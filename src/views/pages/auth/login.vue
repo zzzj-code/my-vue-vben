@@ -23,6 +23,7 @@
           v-model="login.username"
           type="text"
           placeholder="请输入用户名"
+          value="qwerasd"
         />
       </div>
       <div class="inp-verify">
@@ -30,6 +31,7 @@
           v-model="login.password"
           type="password"
           placeholder="请输入密码"
+          value="123456"
         />
       </div>
     </div>
@@ -135,6 +137,16 @@ export default {
 
       //用axios发送请求
       try {
+        // 请求管理平台api  （没成功）
+        // const res = await axios.post("http://ruoyioffice.com/admin-api/system/auth/login", {
+        //   tenantId: '1',
+        //   username: this.login.username,
+        //   password: this.login.password,
+        //   // zIIipezOIZMoUmfOCzrceCUEbve3r6RTKg7VGUDJJ0JcFCzJbFUGSGV/gZ0xZ5sgPS844/bWPERP843MepoZBA==
+        //   captchaVerification: 'zIIipezOIZMoUmfOCzrceCUEbve3r6RTKg7VGUDJJ0JcFCzJbFUGSGV/gZ0xZ5sgPS844/bWPERP843MepoZBA=='
+        // });
+
+        // 请求黑马api
         const res = await axios.post("https://hmajax.itheima.net/api/login", {
           username: this.login.username,
           password: this.login.password,
@@ -143,18 +155,18 @@ export default {
         // console.log(res);
 
         // 成功就存储本地
-        if(res.status = 200){
+        if ((res.data.code = 200)) {
           //存储用户名信息到本地
-          localStorage.setItem('username',res.data.data.username)
+          localStorage.setItem("username", res.data.data.username);
 
           //跳转到其他页面
-          this.$router.push('/home')
-        }else{
-          alert('登录失败')
+          this.$router.push("/home");
+        } else {
+          alert("登录失败");
         }
       } catch (err) {
-        console.error('登录失败',err)
-        if(err.res){
+        console.error("登录失败", err);
+        if (err.res) {
           // 返回登录失败码
           console.log(err.res.data.message);
         }

@@ -146,7 +146,7 @@ export default {
         console.log("注册响应:", res.data);
 
         // 处理响应
-        if (res.status === 200) {
+        if (res.data.code === 200) {
           console.log("注册成功");
           //注册成功跳转登录页
           this.$router.push("/login");

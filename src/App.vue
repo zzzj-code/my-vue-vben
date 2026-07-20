@@ -1,7 +1,6 @@
 <script>
-  // import general from './views/general.vue';
-  export default{
-  }
+// import general from './views/general.vue';
+export default {};
 </script>
 
 <template>

@@ -7,6 +7,7 @@ import forgetPassword from '@/views/pages/auth/forget-password.vue'
 import codeLogin from '@/views/pages/auth/code-login.vue'
 import qrcodeLogin from '@/views/pages/auth/qrcode-login.vue'
 import register from '@/views/pages/auth/register.vue'
+import NotFound from '@/views/NotFound.vue'
 
 // 用户功能页
 import home from '@/views/pages/workspace/home.vue'
@@ -44,6 +45,11 @@ const router = createRouter({
     {
       path: '/home',
       component: home
+    },
+    {
+      path: '/:pathMatch(.*)*',  // 404页面
+      name: 'NotFound',
+      component: NotFound
     }
   ]
 })

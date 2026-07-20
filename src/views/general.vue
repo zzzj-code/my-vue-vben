@@ -20,7 +20,7 @@
     <div class="box-right">
       <!-- 中间验证 -->
       <div class="rigth-content">
-          <router-view />
+        <router-view />
       </div>
       <!-- 商标 -->
       <div class="rigth-floot">
@@ -37,8 +37,12 @@ export default {};
 
 <style scoped>
 .general {
+  /* min-height: 100vh; */
   display: flex;
   /* gap: 1px; */
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
 }
 /* 左边 */
 .box-left {
