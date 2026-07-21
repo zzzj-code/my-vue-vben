@@ -68,19 +68,24 @@
           <div class="info-chat">💬</div>
           <div class="info-chat" @click.stop="showMe" ref="chatRef">
             源码
-            <!--  v-show="showInd" -->
             <div v-show="showInd" class="chat-ind">
-                <div class="ind-tou"></div>
-                <div class="ind-zi">深圳总公司/研发部门</div>
-                <div style="width: 100%; height: 1px; background-color: #ccc;"></div>
-                <div class="ind-neirong">个人中心</div>
-                <div class="ind-neirong">文档</div>
-                <div class="ind-neirong">GitHub</div>
-                <div class="ind-neirong">问题&帮助</div>
-                <div style="width: 100%; height: 1px; background-color: #ccc;"></div>
-                <div class="ind-neirong">锁定屏幕</div>
-                <div style="width: 100%; height: 1px; background-color: #ccc;"></div>
-                <div class="ind-neirong" @click="exit">退出登录</div>
+              <div class="ind-tou"></div>
+              <div class="ind-zi">深圳总公司/研发部门</div>
+              <div
+                style="width: 100%; height: 1px; background-color: #ccc"
+              ></div>
+              <div class="ind-neirong">个人中心</div>
+              <div class="ind-neirong">文档</div>
+              <div class="ind-neirong">GitHub</div>
+              <div class="ind-neirong">问题&帮助</div>
+              <div
+                style="width: 100%; height: 1px; background-color: #ccc"
+              ></div>
+              <div class="ind-neirong">锁定屏幕</div>
+              <div
+                style="width: 100%; height: 1px; background-color: #ccc"
+              ></div>
+              <div class="ind-neirong" @click="exit">退出登录</div>
             </div>
           </div>
         </div>
@@ -100,24 +105,35 @@
     <div class="sidebar-left">
       <ul>
         <li>
-          <router-link to="/home" active-class="sidebar-active"><span></span>我都首页</router-link>
+          <router-link to="/workbench" active-class="sidebar-active" class="rou"
+            ><span></span>我都首页</router-link
+          >
         </li>
-        <li><span></span>数据分析</li>
-        <li><span></span>首页管理</li>
-        <li><span></span>组件管理</li>
+        <li>
+          <router-link to="/analytics" active-class="sidebar-active" class="rou"
+            ><span></span>数据分析</router-link
+          >
+        </li>
+        <li>
+          <router-link to="/manage" active-class="sidebar-active" class="rou"
+            ><span></span>首页管理</router-link
+          >
+        </li>
+        <li>
+          <router-link to="/component" active-class="sidebar-active" class="rou"
+            ><span></span>组件管理</router-link
+          >
+        </li>
       </ul>
     </div>
-    <!-- ============================================================ -->
-    <!-- 搜索模态框（新增）                                              -->
-    <!-- 说明：点击遮罩层不会关闭，只能点 ✕ 或按 ESC 关闭              -->
-    <!-- ============================================================ -->
+    <!-- 主体部分 -->
+    <div class="home-main">
+      <router-view />
+    </div>
+    <!-- ———————————————————————— -->
+    <!-- 搜索模态框 -->
     <div class="modal-overlay" v-if="showModal">
-      <!--
-        注意：这里没有给遮罩加 @click="closeModal"
-        所以点击灰色背景区域不会关闭弹窗
-      -->
       <div class="modal-content">
-        <!-- 模态框头部：图标 + 输入框 + 关闭按钮 -->
         <div class="modal-header">
           <span class="modal-icon">🔍</span>
           <input
@@ -128,12 +144,8 @@
             ref="searchInput"
             @keydown.esc="closeModal"
           />
-          <!-- 点击 ✕ 按钮关闭 -->
           <button class="modal-close" @click="closeModal">✕</button>
         </div>
-
-        <!-- 模态框主体：显示搜索结果 -->
-        <!-- 有搜索结果时：渲染列表 -->
         <div class="modal-body" v-if="searchResults.length > 0">
           <div
             class="search-item"
@@ -146,20 +158,17 @@
             <span class="item-path">{{ item.path }}</span>
           </div>
         </div>
-        <!-- 输入了关键词但没有匹配结果：显示空状态 -->
         <div
           class="modal-body"
           v-else-if="searchKeyword && searchResults.length === 0"
         >
           <div class="empty-result">未找到相关结果</div>
         </div>
-        <!-- 未输入关键词：显示提示 -->
         <div class="modal-footer" v-else>
           <span class="tip">没有搜索历史</span>
         </div>
       </div>
     </div>
-    <!-- ============================================================ -->
   </div>
 </template>
 
@@ -167,18 +176,11 @@
 export default {
   data() {
     return {
-      // ===== 原有数据 =====
       showMenu: false,
       timer: null,
-
-     // 个人页面
       showInd: false,
-
-      // ===== 模态框相关数据（新增） =====
-      showModal: false, // 控制模态框显示/隐藏
-      searchKeyword: "", // 搜索框输入的关键词
-
-      // 菜单数据源（用于搜索匹配）
+      showModal: false,
+      searchKeyword: "",
       menuList: [
         { name: "工作台", icon: "📊", path: "/dashboard" },
         { name: "流程中心", icon: "📋", path: "/process" },
@@ -204,13 +206,7 @@ export default {
       ],
     };
   },
-
   computed: {
-    /**
-     * 搜索过滤结果（新增）
-     * 根据 searchKeyword 过滤 menuList
-     * 匹配规则：菜单名称 或 路径 包含关键词（不区分大小写）
-     */
     searchResults() {
       if (!this.searchKeyword.trim()) return [];
       const keyword = this.searchKeyword.trim().toLowerCase();
@@ -221,18 +217,16 @@ export default {
       );
     },
   },
-
   methods: {
-    exit(){
-        this.$router.push('/login')
+    exit() {
+      this.$router.push("/login");
     },
-    showMe(){
-        this.showInd = !this.showInd 
+    showMe() {
+      this.showInd = !this.showInd;
     },
     closeChat() {
       this.showInd = false;
     },
-    // 新增：点击外部关闭
     handleClickOutside(event) {
       if (!this.showInd) return;
       const el = this.$refs.chatRef;
@@ -240,7 +234,6 @@ export default {
         this.closeChat();
       }
     },
-    // 下拉菜单
     hideMenuDelayed() {
       clearTimeout(this.timer);
       this.timer = setTimeout(() => {
@@ -250,38 +243,23 @@ export default {
     cancelHide() {
       clearTimeout(this.timer);
     },
-
-    // ===== 模态框方法（新增） =====
-
-    /** 打开模态框 */
     openModal() {
       this.showModal = true;
-      this.searchKeyword = ""; // 清空上次搜索关键词
+      this.searchKeyword = "";
       this.$nextTick(() => {
-        this.$refs.searchInput?.focus(); // DOM 更新后自动聚焦输入框
+        this.$refs.searchInput?.focus();
       });
     },
-
-    /** 关闭模态框（只有点击 ✕ 或按 ESC 会触发） */
     closeModal() {
       this.showModal = false;
-      this.searchKeyword = ""; // 关闭时清空关键词
+      this.searchKeyword = "";
     },
-
-    /** 点击搜索结果项 → 执行跳转并关闭弹窗 */
     handleSelect(item) {
       console.log("跳转到:", item.path, item.name);
-      // 如果你的项目有路由，取消下面注释：
-      // this.$router.push(item.path)
-      this.closeModal(); // 跳转后关闭弹窗
+      this.closeModal();
     },
   },
   watch: {
-    /**
-     * 监听模态框显示状态（新增）
-     * 打开时：禁止页面滚动
-     * 关闭时：恢复页面滚动
-     */
     showModal(val) {
       if (val) {
         document.body.style.overflow = "hidden";
@@ -294,68 +272,71 @@ export default {
     },
   },
   mounted() {
-    /**
-     * 全局键盘快捷键监听（新增）
-     * Ctrl+K 或 Command+K → 打开搜索模态框
-     */
     document.addEventListener("keydown", (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
-        e.preventDefault(); // 阻止浏览器默认行为（如打开书签栏）
+        e.preventDefault();
         this.openModal();
       }
     });
-
     document.addEventListener("click", this.handleClickOutside);
   },
   beforeDestroy() {
-    /**
-     * 组件销毁前移除键盘监听（新增）
-     * 防止内存泄漏
-     */
     document.removeEventListener("keydown", this.handleKeydown);
-
     document.removeEventListener("click", this.handleClickOutside);
   },
 };
 </script>
 
 <style scoped>
-.chat-ind{
-    position: absolute;
-    top: 41px;
-    right: -18px;
-    width: 228px;
-    height: 355px;
-    /* border: 1px solid red; */
-    background-color: #fff;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    border-radius: 5px;
-    z-index: 222;
-}
-.ind-tou{
-    width: 100%;
-    height: 72px;
-    border: 1px solid red;
-}
-.ind-zi{
-    width: 100%;
-    text-align: center;
-    font-size: 12px;
-    margin-bottom: 2px;
-}
-.ind-neirong{
-    width: 220px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    padding-left: 40px;
-    margin: 2px 7px;
-    border-radius: 5px;
-}
-.ind-neirong:hover{
-    background-color: #eeecec;
+/* 主体 */
+.home-main {
+  width: 1040px;
+  height: 790px;
+  position: absolute;
+  left: 228px;
+  background-color: #ecebeb;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
+/* ———————————— */
+
+.chat-ind {
+  position: absolute;
+  top: 41px;
+  right: -18px;
+  width: 228px;
+  height: 355px;
+  /* border: 1px solid red; */
+  background-color: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-radius: 5px;
+  z-index: 222;
+}
+.ind-tou {
+  width: 100%;
+  height: 72px;
+  border: 1px solid red;
+}
+.ind-zi {
+  width: 100%;
+  text-align: center;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+.ind-neirong {
+  width: 220px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding-left: 40px;
+  margin: 2px 7px;
+  border-radius: 5px;
+}
+.ind-neirong:hover {
+  background-color: #eeecec;
+}
 
 .nav-active {
   text-decoration: none;
@@ -368,8 +349,8 @@ export default {
   color: #0c70f3;
   border-radius: 5px;
 }
-
-.sidebar-active {
+.rou {
+  position: absolute;
   width: 207px;
   height: 42px;
   /* border: 1px solid red; */
@@ -378,8 +359,11 @@ export default {
   display: flex;
   align-items: center;
   text-decoration: none;
-  background-color: rgb(176, 211, 245);
+  color: black;
+}
+.sidebar-active {
   color: #0c70f3;
+  background-color: rgb(176, 211, 245);
 }
 
 body {
@@ -392,12 +376,15 @@ body {
   min-height: 100vh;
   background-color: #ecebeb;
   position: relative;
+  overflow-x: hidden;
 }
 .home-top {
   width: 100%;
   height: 88px;
-  /* margin-left: 8px; */
-  /* border: 1px solid red; */
+  position: sticky; /*sticky，固定在顶部 */
+  top: 0;
+  z-index: 100;
+  background-color: #ecebeb;
 }
 .top-headr {
   width: 100%;
@@ -772,7 +759,8 @@ body {
   display: flex;
 }
 .headr2-nav {
-  width: 947px;
+  width: 935px;
+  margin-left: 3px;
   height: 37px;
   background-color: #fff;
 }
@@ -831,8 +819,8 @@ body {
   cursor: pointer;
   font-size: 14px;
 }
-.sidebar-left ul li span{
-    width: 16px;
+.sidebar-left ul li span {
+  width: 16px;
 }
 .sidebar-left ul li:hover {
   background-color: #ccc;

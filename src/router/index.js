@@ -11,6 +11,10 @@ import NotFound from '@/views/NotFound.vue'
 
 // 用户功能页
 import home from '@/views/pages/workspace/home.vue'
+import workbench from '@/views/pages/workspace/pages/workbench.vue'
+import analytics from '@/views/pages/workspace/pages/analytics.vue'
+import manage from '@/views/pages/workspace/pages/manage.vue'
+import component from '@/views/pages/workspace/pages/component.vue'
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -44,7 +48,26 @@ const router = createRouter({
     },
     {
       path: '/home',
-      component: home
+      component: home,
+      redirect: '/workbench',
+      children:[
+        {
+          path: '/workbench',
+          component: workbench //我都首页
+        },
+        {
+          path: '/analytics',
+          component: analytics //数据分析页面
+        },
+        {
+          path: '/manage',
+          component: manage  //首页管理
+        },
+        {
+          path: '/component',
+          component: component //组件管理
+        }
+      ]
     },
     {
       path: '/:pathMatch(.*)*',  // 404页面
