@@ -5,7 +5,7 @@
       <div class="app-weather">
         <div class="weather-time">
           <div class="box-time">
-            <h2>早上好, admin</h2>
+            <h2><span>{{ greeting }}</span>, admin</h2>
             <div class="time-zi">欢迎回来,开始您 的工作吧！</div>
           </div>
           <div class="wea-time">
@@ -353,6 +353,7 @@ export default {
         "2026-07-25",
       ],
       dateInfo: "",
+      greeting: "早上好",
       // 当前激活的标签
       activeTab: "todo",
       // 已添加的应用列表
@@ -1052,7 +1053,15 @@ export default {
       const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
       const weekday = weekdays[now.getDay()];
       this.dateInfo = `${year}-${month}-${day} 星期${weekday}`;
+      this.greeting = this.getGreetingByHour(now.getHours());
       this.updateTableTimes();
+    },
+    getGreetingByHour(hour) {
+      if (hour >= 5 && hour < 9) return "早上好";
+      if (hour >= 9 && hour < 12) return "上午好";
+      if (hour >= 12 && hour < 14) return "中午好";
+      if (hour >= 14 && hour < 18) return "下午好";
+      return "晚上好";
     },
 
     updateTableTimes() {
