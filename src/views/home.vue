@@ -6,7 +6,7 @@
       <div class="top-headr">
         <!-- login -->
         <div class="headr-title">
-          <img src="../img/logo.png" alt="" />
+          <img src="../assets/img/logo.png" alt="" />
           <span>宇擎源码一体化平台</span>
         </div>
         <!-- ———————————————————————— -->
@@ -15,11 +15,15 @@
         <div class="headr-nav">
           <ul class="nav-ul">
             <li class="a">
-              <router-link to="/home" active-class="nav-active"
+              <router-link to="/homes" active-class="nav-active"
                 >工作台</router-link
               >
             </li>
-            <li class="a">流程中心</li>
+            <li class="a">
+              <router-link to="/bpm" active-class="nav-active"
+                >流程中心</router-link
+              >
+            </li>
             <li class="a">OA</li>
             <li class="a">人力</li>
             <li class="a">合同</li>
@@ -101,36 +105,10 @@
         </div>
       </div>
     </div>
-    <!-- 侧边导航栏 -->
-    <div class="sidebar-left">
-      <ul>
-        <li>
-          <router-link to="/workbench" active-class="sidebar-active" class="rou"
-            ><span></span>我都首页</router-link
-          >
-        </li>
-        <li>
-          <router-link to="/analytics" active-class="sidebar-active" class="rou"
-            ><span></span>数据分析</router-link
-          >
-        </li>
-        <li>
-          <router-link to="/manage" active-class="sidebar-active" class="rou"
-            ><span></span>首页管理</router-link
-          >
-        </li>
-        <li>
-          <router-link to="/component" active-class="sidebar-active" class="rou"
-            ><span></span>组件管理</router-link
-          >
-        </li>
-      </ul>
-    </div>
-    <!-- 主体部分 -->
-    <div class="home-main">
-      <router-view />
-    </div>
     <!-- ———————————————————————— -->
+    <!-- 中间 -->
+    <router-view></router-view>
+    <!-- ———————————————— -->
     <!-- 搜索模态框 -->
     <div class="modal-overlay" v-if="showModal">
       <div class="modal-content">
@@ -288,19 +266,11 @@ export default {
 </script>
 
 <style scoped>
-/* 主体 */
-.home-main {
-  width: 1040px;
-  height: 790px;
-  position: absolute;
-  left: 228px;
-  background-color: #ecebeb;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.a a{
+  text-decoration: none;
+  color: black;
 }
 
-/* ———————————— */
 
 .chat-ind {
   position: absolute;
@@ -348,22 +318,6 @@ export default {
   background-color: rgb(176, 211, 245);
   color: #0c70f3;
   border-radius: 5px;
-}
-.rou {
-  position: absolute;
-  width: 207px;
-  height: 42px;
-  /* border: 1px solid red; */
-  margin-top: 2px;
-  border-radius: 5px;
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  color: black;
-}
-.sidebar-active {
-  color: #0c70f3;
-  background-color: rgb(176, 211, 245);
 }
 
 body {
@@ -787,43 +741,4 @@ body {
 }
 /* ———————————————— */
 
-/* 侧边导航栏 */
-.sidebar-left {
-  flex: 0 0 227px;
-  width: 227px;
-  height: calc(100vh - 51px); /* 占满剩余高度 */
-  background-color: #fff;
-  position: fixed; /* 固定定位 */
-  top: 51px;
-  left: 0;
-  overflow-y: auto;
-  z-index: 202;
-  background-color: #fff;
-}
-.sidebar-left ul {
-  width: 100%;
-  height: 174px;
-  list-style: none;
-  /* border: 1px solid red; */
-  padding: 3px 10px;
-}
-.sidebar-left ul li {
-  width: 207px;
-  height: 42px;
-  /* border: 1px solid red; */
-  margin-top: 2px;
-  border-radius: 5px;
-  display: flex;
-  align-items: center;
-  /* padding-left: 16px; */
-  cursor: pointer;
-  font-size: 14px;
-}
-.sidebar-left ul li span {
-  width: 16px;
-}
-.sidebar-left ul li:hover {
-  background-color: #ccc;
-}
-/* —————————————— */
 </style>
