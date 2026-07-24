@@ -3,7 +3,7 @@
   <div class="sidebar-left">
     <ul class="sidebar-menu">
       <li>
-        <router-link to="/startProcess" active-class="sidebar-active" class="menu-item">
+        <router-link @click="toggle('start')" to="/startProcess" active-class="sidebar-active" class="menu-item">
           <span class="menu-label">发起流程</span>
         </router-link>
       </li>
@@ -57,17 +57,17 @@
             </router-link>
           </li>
           <li>
-            <router-link to="/group" active-class="sub-active" class="sub-item">
+            <router-link to="/userGroup" active-class="sub-active" class="sub-item">
               <span>用户分组</span>
             </router-link>
           </li>
           <li>
-            <router-link to="/monitor" active-class="sub-active" class="sub-item">
+            <router-link to="/processListener" active-class="sub-active" class="sub-item">
               <span>流程监听器</span>
             </router-link>
           </li>
           <li>
-            <router-link to="/expression" active-class="sub-active" class="sub-item">
+            <router-link to="/processExpression" active-class="sub-active" class="sub-item">
               <span>流程表达式</span>
             </router-link>
           </li>
@@ -77,7 +77,7 @@
             </router-link>
           </li>
           <li>
-            <router-link to="/task" active-class="sub-active" class="sub-item">
+            <router-link to="/processTasnk" active-class="sub-active" class="sub-item">
               <span>流程任务</span>
             </router-link>
           </li>
@@ -112,7 +112,7 @@
 <script setup>
 import { ref } from 'vue'
 
-const expanded = ref('task')
+const expanded = ref('start')
 const toggle = name => {
   expanded.value = expanded.value === name ? '' : name
 }

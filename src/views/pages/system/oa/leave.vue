@@ -7,30 +7,22 @@
           <div class="top-tab">
             <div class="top-row">
               <div class="tab-a">
-                <span>系统分类</span>
-                <input type="text" placeholder="请输入系统分类" />
+                <span>请假类型</span>
+                <input type="text" placeholder="请输入请假类型" />
               </div>
               <div class="tab-a">
-                <span>单据类型</span>
-                <input type="text" placeholder="请输入单据类型" />
+                <span>创建时间</span>
+                <input type="text" placeholder="请输入创建时间" />
               </div>
               <div class="tab-a">
-                <span>单据编号</span>
-                <input type="text" placeholder="请输入单据编号" />
-              </div>
-              <div class="tab-a">
-                <span>单据日期</span>
-                <input type="text" placeholder="请选择流程状态" />
+                <span>审批结果</span>
+                <input type="text" placeholder="请输入审批结果" />
               </div>
             </div>
             <div class="top-row">
               <div class="tab-a">
-                <span>接收时间</span>
-                <input type="text" placeholder="请输入发起时间" />
-              </div>
-              <div class="tab-a">
-                <span>申请部门</span>
-                <input type="text" placeholder="请选择申请部门" />
+                <span>原因</span>
+                <input type="text" placeholder="请输入原因" />
               </div>
               <div class="tab-b">
                 <button type="button">重置</button>
@@ -45,8 +37,9 @@
        <!-- 表格 -->
       <div class="app-main">
         <div class="main-header">
-          <div class="main-title">代办任务</div>
+          <div class="main-title">请假列表</div>
           <div class="main-buttons">
+            <button class="btn btn-primary">+ 发起请假</button>
             <button class="icon-btn">🔍</button>
             <button class="icon-btn">⟳</button>
             <button class="icon-btn">⛶</button>
@@ -57,27 +50,25 @@
           <table class="manage-table">
             <thead>
               <tr>
-                <th class="sticky-col first-col">单据类型</th>
-                <th>单据编号</th>
-                <th>摘要</th>
-                <th>所属公司</th>
-                <th>所属部门</th>
-                <th>流程状态</th>
-                <th>发起时间</th>
+                <th>申请编号</th>
+                <th>状态</th>
+                <th>开始时间</th>
                 <th>结束时间</th>
+                <th>请假类型</th>
+                <th>原因</th>
+                <th>申请时间</th>
                 <th class="operation-col">操作</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="item in rows" :key="item.id">
-                <td class="sticky-col first-col">{{ item.type }}</td>
-                <td><a class="link-number" href="#">{{ item.number }}</a></td>
-                <td>{{ item.summary }}</td>
-                <td>{{ item.company }}</td>
-                <td>{{ item.department }}</td>
+                <td>{{ item.id }}</td>
                 <td><span :class="['status-tag', item.statusClass]">{{ item.processStatus }}</span></td>
-                <td>{{ item.startTime }}</td>
+                <td>{{ item.startTime}}</td>
                 <td>{{ item.endTime }}</td>
+                <td>{{ item.department }}</td>
+                <td><a class="link-number" href="#">{{ item.number }}</a></td>
+                <td>{{ item.startTime }}</td>
                 <td class="operation-col">
                   <a href="#" class="op-link">详情</a>
                   <a href="#" class="op-link op-del">删除</a>
@@ -112,7 +103,6 @@ export default {
       rows: [
         {
           id: 1,
-          type: '设备采购',
           number: 'OA123-202607230001',
           summary: '电脑采购申请',
           company: '深圳分公司',
@@ -296,7 +286,7 @@ export default {
   gap: 10px;
 }
 .tab-a {
-  flex: 0 0 238px;
+  flex: 0 0 320px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -393,7 +383,7 @@ export default {
 }
 .btn {
   padding: 8px 18px;
-  border-radius: 20px;
+  border-radius: 10px;
   border: none;
   cursor: pointer;
   font-size: 14px;

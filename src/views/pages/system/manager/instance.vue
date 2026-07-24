@@ -7,30 +7,36 @@
           <div class="top-tab">
             <div class="top-row">
               <div class="tab-a">
-                <span>系统分类</span>
-                <input type="text" placeholder="请输入系统分类" />
+                <span>发起人</span>
+                <input type="text" placeholder="请输入发起人" />
               </div>
               <div class="tab-a">
-                <span>单据类型</span>
-                <input type="text" placeholder="请输入单据类型" />
+                <span>流程名称</span>
+                <input type="text" placeholder="请输入流程名称" />
               </div>
               <div class="tab-a">
                 <span>单据编号</span>
                 <input type="text" placeholder="请输入单据编号" />
               </div>
+            </div>
+            <div class="top-row">
               <div class="tab-a">
-                <span>单据日期</span>
-                <input type="text" placeholder="请选择流程状态" />
+                <span>所属流程</span>
+                <input type="text" placeholder="请输入所属流程" />
+              </div>
+              <div class="tab-a">
+                <span>流程分类</span>
+                <input type="text" placeholder="请输入流程分类" />
+              </div>
+              <div class="tab-a">
+                <span>流程状态</span>
+                <input type="text" placeholder="请输入流程状态" />
               </div>
             </div>
             <div class="top-row">
               <div class="tab-a">
-                <span>接收时间</span>
+                <span>发起时间</span>
                 <input type="text" placeholder="请输入发起时间" />
-              </div>
-              <div class="tab-a">
-                <span>申请部门</span>
-                <input type="text" placeholder="请选择申请部门" />
               </div>
               <div class="tab-b">
                 <button type="button">重置</button>
@@ -42,10 +48,10 @@
         </form>
       </div>
       <!-- ———————————————————————————————————————— -->
-       <!-- 表格 -->
+      <!-- 表格 -->
       <div class="app-main">
         <div class="main-header">
-          <div class="main-title">代办任务</div>
+          <div class="main-title">流程实例</div>
           <div class="main-buttons">
             <button class="icon-btn">🔍</button>
             <button class="icon-btn">⟳</button>
@@ -58,7 +64,7 @@
             <thead>
               <tr>
                 <th class="sticky-col first-col">单据类型</th>
-                <th>单据编号</th>
+                <th class="sticky-col second-col">单据编号</th>
                 <th>摘要</th>
                 <th>所属公司</th>
                 <th>所属部门</th>
@@ -71,11 +77,17 @@
             <tbody>
               <tr v-for="item in rows" :key="item.id">
                 <td class="sticky-col first-col">{{ item.type }}</td>
-                <td><a class="link-number" href="#">{{ item.number }}</a></td>
+                <td class="sticky-col second-col">
+                  <a class="link-number" href="#">{{ item.number }}</a>
+                </td>
                 <td>{{ item.summary }}</td>
                 <td>{{ item.company }}</td>
                 <td>{{ item.department }}</td>
-                <td><span :class="['status-tag', item.statusClass]">{{ item.processStatus }}</span></td>
+                <td>
+                  <span :class="['status-tag', item.statusClass]">{{
+                    item.processStatus
+                  }}</span>
+                </td>
                 <td>{{ item.startTime }}</td>
                 <td>{{ item.endTime }}</td>
                 <td class="operation-col">
@@ -112,152 +124,152 @@ export default {
       rows: [
         {
           id: 1,
-          type: '设备采购',
-          number: 'OA123-202607230001',
-          summary: '电脑采购申请',
-          company: '深圳分公司',
-          department: '研发部门',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 16:04:06',
-          endTime: '2026-07-23 16:04:32',
+          type: "设备采购",
+          number: "OA123-202607230001",
+          summary: "电脑采购申请",
+          company: "深圳分公司",
+          department: "研发部门",
+          processStatus: "审批通过",
+          statusClass: "status-green",
+          startTime: "2026-07-23 16:04:06",
+          endTime: "2026-07-23 16:04:32",
         },
         {
           id: 2,
-          type: '请假单',
-          number: 'QJ-20260723-060',
-          summary: '年假申请',
-          company: '深圳分公司',
-          department: '市场部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-23 15:54:59',
-          endTime: '',
+          type: "请假单",
+          number: "QJ-20260723-060",
+          summary: "年假申请",
+          company: "深圳分公司",
+          department: "市场部",
+          processStatus: "审批中",
+          statusClass: "status-blue",
+          startTime: "2026-07-23 15:54:59",
+          endTime: "",
         },
         {
           id: 3,
-          type: '报销单',
-          number: 'BX-202607230011',
-          summary: '差旅费用报销',
-          company: '上海分公司',
-          department: '销售部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-23 15:40:53',
-          endTime: '',
+          type: "报销单",
+          number: "BX-202607230011",
+          summary: "差旅费用报销",
+          company: "上海分公司",
+          department: "销售部",
+          processStatus: "审批中",
+          statusClass: "status-blue",
+          startTime: "2026-07-23 15:40:53",
+          endTime: "",
         },
         {
           id: 4,
-          type: '合同变更',
-          number: 'CT301-202607230007',
-          summary: '供应商合同条款调整',
-          company: '深圳分公司',
-          department: '采购部',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 12:43:03',
-          endTime: '2026-07-23 12:49:55',
+          type: "合同变更",
+          number: "CT301-202607230007",
+          summary: "供应商合同条款调整",
+          company: "深圳分公司",
+          department: "采购部",
+          processStatus: "审批通过",
+          statusClass: "status-green",
+          startTime: "2026-07-23 12:43:03",
+          endTime: "2026-07-23 12:49:55",
         },
         {
           id: 5,
-          type: '合同签署',
-          number: 'CT302-202607230001',
-          summary: '项目合作合同',
-          company: '北京分公司',
-          department: '战略部',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 11:43:16',
-          endTime: '2026-07-23 11:55:06',
+          type: "合同签署",
+          number: "CT302-202607230001",
+          summary: "项目合作合同",
+          company: "北京分公司",
+          department: "战略部",
+          processStatus: "审批通过",
+          statusClass: "status-green",
+          startTime: "2026-07-23 11:43:16",
+          endTime: "2026-07-23 11:55:06",
         },
         {
           id: 6,
-          type: '用车申请',
-          number: 'YC-202607230022',
-          summary: '客户拜访用车',
-          company: '广州分公司',
-          department: '销售部',
-          processStatus: '已驳回',
-          statusClass: 'status-red',
-          startTime: '2026-07-23 10:21:00',
-          endTime: '2026-07-23 10:25:40',
+          type: "用车申请",
+          number: "YC-202607230022",
+          summary: "客户拜访用车",
+          company: "广州分公司",
+          department: "销售部",
+          processStatus: "已驳回",
+          statusClass: "status-red",
+          startTime: "2026-07-23 10:21:00",
+          endTime: "2026-07-23 10:25:40",
         },
         {
           id: 7,
-          type: '采购申请',
-          number: 'CG-202607230030',
-          summary: '办公用品采购',
-          company: '深圳分公司',
-          department: '行政部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-23 09:10:52',
-          endTime: '',
+          type: "采购申请",
+          number: "CG-202607230030",
+          summary: "办公用品采购",
+          company: "深圳分公司",
+          department: "行政部",
+          processStatus: "审批中",
+          statusClass: "status-blue",
+          startTime: "2026-07-23 09:10:52",
+          endTime: "",
         },
         {
           id: 8,
-          type: '报销单',
-          number: 'BX-202607230012',
-          summary: '招待费报销',
-          company: '深圳分公司',
-          department: '财务部',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 08:45:33',
-          endTime: '2026-07-23 08:58:12',
+          type: "报销单",
+          number: "BX-202607230012",
+          summary: "招待费报销",
+          company: "深圳分公司",
+          department: "财务部",
+          processStatus: "审批通过",
+          statusClass: "status-green",
+          startTime: "2026-07-23 08:45:33",
+          endTime: "2026-07-23 08:58:12",
         },
         {
           id: 9,
-          type: '请假单',
-          number: 'QJ-20260723-061',
-          summary: '调休申请',
-          company: '杭州分公司',
-          department: '技术部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-23 08:12:18',
-          endTime: '',
+          type: "请假单",
+          number: "QJ-20260723-061",
+          summary: "调休申请",
+          company: "杭州分公司",
+          department: "技术部",
+          processStatus: "审批中",
+          statusClass: "status-blue",
+          startTime: "2026-07-23 08:12:18",
+          endTime: "",
         },
         {
           id: 10,
-          type: '公文发文',
-          number: 'OA105-202607230003',
-          summary: '项目立项函',
-          company: '北京分公司',
-          department: '法务部',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 07:58:51',
-          endTime: '2026-07-23 08:03:20',
+          type: "公文发文",
+          number: "OA105-202607230003",
+          summary: "项目立项函",
+          company: "北京分公司",
+          department: "法务部",
+          processStatus: "审批通过",
+          statusClass: "status-green",
+          startTime: "2026-07-23 07:58:51",
+          endTime: "2026-07-23 08:03:20",
         },
         {
           id: 11,
-          type: '采购申请',
-          number: 'CG-202607230031',
-          summary: '设备维护材料',
-          company: '上海分公司',
-          department: '运维部',
-          processStatus: '已驳回',
-          statusClass: 'status-red',
-          startTime: '2026-07-22 17:20:15',
-          endTime: '2026-07-22 17:25:00',
+          type: "采购申请",
+          number: "CG-202607230031",
+          summary: "设备维护材料",
+          company: "上海分公司",
+          department: "运维部",
+          processStatus: "已驳回",
+          statusClass: "status-red",
+          startTime: "2026-07-22 17:20:15",
+          endTime: "2026-07-22 17:25:00",
         },
         {
           id: 12,
-          type: '合同签署',
-          number: 'CT302-202607230002',
-          summary: '供应链合作协议',
-          company: '深圳分公司',
-          department: '采购部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-22 16:05:42',
-          endTime: '',
+          type: "合同签署",
+          number: "CT302-202607230002",
+          summary: "供应链合作协议",
+          company: "深圳分公司",
+          department: "采购部",
+          processStatus: "审批中",
+          statusClass: "status-blue",
+          startTime: "2026-07-22 16:05:42",
+          endTime: "",
         },
       ],
-    }
+    };
   },
-}
+};
 </script>
 
 <style scoped>
@@ -296,7 +308,7 @@ export default {
   gap: 10px;
 }
 .tab-a {
-  flex: 0 0 238px;
+  flex: 0 0 320px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -337,23 +349,23 @@ export default {
   border-radius: 10px;
   border: none;
 }
-.tab-b button:nth-child(1){
-    background-color: #fff;
-    color: black;
-    border: 1px solid #ccc;
+.tab-b button:nth-child(1) {
+  background-color: #fff;
+  color: black;
+  border: 1px solid #ccc;
 }
-.tab-b button:nth-child(1):hover{
-    border: 1px solid #409eff;
-    color: #409eff;
-    cursor: pointer;
+.tab-b button:nth-child(1):hover {
+  border: 1px solid #409eff;
+  color: #409eff;
+  cursor: pointer;
 }
-.tab-b button:nth-child(2){
-    background-color: #409eff;
-    color: white;
+.tab-b button:nth-child(2) {
+  background-color: #409eff;
+  color: white;
 }
-.tab-b button:nth-child(2):hover{
-    background-color: #66b1ff;
-    cursor: pointer;
+.tab-b button:nth-child(2):hover {
+  background-color: #66b1ff;
+  cursor: pointer;
 }
 .tab-b span {
   font-size: 14px;
@@ -413,21 +425,21 @@ export default {
   justify-content: center;
   cursor: pointer;
 }
-  .table-box {
-    flex: 1;
-    overflow-x: auto;
-    overflow-y: auto;
-    max-width: 100%;
-    border: 1px solid #e4e7ed;
-    border-radius: 6px;
-    background: #fff;
-  }
-  .manage-table {
-    width: max-content;
-    min-width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-  }
+.table-box {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-width: 100%;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  background: #fff;
+}
+.manage-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
 .manage-table th,
 .manage-table td {
   padding: 16px 12px;
@@ -488,18 +500,18 @@ export default {
 .operation-cell {
   color: #909399;
 }
-.status-green{
+.status-green {
   background: #f0f9eb;
   color: #67c23a;
 }
-.status-blue{
+.status-blue {
   background: #f0f6ff;
   color: #409eff;
   padding: 4px 8px;
   border-radius: 8px;
   font-size: 12px;
 }
-.op-btn{
+.op-btn {
   margin-right: 8px;
   padding: 6px 10px;
   border-radius: 6px;
@@ -507,20 +519,20 @@ export default {
   background: #fff;
   cursor: pointer;
 }
-.op-del{
+.op-del {
   color: #f56c6c;
   border-color: #f2cccc;
 }
-.op-link{
+.op-link {
   margin-right: 12px;
   color: #409eff;
   text-decoration: none;
   font-size: 12px;
 }
-.op-link:hover{
+.op-link:hover {
   text-decoration: underline;
 }
-.operation-cell a.op-del{
+.operation-cell a.op-del {
   color: #f56c6c;
 }
 .table-footer {

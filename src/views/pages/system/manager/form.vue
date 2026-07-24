@@ -7,30 +7,8 @@
           <div class="top-tab">
             <div class="top-row">
               <div class="tab-a">
-                <span>系统分类</span>
-                <input type="text" placeholder="请输入系统分类" />
-              </div>
-              <div class="tab-a">
-                <span>单据类型</span>
-                <input type="text" placeholder="请输入单据类型" />
-              </div>
-              <div class="tab-a">
-                <span>单据编号</span>
-                <input type="text" placeholder="请输入单据编号" />
-              </div>
-              <div class="tab-a">
-                <span>单据日期</span>
-                <input type="text" placeholder="请选择流程状态" />
-              </div>
-            </div>
-            <div class="top-row">
-              <div class="tab-a">
-                <span>接收时间</span>
-                <input type="text" placeholder="请输入发起时间" />
-              </div>
-              <div class="tab-a">
-                <span>申请部门</span>
-                <input type="text" placeholder="请选择申请部门" />
+                <span>表单名称</span>
+                <input type="text" placeholder="请输入表单名称" />
               </div>
               <div class="tab-b">
                 <button type="button">重置</button>
@@ -45,8 +23,9 @@
        <!-- 表格 -->
       <div class="app-main">
         <div class="main-header">
-          <div class="main-title">代办任务</div>
+          <div class="main-title">流程表单</div>
           <div class="main-buttons">
+            <button class="btn btn-primary">+ 新增表单流程</button>
             <button class="icon-btn">🔍</button>
             <button class="icon-btn">⟳</button>
             <button class="icon-btn">⛶</button>
@@ -296,7 +275,7 @@ export default {
   gap: 10px;
 }
 .tab-a {
-  flex: 0 0 238px;
+  flex: 0 0 330px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -393,12 +372,13 @@ export default {
 }
 .btn {
   padding: 8px 18px;
-  border-radius: 20px;
+  border-radius: 10px;
   border: none;
   cursor: pointer;
   font-size: 14px;
 }
 .btn-primary {
+  width: 150px;
   background-color: #409eff;
   color: #fff;
 }
