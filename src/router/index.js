@@ -25,6 +25,9 @@ import my from '@/views/pages/system/task/my.vue'
 // oa
 import oa from '@/views/oa.vue'
 
+// 人力
+import hrm from '@/views/hrm.vue'
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -253,6 +256,190 @@ const router = createRouter({
             {
               path: '/im',
               component: () => import('@/views/pages/oaSystem/im.vue') //即时通讯
+            }
+          ]
+        },
+        {
+          // 人力
+          path: '/hrm',
+          component: hrm,
+          redirect: '/orginfo',
+          children:[
+            {
+              path: '/orginfo',
+              component: () => import('@/views/pages/hrm/org/orginfo.vue') //组织管理
+            },
+            {
+              path: '/orgChart',
+              component: () => import('@/views/pages/hrm/org/org-chart.vue') //组织架构图
+            },
+            {
+              path: '/employeeArchiveList',
+              component: () => import('@/views/pages/hrm/employee/employee-archive-list.vue') //员工档案
+            },
+            {
+              path: '/employeeContractExpiring',
+              component: () => import('@/views/pages/hrm/employee/employee-contract-expiring.vue') //劳动合同到期预警
+            },
+            {
+              path: '/employeeContractRenewable',
+              component: () => import('@/views/pages/hrm/employee/employee-contract-renewable.vue') //待续签合同
+            },
+            {
+              path: '/entryList',
+              component: () => import('@/views/pages/hrm/employee-relation/entry-list.vue') //员工入职
+            },
+            {
+              path: '/regularList',
+              component: () => import('@/views/pages/hrm/employee-relation/regular-list.vue') //员工转正
+            },
+            {
+              path: '/transferList',
+              component: () => import('@/views/pages/hrm/employee-relation/transfer-list.vue') //人事调动
+            },
+            {
+              path: '/resignationList',
+              component: () => import('@/views/pages/hrm/employee-relation/resignation-list.vue') //员工离职
+            },
+            {
+              path: '/attendanceConfig',
+              component: () => import('@/views/pages/hrm/attendance/attendance-config.vue') //假勤配置
+            },
+            {
+              path: '/attendancePunch',
+              component: () => import('@/views/pages/hrm/attendance/attendance-punch.vue') //考勤打卡
+            },
+            {
+              path: '/punchRecord',
+              component: () => import('@/views/pages/hrm/attendance/punch-record.vue') //打卡记录
+            },
+            {
+              path: '/leaveCancelList',
+              component: () => import('@/views/pages/hrm/attendance/leave-cancel-list.vue') //请假销假
+            },
+            {
+              path: '/cardReplacementList',
+              component: () => import('@/views/pages/hrm/attendance/card-replacement-list.vue') //补卡管理
+            },
+            {
+              path: '/requirementList',
+              component: () => import('@/views/pages/hrm/recruitment/requirement-list.vue') //招聘需求
+            },
+            {
+              path: '/positionList',
+              component: () => import('@/views/pages/hrm/recruitment/position-list.vue') //招聘职位
+            },
+            {
+              path: '/candidateList',
+              component: () => import('@/views/pages/hrm/recruitment/candidate-list.vue') //候选人中心
+            },
+            {
+              path: '/offerList',
+              component: () => import('@/views/pages/hrm/recruitment/offer-list.vue') //录用审批
+            },
+            {
+              path: '/subject',
+              component: () => import('@/views/pages/hrm/salary/setting/subject.vue') //薪资主体
+            },
+            {
+              path: '/plan',
+              component: () => import('@/views/pages/hrm/salary/setting/plan.vue') //薪资方案
+            },
+            {
+              path: '/item',
+              component: () => import('@/views/pages/hrm/salary/setting/item.vue') //薪资项目
+            },
+            {
+              path: '/archiveList',
+              component: () => import('@/views/pages/hrm/salary/archive-list.vue') //员工薪资档案
+            },
+            {
+              path: '/specialDeduction',
+              component: () => import('@/views/pages/hrm/salary/tax/special-deduction.vue') //专项附加扣除
+            },
+            {
+              path: '/taxOpening',
+              component: () => import('@/views/pages/hrm/salary/tax/tax-opening.vue') //个税累计初期
+            },
+            {
+              path: '/taxProfile',
+              component: () => import('@/views/pages/hrm/salary/tax/tax-profile.vue') //员工个税档案
+            },
+            {
+              path: '/batch',
+              component: () => import('@/views/pages/hrm/salary/batch.vue') //薪资批次
+            },
+            {
+              path: '/payslip',
+              component: () => import('@/views/pages/hrm/salary/payslip.vue') //工资条管理
+            },
+            {
+              path: '/confirmList',
+              component: () => import('@/views/pages/hrm/salary/confirm-list.vue') //薪资确认审批
+            },
+            {
+              path: '/paymentList',
+              component: () => import('@/views/pages/hrm/salary/payment-list.vue') //发薪登记
+            },
+            {
+              path: '/statistics',
+              component: () => import('@/views/pages/hrm/salary/statistics.vue') //薪资统计
+            },
+            {
+              path: '/scheme',
+              component: () => import('@/views/pages/hrm/performance/setting/scheme.vue') //绩效方案
+            },
+            {
+              path: '/indicator',
+              component: () => import('@/views/pages/hrm/performance/setting/indicator.vue') //指标库
+            },
+            {
+              path: '/template1',
+              component: () => import('@/views/pages/hrm/performance/setting/template.vue') //模板管理
+            },
+            {
+              path: '/gradeRule',
+              component: () => import('@/views/pages/hrm/performance/setting/grade-rule.vue') //等级规则
+            },
+            {
+              path: '/periodList',
+              component: () => import('@/views/pages/hrm/performance/period-list.vue') //绩效批次
+            },
+            {
+              path: '/planList',
+              component: () => import('@/views/pages/hrm/performance/plan-list.vue') //目标确认
+            },
+            {
+              path: '/selfReviewList',
+              component: () => import('@/views/pages/hrm/performance/assessment-task/self-review-list.vue') //自评填报
+            },
+            {
+              path: '/leaderReviewList',
+              component: () => import('@/views/pages/hrm/performance/assessment-task/leader-review-list.vue') //评审填报
+            },
+            {
+              path: '/hrCalibrationList',
+              component: () => import('@/views/pages/hrm/performance/assessment-task/hr-calibration-list.vue') //校准填报
+            },
+            {
+              path: '/resultConfirmTaskList',
+              component: () => import('@/views/pages/hrm/performance/assessment-task/result-confirm-task-list.vue') //结果确认
+            },
+            {
+              path: '/appealList',
+              component: () => import('@/views/pages/hrm/performance/assessment-task/appeal-list.vue') //申诉管理
+            },
+            {
+              path: '/resultList',
+              component: () => import('@/views/pages/hrm/performance/result-list.vue') //绩效结果
+            },
+            {
+              path: '/resultConfirmList',
+              component: () => import('@/views/pages/hrm/performance/result-confirm-list.vue') //绩效批次结果审批
+            },
+            {
+              path: '/statistics',
+              component: () => import('@/views/pages/hrm/performance/statistics.vue') //绩效统计
             }
           ]
         }

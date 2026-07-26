@@ -1,0 +1,1 @@
+<template>薪资主体</template>

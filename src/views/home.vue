@@ -27,7 +27,9 @@
             <li class="a">
               <router-link to="/oa" active-class="nav-active">OA</router-link>
             </li>
-            <li class="a">人力</li>
+            <li class="a">
+              <router-link to="/hrm" active-class="nav-active">人力</router-link>
+            </li>
             <li class="a">合同</li>
             <li class="a">CRM</li>
             <li
