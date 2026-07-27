@@ -1,7 +1,7 @@
 <template>
   <div class="page-wrapper">
     <div class="app">
-      <!-- <div ref="chartRef" class="chart-box"></div> -->
+      <div ref="chartRef" class="chart-box"></div>
     </div>
   </div>
 </template>

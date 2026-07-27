@@ -398,10 +398,6 @@ const router = createRouter({
               component: () => import('@/views/pages/hrm/performance/setting/template.vue') //模板管理
             },
             {
-              path: '/gradeRule',
-              component: () => import('@/views/pages/hrm/performance/setting/grade-rule.vue') //等级规则
-            },
-            {
               path: '/periodList',
               component: () => import('@/views/pages/hrm/performance/period-list.vue') //绩效批次
             },
@@ -418,16 +414,8 @@ const router = createRouter({
               component: () => import('@/views/pages/hrm/performance/assessment-task/leader-review-list.vue') //评审填报
             },
             {
-              path: '/hrCalibrationList',
-              component: () => import('@/views/pages/hrm/performance/assessment-task/hr-calibration-list.vue') //校准填报
-            },
-            {
               path: '/resultConfirmTaskList',
               component: () => import('@/views/pages/hrm/performance/assessment-task/result-confirm-task-list.vue') //结果确认
-            },
-            {
-              path: '/appealList',
-              component: () => import('@/views/pages/hrm/performance/assessment-task/appeal-list.vue') //申诉管理
             },
             {
               path: '/resultList',

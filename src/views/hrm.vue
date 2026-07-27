@@ -398,15 +398,6 @@
                   <span>模板管理</span>
                 </router-link>
               </li>
-              <li>
-                <router-link
-                  to="/gradeRule"
-                  active-class="sub-active"
-                  class="sub-item"
-                >
-                  <span>等级规则</span>
-                </router-link>
-              </li>
             </ul>
           </li>
           <li>
@@ -455,29 +446,11 @@
               </li>
               <li>
                 <router-link
-                  to="/hrCalibrationList"
-                  active-class="sub-active"
-                  class="sub-item"
-                >
-                  <span>校准填报</span>
-                </router-link>
-              </li>
-              <li>
-                <router-link
                   to="/resultConfirmTaskList"
                   active-class="sub-active"
                   class="sub-item"
                 >
                   <span>结果确认</span>
-                </router-link>
-              </li>
-              <li>
-                <router-link
-                  to="/appealList"
-                  active-class="sub-active"
-                  class="sub-item"
-                >
-                  <span>申诉管理</span>
                 </router-link>
               </li>
             </ul>
