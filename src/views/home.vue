@@ -30,7 +30,9 @@
             <li class="a">
               <router-link to="/hrm" active-class="nav-active">人力</router-link>
             </li>
-            <li class="a">合同</li>
+            <li class="a">
+              <router-link to="/contract" active-class="nav-active">合同</router-link>
+            </li>
             <li class="a">CRM</li>
             <li
               class="nav-trigger a"

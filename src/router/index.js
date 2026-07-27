@@ -28,6 +28,9 @@ import oa from '@/views/oa.vue'
 // 人力
 import hrm from '@/views/hrm.vue'
 
+// 合同
+import contract from '@/views/contract.vue'
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -428,6 +431,38 @@ const router = createRouter({
             {
               path: '/statistics',
               component: () => import('@/views/pages/hrm/performance/statistics.vue') //绩效统计
+            }
+          ]
+        },
+        {
+          // 合同模块
+          path: '/contract',
+          component: contract,
+          redirect: '/contractStats',
+          children:[
+            {
+              path: '/contractStats',
+              component: () => import('@/views/pages/contract/contract-stats.vue') //统计分析
+            },
+            {
+              path: '/contractInfoList',
+              component: () => import('@/views/pages/contract/contract-info-list.vue') //合同台账
+            },
+            {
+              path: '/contractDraftList',
+              component: () => import('@/views/pages/contract/contract-draft-list.vue') //合同起草
+            },
+            {
+              path: '/Category1',
+              component: () => import('@/views/pages/contract/config/category.vue') //合同分类
+            },
+            {
+              path: '/Template2',
+              component: () => import('@/views/pages/contract/config/template.vue') //合同模板
+            },
+            {
+              path: '/basic',
+              component: () => import('@/views/pages/contract/config/basic.vue') //基础配置
             }
           ]
         }
