@@ -31,6 +31,9 @@ import hrm from '@/views/hrm.vue'
 // 合同
 import contract from '@/views/contract.vue'
 
+//crm
+import crm from '@/views/crm.vue'
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -463,6 +466,94 @@ const router = createRouter({
             {
               path: '/basic',
               component: () => import('@/views/pages/contract/config/basic.vue') //基础配置
+            }
+          ]
+        },
+        {
+          //crm模块
+          path: '/crm',
+          component: crm,
+          redirect: '/backlog',
+          children:[
+            {
+              path: '/backlog',
+              component: () => import('@/views/pages/crm/backlog.vue') //待办事项
+            },
+            {
+              path: '/clue',
+              component: () => import('@/views/pages/crm/clue.vue') //线索管理
+            },
+            {
+              path: '/customer',
+              component: () => import('@/views/pages/crm/customer.vue') //客户管理
+            },
+            {
+              path: '/contact',
+              component: () => import('@/views/pages/crm/contact.vue') //联系人管理
+            },
+            {
+              path: '/pool',
+              component: () => import('@/views/pages/crm/pool.vue') //客户公海
+            },
+            {
+              path: '/business',
+              component: () => import('@/views/pages/crm/business.vue') //商机管理
+            },
+            {
+              path: '/contract1',
+              component: () => import('@/views/pages/crm/contract.vue') //销售合同
+            },
+            {
+              path: '/receivable',
+              component: () => import('@/views/pages/crm/receivable.vue') //回款管理
+            },
+            {
+              path: '/receivablePlan',
+              component: () => import('@/views/pages/crm/receivable-plan.vue') //回款计划
+            },
+            {
+              path: '/product',
+              component: () => import('@/views/pages/crm/product.vue') //产品管理
+            },
+            {
+              path: '/customer1',
+              component: () => import('@/views/pages/crm/statistics/customer.vue') //客户分析
+            },
+            {
+              path: '/ranking',
+              component: () => import('@/views/pages/crm/statistics/ranking.vue') //排行榜
+            },
+            {
+              path: '/performance',
+              component: () => import('@/views/pages/crm/statistics/performance.vue') //员工业绩
+            },
+            {
+              path: '/portrait',
+              component: () => import('@/views/pages/crm/statistics/portrait.vue') //客户画像
+            },
+            {
+              path: '/funnel',
+              component: () => import('@/views/pages/crm/statistics/funnel.vue') //销售漏斗
+            },
+            {
+              path: '/customer-pool-config',
+              component: () => import('@/views/pages/crm/config/customer-pool-config.vue') //客户公海配置
+            },
+            {
+              path: '/customer-limit-config',
+              component: () => import('@/views/pages/crm/config/customer-limit-config.vue') //客户限制配置
+            },
+            {
+              path: '/product1',
+              component: () => import('@/views/pages/crm/config/product.vue') //产品分类配置
+            },
+            {
+              path: '/business-status',
+              component: () => import('@/views/pages/crm/config/business-status.vue') //商机状态配置
+            },
+            {
+              path: '/contract-config',
+              component: () => import('@/views/pages/crm/config/contract-config.vue') //合同配置
             }
           ]
         }

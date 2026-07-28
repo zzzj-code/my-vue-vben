@@ -33,7 +33,9 @@
             <li class="a">
               <router-link to="/contract" active-class="nav-active">合同</router-link>
             </li>
-            <li class="a">CRM</li>
+            <li class="a">
+              <router-link to="/crm" active-class="nav-active">CRM</router-link>
+            </li>
             <li
               class="nav-trigger a"
               @mouseenter="showMenu = true"
