@@ -46,22 +46,22 @@
                 class="nav-tab"
                 @mouseenter="cancelHide"
                 :class="{ active: showMenu }"
-              >
-                <li><a href="javascript:void(0)">ERP</a></li>
-                <li><a href="javascript:void(0)">项目</a></li>
-                <li><a href="javascript:void(0)">资产</a></li>
-                <li><a href="javascript:void(0)">MES</a></li>
-                <li><a href="javascript:void(0)">财富</a></li>
-                <li><a href="javascript:void(0)">WMS</a></li>
-                <li><a href="javascript:void(0)">系统管理</a></li>
-                <li><a href="javascript:void(0)">基础设施</a></li>
-                <li><a href="javascript:void(0)">支付管理</a></li>
-                <li><a href="javascript:void(0)">报表管理</a></li>
-                <li><a href="javascript:void(0)">主数据</a></li>
-                <li><a href="javascript:void(0)">工单管理</a></li>
-                <li><a href="javascript:void(0)">公众号管理</a></li>
-                <li><a href="javascript:void(0)">AI 大模型</a></li>
-                <li><a href="javascript:void(0)">IM 即时通讯</a></li>
+              > 
+                <li><router-link to="/erp" active-class="nav-active1">ERP</router-link></li>
+                <li><router-link to="/no" active-class="nav-active1">项目</router-link></li>
+                <li><router-link to="/no" active-class="nav-active1">资产</router-link></li>
+                <li><router-link to="/no" active-class="nav-active1">MES</router-link></li>
+                <li><router-link to="/no" active-class="nav-active1">财富</router-link></li>
+                <li><router-link to="/no" active-class="nav-active1">WMS</router-link></li>
+                <li><router-link to="/no" active-class="nav-active1">系统管理</router-link></li>
+                <li><router-link to="/no" active-class="nav-active1">基础设施</router-link></li>
+                <li><router-link to="/no" active-class="nav-active1">支付管理</router-link></li>
+                <li><router-link to="/no" active-class="nav-active1">报表管理</router-link></li>
+                <li><router-link to="/no" active-class="nav-active1">主数据</router-link></li>
+                <li><router-link to="/no" active-class="nav-active1">工单管理</router-link></li>
+                <li><router-link to="/no" active-class="nav-active1">公众号管理</router-link></li>
+                <li><router-link to="/no" active-class="nav-active1">AI 大模型</router-link></li>
+                <li><router-link to="/no" active-class="nav-active1">IM 即时通讯</router-link></li>
               </ul>
             </li>
           </ul>
@@ -327,6 +327,16 @@ export default {
   color: #0c70f3;
   border-radius: 5px;
 }
+.nav-active1{
+  text-decoration: none;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  background-color: rgb(176, 211, 245);
+  color: #0c70f3;
+  border-radius: 5px;
+}
 
 body {
   background-color: #ecebeb;
@@ -430,7 +440,7 @@ body {
   letter-spacing: 0px;
   list-style: none;
   margin-top: 10px;
-  padding: 10px 8px;
+  padding: 10px;
   border-radius: 5px;
   box-shadow: 0 2px 10px rgba(36, 35, 35, 0.2);
   background: #fff;
@@ -458,17 +468,22 @@ body {
     transform 0.25s ease,
     visibility 0s linear 0s;
 }
-.nav-tab a {
+.nav-tab li {
   display: block;
-  padding: 10px 15px;
+  /* padding: 10px 15px; */
+  width: 100%;
+  height: 40px;
   color: #424242;
   text-decoration: none;
   border-radius: 5px;
   font-size: 14px;
   white-space: nowrap;
   line-height: 1.4;
+  display: flex;
+  align-items: center;
+  text-indent: 1em;
 }
-.nav-tab a:hover {
+.nav-tab li:hover {
   background-color: rgb(241, 239, 239);
 }
 /* —————————————— */

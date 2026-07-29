@@ -39,7 +39,7 @@
                     <th>拥有客户数上限</th>
                     <th>成交客户是否占用拥有客户数</th>
                     <th>创建时间</th>
-                    <th>操作</th>
+                    <th style="width: 180px;">操作</th>
                 </tr>
             </thead>
         </table>
@@ -170,20 +170,20 @@ export default {
   overflow: auto;
 }
 .app-main table {
-  width: max-content;
-  min-width: 1100px;
+  width: 100%;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
 }
 .app-main th {
+  width: 138px;
   height: 56px;
   background-color: #e6e1e1;
   border-right: 1px solid #ccc;
   min-width: 60px;
   max-width: 200px;
-  white-space: nowrap;
   padding: 0 12px;
+  font-size: 14px;
 }
 .app-floot {
   width: 100%;

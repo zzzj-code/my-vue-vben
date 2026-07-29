@@ -34,6 +34,9 @@ import contract from '@/views/contract.vue'
 //crm
 import crm from '@/views/crm.vue'
 
+// erp
+import erp from '@/views/erp.vue'
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -554,6 +557,102 @@ const router = createRouter({
             {
               path: '/contract-config',
               component: () => import('@/views/pages/crm/config/contract-config.vue') //合同配置
+            }
+          ]
+        },
+        {
+          //erp模块
+          path: '/erp',
+          component: erp,
+          redirect: '/erp-home',
+          children: [
+            {
+              path:'/erp-home',
+              component: () => import('@/views/pages/erp/erp-home.vue') //erp首页
+            },
+            {
+              path: '/order',
+              component: () => import('@/views/pages/erp/purchase/order.vue') //采购订单
+            },
+            {
+              path: '/in',
+              component: () => import('@/views/pages/erp/purchase/in.vue') //采购入库
+            },
+            {
+              path: '/return',
+              component: () => import('@/views/pages/erp/purchase/return.vue') //采购退货
+            },
+            {
+              path: '/supplier',
+              component: () => import('@/views/pages/erp/purchase/supplier.vue') //供应商信息
+            },
+            {
+              path: '/sale/order',
+              component: () => import('@/views/pages/erp/sale/order.vue') //销售订单
+            },
+            {
+              path: '/out',
+              component: () => import('@/views/pages/erp/sale/out.vue') //销售出库
+            },
+            {
+              path: '/sale/return',
+              component: () => import('@/views/pages/erp/sale/return.vue') //销售退货
+            },
+            {
+              path: '/sale/customer',
+              component: () => import('@/views/pages/erp/sale/customer.vue') //客户信息
+            },
+            {
+              path: '/warehouse',
+              component: () => import('@/views/pages/erp/stock/warehouse.vue') //仓库信息
+            },
+            {
+              path: '/stock',
+              component: () => import('@/views/pages/erp/stock/stock.vue') //产品库存
+            },
+            {
+              path: '/record',
+              component: () => import('@/views/pages/erp/stock/record.vue') //出入库明细
+            },
+            {
+              path: '/stock/in',
+              component: () => import('@/views/pages/erp/stock/in.vue') //其他入库
+            },
+            {
+              path: '/stock/out',
+              component: () => import('@/views/pages/erp/stock/out.vue') //其他出库
+            },
+            {
+              path: '/move',
+              component: () => import('@/views/pages/erp/stock/move.vue') //库存调拨
+            },
+            {
+              path: '/check',
+              component: () => import('@/views/pages/erp/stock/check.vue') //库存盘点
+            },
+            {
+              path: '/product/product',
+              component: () => import('@/views/pages/erp/product/product.vue') //产品信息
+            },
+            {
+              path: '/product-category',
+              component: () => import('@/views/pages/erp/product/product-category.vue') //产品分类
+            },
+            {
+              path: '/unit',
+              component: () => import('@/views/pages/erp/product/unit.vue') //产品单位
+            },
+            {
+              path: '/payment',
+              component: () => import('@/views/pages/erp/finance/payment.vue') //付款单
+            },
+            {
+              path: '/receipt',
+              component: () => import('@/views/pages/erp/finance/receipt.vue') //收款单
+            },
+            {
+              path: '/account',
+              component: () => import('@/views/pages/erp/finance/account.vue') //结算账户
             }
           ]
         }
