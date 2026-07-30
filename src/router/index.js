@@ -37,6 +37,9 @@ import crm from '@/views/crm.vue'
 // erp
 import erp from '@/views/erp.vue'
 
+//项目
+import project from '@/views/project.vue'
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -653,6 +656,74 @@ const router = createRouter({
             {
               path: '/account',
               component: () => import('@/views/pages/erp/finance/account.vue') //结算账户
+            }
+          ]
+        },
+        {
+          //项目模块
+          path: '/project',
+          component: project,
+          redirect: '/project-home',
+          children: [
+            {
+              path:'/project-home',
+              component: () => import('@/views/pages/project/project-home.vue') //项目工作台
+            },
+            {
+              path: '/project-apply-list',
+              component: () => import('@/views/pages/project/project-apply-list.vue') //项目立项
+            },
+            {
+              path: '/project-ledger-list',
+              component: () => import('@/views/pages/project/project-ledger-list.vue') //项目台账
+            },
+            {
+              path: '/project-task-list',
+              component: () => import('@/views/pages/project/project-task-list.vue') //项目任务
+            },
+            {
+              path: '/worktime-report',
+              component: () => import('@/views/pages/project/worktime-center/worktime-report.vue') //工时周报
+            },
+            {
+              path: '/worktime-fill',
+              component: () => import('@/views/pages/project/worktime-center/worktime-fill.vue')//我的工时
+            },
+            {
+              path: '/project-change-list',
+              component: () => import('@/views/pages/project/project-change-list.vue') //项目变更
+            },
+            {
+              path: '/project-stats',
+              component: () => import('@/views/pages/project/project-stats.vue')//统计看板
+            },
+            {
+              path: '/project-resource',
+              component: () => import('@/views/pages/project/project-resource.vue') //资源负荷
+            },
+            {
+              path: '/project-group',
+              component: () => import('@/views/pages/project/project-group.vue') //项目集
+            },
+            {
+              path: '/base-config/category',
+              component: () => import('@/views/pages/project/base-config/category.vue') //项目分类
+            },
+            {
+              path: '/base-config/template',
+              component: () => import('@/views/pages/project/base-config/template.vue') //项目模板
+            },
+            {
+              path: '/type-config',
+              component: () => import('@/views/pages/project/base-config/type-config.vue') //项目类型配置
+            },
+            {
+              path: '/module-config',
+              component: () => import('@/views/pages/project/base-config/module-config.vue') //能力包管理
+            },
+            {
+              path: '/base-config/settings',
+              component: () => import('@/views/pages/project/base-config/settings.vue') //项目配置
             }
           ]
         }
