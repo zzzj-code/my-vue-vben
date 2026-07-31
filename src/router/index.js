@@ -40,6 +40,9 @@ import erp from '@/views/erp.vue'
 //项目
 import project from '@/views/project.vue'
 
+//资产
+import asset from '@/views/asset.vue'
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -724,6 +727,90 @@ const router = createRouter({
             {
               path: '/base-config/settings',
               component: () => import('@/views/pages/project/base-config/settings.vue') //项目配置
+            }
+          ]
+        },
+        {
+          //资产模块
+          path: '/asset',
+          component: asset,
+          redirect: '/dashboard',
+          children: [
+            {
+              path: '/dashboard',
+              component: () => import('@/views/pages/asset/dashboard.vue')//资产首页
+            },
+            {
+              path: '/base/category',
+              component: () =>import('@/views/pages/asset/base/category.vue') //资产分类
+            },
+            {
+              path: '/base/location',
+              component: () => import('@/views/pages/asset/base/location.vue') //存放位置
+            },
+            {
+              path: '/base/config',
+              component: () => import('@/views/pages/asset/base/config.vue') //模块配置
+            },
+            {
+              path: '/label-template',
+              component: () => import('@/views/pages/asset/base/label-template.vue')//标签模块 
+            },
+            {
+              path: '/custom-field',
+              component: () => import('@/views/pages/asset/base/custom-field.vue') //自定义字段
+            },
+            {
+              path: '/card',
+              component: () => import('@/views/pages/asset/card.vue') //资产台账
+            },
+            {
+              path: '/asset/receive',
+              component: () => import('@/views/pages/asset/receive.vue') //资产入库
+            },
+            {
+              path: '/allocate',
+              component: () => import('@/views/pages/asset/change/allocate.vue')//领用/借用
+            },
+            {
+              path: '/transfer',
+              component: () => import('@/views/pages/asset/change/transfer.vue') //资产调拨
+            },
+            {
+              path: '/repair',
+              component: () => import('@/views/pages/asset/change/repair.vue') //资产维修
+            },
+            {
+              path: '/stocktake',
+              component: () => import('@/views/pages/asset/stocktake.vue') //资产盘点
+            },
+            {
+              path: '/depreciation',
+              component: () => import('@/views/pages/asset/depreciation.vue') //资产折旧
+            },
+            {
+              path: '/dispose',
+              component: () => import('@/views/pages/asset/dispose.vue') //资产处置
+            },
+            {
+              path: '/asset/stats',
+              component: () => import('@/views/pages/asset/stats.vue')//统计报表
+            },
+            {
+              path: '/label-print',
+              component: () => import('@/views/pages/asset/label-print.vue')//标签打印
+            },
+            {
+              path: '/code-reserve',
+              component: () => import('@/views/pages/asset/code-reserve.vue')//编号预分配
+            },
+            {
+              path: '/inspection',
+              component: () => import('@/views/pages/asset/inspection.vue') //巡检保养
+            },
+            {
+              path: '/inspection-item',
+              component: () => import('@/views/pages/asset/inspection-item.vue')//巡检记录
             }
           ]
         }

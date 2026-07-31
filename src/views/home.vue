@@ -49,7 +49,7 @@
               > 
                 <li><router-link to="/erp" active-class="nav-active1">ERP</router-link></li>
                 <li><router-link to="/project" active-class="nav-active1">项目</router-link></li>
-                <li><router-link to="/no" active-class="nav-active1">资产</router-link></li>
+                <li><router-link to="/asset" active-class="nav-active1">资产</router-link></li>
                 <li><router-link to="/no" active-class="nav-active1">MES</router-link></li>
                 <li><router-link to="/no" active-class="nav-active1">财富</router-link></li>
                 <li><router-link to="/no" active-class="nav-active1">WMS</router-link></li>
