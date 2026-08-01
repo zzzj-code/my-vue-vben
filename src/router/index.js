@@ -43,6 +43,9 @@ import project from '@/views/project.vue'
 //资产
 import asset from '@/views/asset.vue'
 
+//MES
+import mes from '@/views/mes.vue'
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -811,6 +814,250 @@ const router = createRouter({
             {
               path: '/inspection-item',
               component: () => import('@/views/pages/asset/inspection-item.vue')//巡检记录
+            }
+          ]
+        },
+        {
+          //MES模块
+          path: '/mes',
+          component: mes,
+          redirect: '/mes/home',
+          children: [
+            {
+              path: '/mes/home',
+              component:() => import('@/views/pages/mes/home.vue') //首页
+            },
+            {
+              path: '/md/item',
+              component: () => import('@/views/pages/mes/md/item.vue')//物料产品管理
+            },
+            {
+              path: '/md/item-type',
+              component: () => import('@/views/pages/mes/md/item-type.vue') //物料产品分类
+            },
+            {
+              path: '/md/unit-measure',
+              component: () => import('@/views/pages/mes/md/unit-measure.vue')//计量单位
+            },
+            {
+              path:'/md/client',
+              component: () => import('@/views/pages/mes/md/client.vue')//客户管理
+            },
+            {
+              path: '/md/vendor',
+              component: () => import('@/views/pages/mes/md/vendor.vue')//供应商管理
+            },
+            {
+              path: '/md/workshop',
+              component: () => import('@/views/pages/mes/md/workshop.vue')//车间设置
+            },
+            {
+              path: '/md/workstation',
+              component: () => import('@/views/pages/mes/md/workstation.vue')//工作站设置
+            },
+            {
+              path: '/md/auto-code',
+              component: () => import('@/views/pages/mes/md/auto-code.vue')//编码规则
+            },
+            {
+              path: '/wm/warehouse',
+              component: () => import('@/views/pages/mes/wm/warehouse.vue')//仓库设置
+            },
+            {
+              path: '/wm/material-stock',
+              component: () => import('@/views/pages/mes/wm/material-stock.vue')//库存现有量
+            },
+            {
+              path: '/wm/item-receipt',
+              component: () => import('@/views/pages/mes/wm/item-receipt.vue')//采购入库
+            },
+            {
+              path: '/wm/arrival-notice',
+              component: () => import('@/views/pages/mes/wm/arrival-notice.vue')//到货通知
+            },
+            {
+              path: '/wm/return-vendor',
+              component: () => import('@/views/pages/mes/wm/return-vendor.vue')//采购退货
+            },
+            {
+              path: '/wm/product-issue',
+              component: () => import('@/views/pages/mes/wm/product-issue.vue')//生产领料
+            },
+            {
+              path: '/wm/return-issue',
+              component: () => import('@/views/pages/mes/wm/return-issue.vue')//生产退料
+            },
+            {
+              path: '/wm/product-receipt',
+              component: () => import('@/views/pages/mes/wm/product-receipt.vue')//产品入库
+            },
+            {
+              path: '/wm/sales-notice',
+              component: () => import('@/views/pages/mes/wm/sales-notice.vue')//发货通知
+            },
+            {
+              path: '/wm/product-sales',
+              component: () => import('@/views/pages/mes/wm/product-sales.vue')//销售出库
+            },
+            {
+              path: '/wm/return-sales',
+              component: () => import('@/views/pages/mes/wm/return-sales.vue')//销售退货
+            },
+            {
+              path: '/wm/transfer',
+              component: () => import('@/views/pages/mes/wm/transfer.vue') //转移调拨
+            },
+            {
+              path: '/stock-taking/plan',
+              component: () => import('@/views/pages/mes/wm/stock-taking/plan.vue')//盘点方案
+            },
+            {
+              path: '/stock-taking/task',
+              component: () => import('@/views/pages/mes/wm/stock-taking/task.vue')//盘点任务
+            },
+            {
+              path: '/wm/packages',
+              component: () => import('@/views/pages/mes/wm/packages.vue')//装箱管理
+            },
+            {
+              path: '/wm/barcode',
+              component: () => import('@/views/pages/mes/wm/barcode.vue')//赋能管理
+            },
+            {
+              path: '/wm/sn',
+              component: () => import('@/views/pages/mes/wm/sn.vue') //sn码
+            },
+            {
+              path: '/wm/outsource-issue',
+              component: () => import('@/views/pages/mes/wm/outsource-issue.vue')//外协发料
+            },
+            {
+              path: '/wm/outsource-receipt',
+              component: () => import('@/views/pages/mes/wm/outsource-receipt.vue')//外协入库
+            },
+            {
+              path: '/wm/misc-receipt',
+              component: () => import('@/views/pages/mes/wm/misc-receipt.vue')//杂项入库
+            },
+            {
+              path: '/wm/misc-issue',
+              component: () => import('@/views/pages/mes/wm/misc-issue.vue')//杂项出库
+            },
+            {
+              path: '/dv/type',
+              component: () => import('@/views/pages/mes/dv/type.vue')//设备类型
+            },
+            {
+              path: '/dv/machinery',
+              component: () => import('@/views/pages/mes/dv/machinery.vue')//设备台账
+            },
+            {
+              path: '/dv/subject',
+              component: () => import('@/views/pages/mes/dv/subject.vue')//点检保养项目
+            },
+            {
+              path: '/dv/checkplan',
+              component: () => import('@/views/pages/mes/dv/checkplan.vue')//点检保养方案
+            },
+            {
+              path: '/dv/check-record',
+              component: () => import('@/views/pages/mes/dv/check-record.vue')//点检记录
+            },
+            {
+              path: '/dv/mainten-record',
+              component: () => import('@/views/pages/mes/dv/mainten-record.vue')//保养记录
+            },
+            {
+              path: '/dv/repair',
+              component: () => import('@/views/pages/mes/dv/repair.vue')//维修单
+            },
+            {
+              path: '/tm/type',
+              component: () => import('@/views/pages/mes/tm/type.vue')//工具类型设置
+            },
+            {
+              path: '/tm/tool',
+              component: () => import('@/views/pages/mes/tm/tool.vue')//工装夹具台账
+            },
+            {
+              path: '/pro/work-order',
+              component: () => import('@/views/pages/mes/pro/work-order.vue')//生产工单
+            },
+            {
+              path: '/pro/process',
+              component: () => import('@/views/pages/mes/pro/process.vue')//工序设置
+            },
+            {
+              path: '/pro/route',
+              component: () => import('@/views/pages/mes/pro/route.vue')//工艺流程
+            },
+            {
+              path: '/pro/feedback',
+              component: () => import('@/views/pages/mes/pro/feedback.vue')//生产报工
+            },
+            {
+              path: '/pro/card',
+              component: () => import('@/views/pages/mes/pro/card.vue')//工序流转
+            },
+            {
+              path: '/pro/andon',
+              component: () => import('@/views/pages/mes/pro/andon.vue')//安灯呼叫
+            },
+            {
+              path: '/pro/workrecord',
+              component: () => import('@/views/pages/mes/pro/workrecord.vue')//工作记录
+            },
+            {
+              path: '/qc/defect',
+              component: () => import('@/views/pages/mes/qc/defect.vue')//常见缺陷
+            },
+            {
+              path: '/qc/indicator',
+              component: () => import('@/views/pages/mes/qc/indicator.vue')//检测项设置
+            },
+            {
+              path: '/qc/template',
+              component: () => import('@/views/pages/mes/qc/template.vue')//质检方案
+            },
+            {
+              path: '/qc/pending-inspect',
+              component: () => import('@/views/pages/mes/qc/pending-inspect.vue')//待检任务
+            },
+            {
+              path: '/qc/iqc',
+              component: () => import('@/views/pages/mes/qc/iqc.vue')//来料检验
+            },
+            {
+              path: '/qc/ipqc',
+              component: () => import('@/views/pages/mes/qc/ipqc.vue')//过程检验
+            },
+            {
+              path: '/qc/rqc',
+              component: () => import('@/views/pages/mes/qc/rqc.vue')//退料检验
+            },
+            {
+              path: '/qc/oqc',
+              component: () => import('@/views/pages/mes/qc/oqc.vue')//出货检验
+            },
+            {
+              path: '/qc/batch-trace',
+              component: () => import('@/views/pages/mes/qc/batch-trace.vue')//批次追溯
+            },
+            {
+              path: '/cal/team',
+              component: () => import('@/views/pages/mes/cal/team.vue')//班组设置
+            },
+            {
+              path: '/cal/plan',
+              component: () => import('@/views/pages/mes/cal/plan.vue')//排班计划
+            },
+            {
+              path: '/cal/holiday',
+              component: () => import('@/views/pages/mes/cal/holiday.vue')//节假日设置
+            },
+            {
+              path: '/cal/calendar',
+              component: () => import('@/views/pages/mes/cal/calendar.vue')//排班日历
             }
           ]
         }
