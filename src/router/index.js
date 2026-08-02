@@ -46,6 +46,9 @@ import asset from '@/views/asset.vue'
 //MES
 import mes from '@/views/mes.vue'
 
+//财务
+import finance from '@/views/finance.vue'
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -1058,6 +1061,38 @@ const router = createRouter({
             {
               path: '/cal/calendar',
               component: () => import('@/views/pages/mes/cal/calendar.vue')//排班日历
+            }
+          ]
+        },
+        {
+          //财务模块
+          path:'/finance',
+          component: finance,
+          redirect: '/invoice-apply',
+          children: [
+            {
+              path: '/invoice-apply',
+              component: () => import('@/views/pages/finance/invoice/invoice-apply.vue')//开票申请
+            },
+            {
+              path: '/output-invoice',
+              component: () => import('@/views/pages/finance/invoice/output-invoice.vue')//销项开票
+            },
+            {
+              path: '/input-invoice',
+              component: () => import('@/views/pages/finance/invoice/input-invoice.vue')//进项开票
+            },
+            {
+              path: '/invoice-pool',
+              component: () => import('@/views/pages/finance/invoice/invoice-pool.vue')//票夹/全票池
+            },
+            {
+              path: '/invoice-title',
+              component: () => import('@/views/pages/finance/invoice/invoice-title.vue')//发票抬头
+            },
+            {
+              path: '/invoice-goods',
+              component: () => import('@/views/pages/finance/invoice/invoice-goods.vue')//开票项目
             }
           ]
         }
