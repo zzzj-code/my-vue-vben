@@ -52,7 +52,7 @@
                 <li><router-link to="/asset" active-class="nav-active1">资产</router-link></li>
                 <li><router-link to="/mes" active-class="nav-active1">MES</router-link></li>
                 <li><router-link to="/finance" active-class="nav-active1">财务</router-link></li>
-                <li><router-link to="/no" active-class="nav-active1">WMS</router-link></li>
+                <li><router-link to="/wms" active-class="nav-active1">WMS</router-link></li>
                 <li><router-link to="/no" active-class="nav-active1">系统管理</router-link></li>
                 <li><router-link to="/no" active-class="nav-active1">基础设施</router-link></li>
                 <li><router-link to="/no" active-class="nav-active1">支付管理</router-link></li>

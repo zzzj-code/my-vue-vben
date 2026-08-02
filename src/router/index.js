@@ -49,6 +49,9 @@ import mes from '@/views/mes.vue'
 //财务
 import finance from '@/views/finance.vue'
 
+//wms
+import wms from '@/views/wms.vue'
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -1093,6 +1096,61 @@ const router = createRouter({
             {
               path: '/invoice-goods',
               component: () => import('@/views/pages/finance/invoice/invoice-goods.vue')//开票项目
+            }
+          ]
+        },
+        {
+          path: '/wms',
+          component: wms,
+          redirect: '/wms/home',
+          children: [
+            {
+              path: '/wms/home',
+              component: () => import('@/views/pages/wms/home.vue')//wms首页
+            },
+            {
+              path: '/wms/receipt',
+              component: () => import('@/views/pages/wms/receipt.vue')//入库管理
+            },
+            {
+              path: '/wms/shipment',
+              component: () => import('@/views/pages/wms/shipment.vue')//出库管理
+            },
+            {
+              path: '/wms/movement',
+              component: () => import('@/views/pages/wms/movement.vue')//移库管理
+            },
+            {
+              path: '/wms/check',
+              component: () => import('@/views/pages/wms/check.vue')//盘库管理
+            },
+            {
+              path: '/inventory/index',
+              component: () => import('@/views/pages/wms/inventory/index.vue')//库存统计
+            },
+            {
+              path: '/inventory/history',
+              component: () => import('@/views/pages/wms/inventory/history.vue')//库存流水
+            },
+            {
+              path: '/md/warehouse',
+              component: () => import('@/views/pages/wms/md/warehouse.vue')//仓库管理
+            },
+            {
+              path: '/md/category',
+              component: () => import('@/views/pages/wms/md/category.vue')//商品分类
+            },
+            {
+              path: '/md/brand',
+              component: () => import('@/views/pages/wms/md/brand.vue')//商品品牌
+            },
+            {
+              path: '/wms/md/item',
+              component: () => import('@/views/pages/wms/md/item.vue')//商品管理
+            },
+            {
+              path: '/md/merchant',
+              component: () => import('@/views/pages/wms/md/merchant.vue')//来往企业
             }
           ]
         }
