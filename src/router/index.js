@@ -52,6 +52,9 @@ import finance from '@/views/finance.vue'
 //wms
 import wms from '@/views/wms.vue'
 
+//系统管理
+import management from '@/views/management.vue'
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -1100,6 +1103,7 @@ const router = createRouter({
           ]
         },
         {
+          //wms模块
           path: '/wms',
           component: wms,
           redirect: '/wms/home',
@@ -1151,6 +1155,130 @@ const router = createRouter({
             {
               path: '/md/merchant',
               component: () => import('@/views/pages/wms/md/merchant.vue')//来往企业
+            }
+          ]
+        },
+        {
+          //系统管理模块
+          path: '/management',
+          component: management,
+          redirect: '/tenant/list',
+          children: [
+            {
+              path: '/tenant/list',
+              component: () => import('@/views/pages/management/tenant/list.vue')//租户列表
+            },
+            {
+              path: '/tenant/package',
+              component: () => import('@/views/pages/management/tenant/package.vue')//租户套餐
+            },
+            {
+              path: '/management/dept',
+              component: () => import('@/views/pages/management/dept.vue')//组织管理
+            },
+            {
+              path: '/management/user',
+              component: () => import('@/views/pages/management/user.vue')//用户管理
+            },
+            {
+              path: '/management/role',
+              component: () => import('@/views/pages/management/role.vue')//角色管理
+            },
+            {
+              path: '/management/post',
+              component: () => import('@/views/pages/management/post.vue')//岗位管理
+            },
+            {
+              path: '/management/menu',
+              component: () => import('@/views/pages/management/menu.vue')//菜单管理
+            },
+            {
+              path: '/management/dict',
+              component: () => import('@/views/pages/management/dict.vue')//字典管理
+            },
+            {
+              path: '/messages/scene',
+              component: () => import('@/views/pages/management/messages/scene.vue')//消息定义
+            },
+            {
+              path: '/messages/route',
+              component: () => import('@/views/pages/management/messages/route.vue')//跳转路由
+            },
+            {
+              path: '/messages/instance',
+              component: () => import('@/views/pages/management/messages/instance.vue')//消息实例
+            },
+            {
+              path: '/messages/log',
+              component: () => import('@/views/pages/management/messages/log.vue')//发送日志
+            },
+            {
+              path: '/sms-channel',
+              component: () => import('@/views/pages/management/messages/sms/sms-channel.vue')//短信渠道
+            },
+            {
+              path: '/sms-template',
+              component: () => import('@/views/pages/management/messages/sms/sms-template.vue')//短信模板
+            },
+            {
+              path: '/sms-log',
+              component: () => import('@/views/pages/management/messages/sms/sms-log.vue')//短信日志
+            },
+            {
+              path: '/mail-account',
+              component: () => import('@/views/pages/management/messages/mail/mail-account.vue')//邮箱账号
+            },
+            {
+              path: '/mail-template',
+              component: () => import('@/views/pages/management/messages/mail/mail-template.vue')//邮件模板
+            },
+            {
+              path: '/mail-log',
+              component: () => import('@/views/pages/management/messages/mail/mail-log.vue')//邮件记录
+            },
+            {
+              path: '/notify-template',
+              component: () => import('@/views/pages/management/messages/notify/notify-template.vue')//模板管理
+            },
+            {
+              path:'/notify-message',
+              component: () => import('@/views/pages/management/messages/notify/notify-message.vue')//消息记录
+            },
+            {
+              path: '/messages/notice',
+              component: () => import('@/views/pages/management/messages/notice.vue')//通知公告
+            },
+            {
+              path: '/bill-type',
+              component: () => import('@/views/pages/management/bill-type.vue')//单据类型字典
+            },
+            {
+              path: '/log/operate-log',
+              component: () => import('@/views/pages/management/log/operate-log.vue')//操作日志
+            },
+            {
+              path: '/log/login-log',
+              component: () => import('@/views/pages/management/log/login-log.vue')//登录日志
+            },
+            {
+              path: '/oauth2/application',
+              component: () => import('@/views/pages/management/oauth2/application.vue')//应用管理
+            },
+            {
+              path: '/oauth2/token',
+              component: () => import('@/views/pages/management/oauth2/token.vue')//令牌管理
+            },
+            {
+              path: '/social/client',
+              component: () => import('@/views/pages/management/social/client.vue')//三方应用
+            },
+            {
+              path: '/social/user',
+              component: () => import('@/views/pages/management/social/user.vue')//三方应用
+            },
+            {
+              path: '/management/area',
+              component: () => import('@/views/pages/management/area.vue')//地区管理
             }
           ]
         }
