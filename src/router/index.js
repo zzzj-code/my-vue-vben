@@ -55,6 +55,9 @@ import wms from '@/views/wms.vue'
 //系统管理
 import management from '@/views/management.vue'
 
+//基础设施
+import infra from '@/views/infra.vue'
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -1279,6 +1282,94 @@ const router = createRouter({
             {
               path: '/management/area',
               component: () => import('@/views/pages/management/area.vue')//地区管理
+            }
+          ]
+        },
+        {
+          //基础设施模块
+          path: '/infra',
+          component: infra,
+          redirect: '/infra/codegen',
+          children: [
+            {
+              path: '/infra/codegen',
+              component: () => import('@/views/pages/infra/codegen.vue')//代码生成
+            },
+            {
+              path: '/demo01-contact',
+              component: () => import('@/views/pages/infra/demo/demo01-contact.vue')//单表(增删改查)
+            },
+            {
+              path: '/demo02-category',
+              component: () => import('@/views/pages/infra/demo/demo02-category.vue')//树表(增删改查)
+            },
+            {
+              path: '/demo03-normal',
+              component: () => import('@/views/pages/infra/demo/demo03-normal.vue')//主子表(标准)
+            },
+            {
+              path: '/demo03-erp',
+              component: () => import('@/views/pages/infra/demo/demo03-erp.vue')//主子表(ERP)
+            },
+            {
+              path: '/demo03-inner',
+              component: () => import('@/views/pages/infra/demo/demo03-inner.vue')//主子表(内嵌)
+            },
+            {
+              path: '/data-source-config',
+              component: () => import('@/views/pages/infra/data-source-config.vue')//数据源配置
+            },
+            {
+              path: '/build',
+              component: () => import('@/views/pages/infra/build.vue')//表单构建
+            },
+            {
+              path: '/swagger',
+              component: () => import('@/views/pages/infra/swagger.vue')//API接口
+            },
+            {
+              path: '/api-access-log',
+              component: () => import('@/views/pages/infra/log/api-access-log.vue')//访问日志
+            },
+            {
+              path: '/api-error-log',
+              component: () => import('@/views/pages/infra/log/api-error-log.vue')//错误日志
+            },
+            {
+              path: '/websocket',
+              component: () => import('@/views/pages/infra/websocket.vue')//websocket
+            },
+            {
+              path: '/file-config',
+              component: () => import('@/views/pages/infra/file/file-config.vue')//文件配置
+            },
+            {
+              path: '/file/file',
+              component: () => import('@/views/pages/infra/file/file.vue')//文件列表
+            },
+            {
+              path: '/infra/config',
+              component: () => import('@/views/pages/infra/config.vue')//配置管理
+            },
+            {
+              path: '/monitors/druid',
+              component: () => import('@/views/pages/infra/monitors/druid.vue')//mysql监控
+            },
+            {
+              path: '/monitors/redis',
+              component: () => import('@/views/pages/infra/monitors/redis.vue')//redis监控
+            },
+            {
+              path: '/admin-server',
+              component: () => import('@/views/pages/infra/monitors/admin-server.vue')//java监控
+            },
+            {
+              path: '/skywalking',
+              component: () => import('@/views/pages/infra/monitors/skywalking.vue')//链路监控
+            },
+            {
+              path: '/job-ops',
+              component: () => import('@/views/pages/infra/operation/job-ops.vue')//定时任务运维
             }
           ]
         }
