@@ -58,6 +58,9 @@ import management from '@/views/management.vue'
 //基础设施
 import infra from '@/views/infra.vue'
 
+//支付管理
+import pay from '@/views/pay.vue'
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -1370,6 +1373,50 @@ const router = createRouter({
             {
               path: '/job-ops',
               component: () => import('@/views/pages/infra/operation/job-ops.vue')//定时任务运维
+            }
+          ]
+        },
+        {
+          //支付管理模块
+          path: '/pay',
+          component: pay,
+          redirect: '/pay/app',
+          children: [
+            {
+              path: '/pay/app',
+              component: () => import('@/views/pages/pay/app.vue')//应用信息
+            },
+            {
+              path: '/pay/order',
+              component: () => import('@/views/pages/pay/order.vue')//支付订单
+            },
+            {
+              path: '/pay/refund',
+              component: () => import('@/views/pages/pay/refund.vue')//退款订单
+            },
+            {
+              path: '/pay/transfer',
+              component: () => import('@/views/pages/pay/transfer.vue')//转账订单
+            },
+            {
+              path: '/wallet-balance',
+              component: () => import('@/views/pages/pay/wallet/wallet-balance.vue')//钱包余额
+            },
+            {
+              path: '/wallet-recharge-package',
+              component: () => import('@/views/pages/pay/wallet/wallet-recharge-package.vue')//充值套餐
+            },
+            {
+              path: '/pay/notify',
+              component: () => import('@/views/pages/pay/notify.vue')//回调通知
+            },
+            {
+              path: '/demo/order',
+              component: () => import('@/views/pages/pay/demo/order.vue')//支付&退款案例
+            },
+            {
+              path: '/demo/transfer',
+              component: () => import('@/views/pages/pay/demo/transfer.vue')//提现转账案例
             }
           ]
         }
