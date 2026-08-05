@@ -61,6 +61,9 @@ import infra from '@/views/infra.vue'
 //支付管理
 import pay from '@/views/pay.vue'
 
+//报表管理
+import report from '@/views/report.vue'
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -1417,6 +1420,26 @@ const router = createRouter({
             {
               path: '/demo/transfer',
               component: () => import('@/views/pages/pay/demo/transfer.vue')//提现转账案例
+            }
+          ]
+        },
+        {
+          //报表管理模块
+          path: '/report',
+          component: report,
+          redirect: '/jimu-report',
+          children: [
+            {
+              path: '/jimu-report',
+              component: () => import('@/views/pages/report/jimu-report.vue')//报表设计器
+            },
+            {
+              path: '/jimu-bi',
+              component: () => import('@/views/pages/report/jimu-bi.vue')//仪表盘设计器
+            },
+            {
+              path: '/go-view',
+              component: () => import('@/views/pages/report/go-view.vue')//大屏设计器
             }
           ]
         }

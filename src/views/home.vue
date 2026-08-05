@@ -56,7 +56,7 @@
                 <li><router-link to="/management" active-class="nav-active1">系统管理</router-link></li>
                 <li><router-link to="/infra" active-class="nav-active1">基础设施</router-link></li>
                 <li><router-link to="/pay" active-class="nav-active1">支付管理</router-link></li>
-                <li><router-link to="/no" active-class="nav-active1">报表管理</router-link></li>
+                <li><router-link to="/report" active-class="nav-active1">报表管理</router-link></li>
                 <li><router-link to="/no" active-class="nav-active1">主数据</router-link></li>
                 <li><router-link to="/no" active-class="nav-active1">工单管理</router-link></li>
                 <li><router-link to="/no" active-class="nav-active1">公众号管理</router-link></li>
