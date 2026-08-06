@@ -38,43 +38,52 @@
           <table>
             <thead>
               <tr>
-                <th><input type="checkbox" /></th>
-                <th>工作日期</th>
-                <th>关联任务</th>
-                <th>工时(h)</th>
-                <th>工作内容</th>
-                <th>状态</th>
-                <th>审核意见</th>
-                <th>创建时间</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner"><input type="checkbox" /></div></th>
+                <th><div class="th-inner">工作日期</div></th>
+                <th><div class="th-inner">关联任务</div></th>
+                <th><div class="th-inner">工时(h)</div></th>
+                <th><div class="th-inner">工作内容</div></th>
+                <th><div class="th-inner">状态</div></th>
+                <th><div class="th-inner">审核意见</div></th>
+                <th><div class="th-inner">创建时间</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td><input type="checkbox" /></td>
                 <td>{{ item.workDate }}</td>
                 <td>{{ item.taskName }}</td>
                 <td>{{ item.hours }}</td>
                 <td>{{ item.content }}</td>
                 <td>
-                    <span
-                    style="display: inline-block; width: 52px; height: 22px; border-radius: 5px;
-                    background-color: #e6f6ff; border: 1px solid #006be6; color: #006be6;">
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getStatusBg(item.status),
+                      color: getStatusColor(item.status),
+                      border: `1px solid ${getStatusColor(item.status)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >
                     {{ item.status }}
-                    </span>
+                  </span>
                 </td>
                 <td>{{ item.reviewComment }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button></button>
+                  <button>编辑</button>
                   <button>删除</button>
-                  <button></button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共20条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -85,7 +94,7 @@ export default {
   data() {
     return {
       tabValue: [
-         {
+        {
           id: 1,
           workDate: "2026-07-15",
           taskName: "OA需求调研",
@@ -288,6 +297,24 @@ export default {
       ],
     };
   },
+  methods: {
+    getStatusColor(status) {
+      const map = {
+        '待审核': '#faad14',
+        '已驳回': '#ff4d4f',
+        '已通过': '#52c41a'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '待审核': '#fffbe6',
+        '已驳回': '#fff2f0',
+        '已通过': '#f6ffed'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -302,7 +329,6 @@ export default {
 .app {
   width: 1014px;
   height: 590px;
-  /* border: 1px solid red; */
   padding: 10px;
   position: absolute;
   top: -380px;
@@ -320,7 +346,6 @@ export default {
 .top-inp {
   width: 100%;
   height: 42px;
-  /* border: 1px solid red; */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -328,7 +353,6 @@ export default {
 .top-inp .inp-1 {
   width: 246px;
   height: 100%;
-  /* border: 1px solid red; */
 }
 .top-inp .inp-1 span {
   display: inline-block;
@@ -453,27 +477,78 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #e9e6e6;
-  padding: 0 24px;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   height: 40px;
   text-align: center;
   background-color: #fff;
   border-bottom: 1px solid #ccc;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
+
+/* 复选框列 */
+.main-tab td:first-child,
+.main-tab th:first-child {
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+}
+
 .ol-col {
   width: 120px;
+  min-width: 120px;
   position: sticky;
   right: 0;
+  z-index: 2;
+  border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 38px;
   height: 32px;
-  color: red;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ol-col button:first-child {
+  color: #006be6;
+}
+.ol-col button:first-child:hover {
+  background-color: #f0f4f9;
+}
+.ol-col button:last-child {
+  color: red;
+}
+.ol-col button:last-child:hover {
+  background-color: #fff2f0;
 }
 .main-floot {
   width: 100%;

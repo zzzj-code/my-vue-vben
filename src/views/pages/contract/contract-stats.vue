@@ -95,12 +95,24 @@
           <table>
             <thead>
               <tr>
-                <th>排名</th>
-                <th>合同编号</th>
-                <th>合同名称</th>
-                <th>合同金额</th>
-                <th>已履约</th>
-                <th>完成率</th>
+                <th>
+                  <div>排名</div>
+                </th>
+                <th>
+                  <div>合同编号</div>
+                </th>
+                <th>
+                  <div>合同名称</div>
+                </th>
+                <th>
+                  <div>合同金额</div>
+                </th>
+                <th>
+                  <div>已履约</div>
+                </th>
+                <th>
+                  <div style="border-right: 0;">完成率</div>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -746,12 +758,18 @@ export default {
   border-collapse: separate;
   border-spacing: 0;
   /* border: 1px solid #e6e6e6; */
+  font-size: 14px;
 }
 .tab-main th {
-  height: 39px;
-  border-right: 1px solid #ccc;
-  background-color: #e2e1e1;
+  padding: 8px;
+  height: 40px;
   border-bottom: 1px solid #ccc;
+  background-color: #e2e1e1;
+}
+.tab-main th div:first-child{
+  height: 24px;
+  /* border: 1px solid; */
+  border-right: 1px solid #ccc;
 }
 .tab-main th:last-child {
   border: 0;

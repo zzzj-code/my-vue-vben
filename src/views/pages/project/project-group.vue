@@ -38,34 +38,48 @@
           <table>
             <thead>
               <tr>
-                <th>序号</th>
-                <th>项目集名称</th>
-                <th>项目集编号</th>
-                <th>负责人</th>
-                <th>状态</th>
-                <th>描述</th>
-                <th>创建时间</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">序号</div></th>
+                <th><div class="th-inner">项目集名称</div></th>
+                <th><div class="th-inner">项目集编号</div></th>
+                <th><div class="th-inner">负责人</div></th>
+                <th><div class="th-inner">状态</div></th>
+                <th><div class="th-inner">描述</div></th>
+                <th><div class="th-inner">创建时间</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>研发项目</td>
-                    <td>YF001</td>
-                    <td></td>
-                    <td>进行中</td>
-                    <td></td>
-                    <td>2026-06-06 21:30:06</td>
-                    <td class="ol-col">
-                        <button>编辑</button>
-                        <button>删除</button>
-                    </td>
-                </tr>
+              <tr v-for="(item, index) in tabValue" :key="item.id">
+                <td>{{ index + 1 }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.code }}</td>
+                <td>{{ item.leader || '-' }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getStatusBg(item.status),
+                      color: getStatusColor(item.status),
+                      border: `1px solid ${getStatusColor(item.status)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.status }}</span>
+                </td>
+                <td>{{ item.description || '-' }}</td>
+                <td>{{ item.createTime }}</td>
+                <td class="ol-col">
+                  <button>编辑</button>
+                  <button>删除</button>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共1条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -76,9 +90,74 @@ export default {
   data() {
     return {
       tabValue: [
+        {
+          id: 1,
+          name: "研发项目集",
+          code: "YF001",
+          leader: "张伟",
+          status: "进行中",
+          description: "公司年度研发项目集",
+          createTime: "2026-06-06 21:30:06",
+        },
+        {
+          id: 2,
+          name: "数字化转型项目集",
+          code: "SZ002",
+          leader: "李芳",
+          status: "规划中",
+          description: "企业数字化转型整体项目集",
+          createTime: "2026-06-10 14:20:00",
+        },
+        {
+          id: 3,
+          name: "市场拓展项目集",
+          code: "SC003",
+          leader: "王磊",
+          status: "进行中",
+          description: "市场拓展与客户增长项目集",
+          createTime: "2026-06-15 09:10:00",
+        },
+        {
+          id: 4,
+          name: "产品创新项目集",
+          code: "CP004",
+          leader: "陈静",
+          status: "已暂停",
+          description: "新产品创新与研发项目集",
+          createTime: "2026-06-20 16:45:00",
+        },
+        {
+          id: 5,
+          name: "基础建设项目集",
+          code: "JC005",
+          leader: "赵明",
+          status: "已完成",
+          description: "基础设施建设与升级项目集",
+          createTime: "2026-06-25 11:30:00",
+        },
       ],
     };
   },
+  methods: {
+    getStatusColor(status) {
+      const map = {
+        '规划中': '#1890ff',
+        '进行中': '#52c41a',
+        '已暂停': '#faad14',
+        '已完成': '#8c8c8c'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '规划中': '#e6f7ff',
+        '进行中': '#f6ffed',
+        '已暂停': '#fffbe6',
+        '已完成': '#f5f5f5'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -93,7 +172,6 @@ export default {
 .app {
   width: 1014px;
   height: 590px;
-  /* border: 1px solid red; */
   padding: 10px;
   position: absolute;
   top: -380px;
@@ -111,7 +189,6 @@ export default {
 .top-inp {
   width: 100%;
   height: 42px;
-  /* border: 1px solid red; */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -119,7 +196,6 @@ export default {
 .top-inp .inp-1 {
   width: 246px;
   height: 100%;
-  /* border: 1px solid red; */
 }
 .top-inp .inp-1 span {
   display: inline-block;
@@ -235,7 +311,7 @@ export default {
 }
 .main-tab table {
   width: max-content;
-  min-width: 1360px;
+  min-width: 800px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -244,31 +320,78 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #e9e6e6;
-  padding: 0 20px;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   height: 40px;
   text-align: center;
   background-color: #fff;
   border-bottom: 1px solid #ccc;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
 }
+
+/* 序号列 */
+.main-tab td:first-child,
+.main-tab th:first-child {
+  width: 50px;
+  min-width: 50px;
+  max-width: 50px;
+}
+
 .ol-col {
   width: 140px;
+  min-width: 140px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 38px;
   height: 32px;
-  color: #006be6;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
 }
-.ol-col button:last-child{
-    color: red;
+.ol-col button:first-child {
+  color: #006be6;
+}
+.ol-col button:first-child:hover {
+  background-color: #f0f4f9;
+}
+.ol-col button:last-child {
+  color: red;
+}
+.ol-col button:last-child:hover {
+  background-color: #fff2f0;
 }
 .main-floot {
   width: 100%;

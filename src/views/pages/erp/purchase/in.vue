@@ -38,25 +38,25 @@
             <thead>
               <tr>
                 <th class="col-check">
-                  <input type="checkbox" name="" id="" />
+                  <div class="th-inner"><input type="checkbox" /></div>
                 </th>
-                <th class="col-id">入库单号</th>
-                <th>产品信息</th>
-                <th>供应商</th>
-                <th>入库时间</th>
-                <th>创建人</th>
-                <th>总数量</th>
-                <th>应付金额</th>
-                <th>已付金额</th>
-                <th>未付金额</th>
-                <th>审批状态</th>
-                <th class="ol-col">操作</th>
+                <th class="col-id"><div class="th-inner">入库单号</div></th>
+                <th><div class="th-inner">产品信息</div></th>
+                <th><div class="th-inner">供应商</div></th>
+                <th><div class="th-inner">入库时间</div></th>
+                <th><div class="th-inner">创建人</div></th>
+                <th><div class="th-inner">总数量</div></th>
+                <th><div class="th-inner">应付金额</div></th>
+                <th><div class="th-inner">已付金额</div></th>
+                <th><div class="th-inner">未付金额</div></th>
+                <th><div class="th-inner">审批状态</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td class="col-check">
-                  <input type="checkbox" name="" id="" />
+                  <input type="checkbox" />
                 </td>
                 <td class="col-id">{{ item.id }}</td>
                 <td>{{ item.product }}</td>
@@ -64,10 +64,22 @@
                 <td>{{ item.inTime }}</td>
                 <td>{{ item.creator }}</td>
                 <td>{{ item.quantity }}</td>
-                <td>{{ item.totalAmount }}</td>
-                <td>{{ item.paidAmount }}</td>
-                <td>{{ item.unpaidAmount }}</td>
-                <td>{{ item.status }}</td>
+                <td>¥{{ item.totalAmount.toFixed(2) }}</td>
+                <td>¥{{ item.paidAmount.toFixed(2) }}</td>
+                <td>¥{{ item.unpaidAmount.toFixed(2) }}</td>
+                <td>
+                  <span :style="{
+                    color: item.status === '已审批' ? '#52c41a' : '#faad14',
+                    backgroundColor: item.status === '已审批' ? '#f6ffed' : '#fffbe6',
+                    padding: '2px 12px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    display: 'inline-block',
+                    fontWeight: '500'
+                  }">
+                    {{ item.status }}
+                  </span>
+                </td>
                 <td class="ol-col">详情&nbsp;&nbsp;编辑&nbsp;&nbsp;删除</td>
               </tr>
             </tbody>
@@ -150,7 +162,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -173,7 +184,6 @@ export default {
 .top-inp div {
   width: 330px;
   height: 100%;
-  /* border: 1px solid red; */
   font-size: 14px;
   color: #006be6;
 }
@@ -302,33 +312,69 @@ export default {
   border-collapse: separate;
   border-spacing: 0;
   border: 1px solid #e6e6e6;
+  font-size: 14px;
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #f0eaea;
+  border-right: none;
   text-align: center;
-  padding: 0 24px;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   height: 40px;
+  font-size: 14px;
   border-bottom: 1px solid #ccc;
   text-align: center;
-  padding: 0 24px;
+  padding: 0 8px;
   background-color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
+
+/* 固定列：左侧复选框 */
 .col-check {
   position: sticky;
   left: 0;
+  z-index: 2;
+  background-color: #f0eaea;
 }
-.col-id {
-  position: sticky;
-  left: 62px;
+.col-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
+
+/* 固定列：右侧操作 */
 .ol-col {
   position: sticky;
   right: 0;
+  z-index: 2;
+  background-color: #fff;
 }
+
 .main-floot {
   width: 100%;
   height: 36px;

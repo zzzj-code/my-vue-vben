@@ -37,12 +37,14 @@
           <table>
             <thead>
               <tr>
-                <th>分类名称</th>
-                <th>分类编码</th>
-                <th>显示顺序</th>
-                <th>分类状态</th>
-                <th>创建时间</th>
-                <th style="width: 180px;">操作</th>
+                <th><div class="th-inner">分类名称</div></th>
+                <th><div class="th-inner">分类编码</div></th>
+                <th><div class="th-inner">显示顺序</div></th>
+                <th><div class="th-inner">分类状态</div></th>
+                <th><div class="th-inner">创建时间</div></th>
+                <th style="width: 180px;">
+                  <div class="th-inner no-border">操作</div>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -52,7 +54,7 @@
                 <td>1</td>
                 <td>开启</td>
                 <td>2026-07-27 10:27:09</td>
-                <td>+新增下级&nbsp;&nbsp;编辑&nbsp;&nbsp;删除</td>
+                <td style="width: 180px;">+新增下级&nbsp;&nbsp;编辑&nbsp;&nbsp;删除</td>
               </tr>
             </tbody>
           </table>
@@ -84,7 +86,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -107,7 +108,6 @@ export default {
 .top-inp div {
   width: 330px;
   height: 100%;
-  /* border: 1px solid red; */
   font-size: 14px;
   color: #006be6;
 }
@@ -239,28 +239,65 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #f0eaea;
+  border-right: none;
   text-align: center;
-  padding: 0 24px;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   height: 40px;
+  font-size: 14px;
   border-bottom: 1px solid #ccc;
   text-align: center;
-  padding: 0 20px;
+  padding: 0 8px;
   background-color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
-.col-check {
-  position: sticky;
-  left: 0;
+
+/* 操作列固定宽度 */
+.main-tab td:last-child {
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
 }
-.col-id {
-  position: sticky;
-  left: 62px;
+
+.main-floot {
+  width: 100%;
+  height: 36px;
+  margin-top: 5px;
+  font-size: 12px;
 }
-.ol-col {
-  position: sticky;
-  right: 0;
+.main-floot span {
+  display: inline-block;
+  width: 100px;
+  height: 24px;
+  text-align: center;
+  padding-top: 3px;
+  margin-left: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 </style>

@@ -64,6 +64,9 @@ import pay from '@/views/pay.vue'
 //报表管理
 import report from '@/views/report.vue'
 
+//主数据
+import mdm from '@/views/mdm.vue'
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -1440,6 +1443,46 @@ const router = createRouter({
             {
               path: '/go-view',
               component: () => import('@/views/pages/report/go-view.vue')//大屏设计器
+            }
+          ]
+        },
+        {
+          //主数据模块
+          path: '/mdm',
+          component: mdm,
+          redirect: '/basic/dict',
+          children: [
+            {
+              path: '/basic/dict',
+              component: () => import('@/views/pages/mdm/basic/dict.vue')//基础字典
+            },
+            {
+              path: '/basic/partner',
+              component: () => import('@/views/pages/mdm/basic/partner.vue')//客商信息
+            },
+            {
+              path: '/basic/partner-category',
+              component: () => import('@/views/pages/mdm/basic/partner-category.vue')//客商分类
+            },
+            {
+              path: '/basic/unit',
+              component: () => import('@/views/pages/mdm/basic/unit.vue')//计量单位
+            },
+            {
+              path: '/basic/material',
+              component: () => import('@/views/pages/mdm/basic/material.vue')//物料信息
+            },
+            {
+              path: '/basic/material-category',
+              component: () => import('@/views/pages/mdm/basic/material-category.vue')//物料分类
+            },
+            {
+              path: '/ledger/contract-ledger',
+              component: () => import('@/views/pages/mdm/ledger/contract-ledger.vue')//合同主数据
+            },
+            {
+              path: '/ledger/project-ledger',
+              component: () => import('@/views/pages/mdm/ledger/project-ledger.vue')//项目台账
             }
           ]
         }

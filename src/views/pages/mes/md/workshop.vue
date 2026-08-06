@@ -35,22 +35,36 @@
           <table>
             <thead>
               <tr>
-                <th>车间编码</th>
-                <th>车间名称</th>
-                <th>面积</th>
-                <th>负责人</th>
-                <th>状态</th>
-                <th>备注</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">车间编码</div></th>
+                <th><div class="th-inner">车间名称</div></th>
+                <th><div class="th-inner">面积</div></th>
+                <th><div class="th-inner">负责人</div></th>
+                <th><div class="th-inner">状态</div></th>
+                <th><div class="th-inner">备注</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td style="color: #006be6">{{ item.code }}</td>
                 <td>{{ item.name }}</td>
-                <td>{{ item.area }}</td>
+                <td>{{ item.area }}㎡</td>
                 <td>{{ item.director }}</td>
-                <td>{{ item.status }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getStatusBg(item.status),
+                      color: getStatusColor(item.status),
+                      border: `1px solid ${getStatusColor(item.status)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.status }}</span>
+                </td>
                 <td>{{ item.remark }}</td>
                 <td class="ol-col">
                   <button>编辑</button>
@@ -60,7 +74,7 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共3条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -98,9 +112,43 @@ export default {
           status: "启用",
           remark: "主要负责产品组装与测试",
         },
+        {
+          id: 4,
+          code: "WS-004",
+          name: "机加工车间",
+          area: "1600",
+          director: "刘洋",
+          status: "启用",
+          remark: "主要负责CNC加工与精密制造",
+        },
+        {
+          id: 5,
+          code: "WS-005",
+          name: "焊接车间",
+          area: "1000",
+          director: "陈静",
+          status: "停用",
+          remark: "主要负责焊接工艺，已搬迁",
+        },
       ],
     };
   },
+  methods: {
+    getStatusColor(status) {
+      const map = {
+        '启用': '#52c41a',
+        '停用': '#8c8c8c'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '启用': '#f6ffed',
+        '停用': '#f5f5f5'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -116,7 +164,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -251,32 +298,70 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
+
 .ol-col {
-  width: 160px;
+  width: 140px;
+  min-width: 140px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 56px;
   height: 32px;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ol-col button:first-child {
   color: #006be6;
+}
+.ol-col button:first-child:hover {
+  background-color: #f0f4f9;
 }
 .ol-col button:last-child {
   color: red;
+}
+.ol-col button:last-child:hover {
+  background-color: #fff2f0;
 }
 
 .main-floot {

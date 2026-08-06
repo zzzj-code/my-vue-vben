@@ -36,37 +36,79 @@
           <table>
             <thead>
               <tr>
-                <th>检验单编号</th>
-                <th>检验单名称</th>
-                <th>检验类型</th>
-                <th>生产工单编号</th>
-                <th>产品物料编码</th>
-                <th>产品物料名称</th>
-                <th>规格型号</th>
-                <th>单位</th>
-                <th>检测数量</th>
-                <th>检测结果</th>
-                <th>检测日期</th>
-                <th>检测人员</th>
-                <th>单据状态</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">检验单编号</div></th>
+                <th><div class="th-inner">检验单名称</div></th>
+                <th><div class="th-inner">检验类型</div></th>
+                <th><div class="th-inner">生产工单编号</div></th>
+                <th><div class="th-inner">产品物料编码</div></th>
+                <th><div class="th-inner">产品物料名称</div></th>
+                <th><div class="th-inner">规格型号</div></th>
+                <th><div class="th-inner">单位</div></th>
+                <th><div class="th-inner">检测数量</div></th>
+                <th><div class="th-inner">检测结果</div></th>
+                <th><div class="th-inner">检测日期</div></th>
+                <th><div class="th-inner">检测人员</div></th>
+                <th><div class="th-inner">单据状态</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td style="color: #006be6">{{ item.code }}</td>
                 <td>{{ item.name }}</td>
-                <td>{{ item.type }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: '#e6f6ff',
+                      color: '#006be6',
+                      border: '1px solid #006be6',
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.type }}</span>
+                </td>
                 <td>{{ item.moCode }}</td>
                 <td>{{ item.materialCode }}</td>
                 <td>{{ item.materialName }}</td>
                 <td>{{ item.spec }}</td>
                 <td>{{ item.unit }}</td>
                 <td>{{ item.checkQty }}</td>
-                <td>{{ item.result }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getResultBg(item.result),
+                      color: getResultColor(item.result),
+                      border: `1px solid ${getResultColor(item.result)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.result }}</span>
+                </td>
                 <td>{{ item.checkDate }}</td>
                 <td>{{ item.checker }}</td>
-                <td>{{ item.status }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getStatusBg(item.status),
+                      color: getStatusColor(item.status),
+                      border: `1px solid ${getStatusColor(item.status)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.status }}</span>
+                </td>
                 <td class="ol-col">
                   <button>详情</button>
                 </td>
@@ -74,7 +116,7 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共4条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -149,9 +191,71 @@ export default {
           checker: "陈静",
           status: "已检验",
         },
+        {
+          id: 5,
+          code: "IPQC-2024-005",
+          name: "主板半成品过程检验",
+          type: "过程检验",
+          moCode: "MO-2024-004",
+          materialCode: "P-2024-011",
+          materialName: "主板半成品",
+          spec: "PCB 四层板 带元件",
+          unit: "片",
+          checkQty: 15,
+          result: "合格",
+          checkDate: "2024-02-20",
+          checker: "赵刚",
+          status: "待检验",
+        },
+        {
+          id: 6,
+          code: "IPQC-2024-006",
+          name: "传感器半成品过程检验",
+          type: "过程检验",
+          moCode: "MO-2024-006",
+          materialCode: "P-2024-017",
+          materialName: "传感器半成品",
+          spec: "温湿度 SHT30",
+          unit: "个",
+          checkQty: 10,
+          result: "不合格",
+          checkDate: "2024-03-18",
+          checker: "孙丽",
+          status: "已检验",
+        },
       ],
     };
   },
+  methods: {
+    getResultColor(result) {
+      const map = {
+        '合格': '#52c41a',
+        '不合格': '#ff4d4f'
+      };
+      return map[result] || '#333';
+    },
+    getResultBg(result) {
+      const map = {
+        '合格': '#f6ffed',
+        '不合格': '#fff2f0'
+      };
+      return map[result] || '#fff';
+    },
+    getStatusColor(status) {
+      const map = {
+        '已检验': '#52c41a',
+        '待检验': '#faad14'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '已检验': '#f6ffed',
+        '待检验': '#fffbe6'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -167,7 +271,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -296,7 +399,7 @@ export default {
 }
 .main-tab table {
   width: max-content;
-  min-width: 1100px;
+  min-width: 1520px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -305,29 +408,62 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
 }
+
 .ol-col {
-  width: 160px;
+  width: 80px;
+  min-width: 80px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 56px;
   height: 32px;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
   color: #006be6;
+}
+.ol-col button:hover {
+  background-color: #f0f4f9;
 }
 
 .main-floot {

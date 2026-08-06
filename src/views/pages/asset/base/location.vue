@@ -15,22 +15,36 @@
           <table>
             <thead>
               <tr>
-                <th>位置名称</th>
-                <th>位置编码</th>
-                <th>详细地址</th>
-                <th>排序</th>
-                <th>状态</th>
-                <th>创建时间</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">位置名称</div></th>
+                <th><div class="th-inner">位置编码</div></th>
+                <th><div class="th-inner">详细地址</div></th>
+                <th><div class="th-inner">排序</div></th>
+                <th><div class="th-inner">状态</div></th>
+                <th><div class="th-inner">创建时间</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.code">
                 <td>{{ item.name }}</td>
                 <td>{{ item.code }}</td>
                 <td>{{ item.address }}</td>
                 <td>{{ item.sort }}</td>
-                <td>{{ item.status }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getStatusBg(item.status),
+                      color: getStatusColor(item.status),
+                      border: `1px solid ${getStatusColor(item.status)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.status }}</span>
+                </td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
                   <button>新增子分类</button>
@@ -246,6 +260,24 @@ export default {
       ],
     };
   },
+  methods: {
+    getStatusColor(status) {
+      const map = {
+        '启用': '#52c41a',
+        '停用': '#8c8c8c',
+        '维修中': '#faad14'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '启用': '#f6ffed',
+        '停用': '#f5f5f5',
+        '维修中': '#fffbe6'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -261,7 +293,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -269,7 +300,7 @@ export default {
   width: 100%;
   height: 100%;
   background-color: #fff;
-  border-radius: 0 0 10px 10px;
+  border-radius: 10px;
   padding: 10px;
 }
 .main-top {
@@ -299,6 +330,7 @@ export default {
   border: 0;
   color: #fff;
   border-radius: 10px;
+  cursor: pointer;
 }
 .main-top div:last-child {
   width: 10%;
@@ -313,6 +345,7 @@ export default {
   border: 1px solid #ccc;
   background-color: #fff;
   border-radius: 50%;
+  cursor: pointer;
 }
 .main-tab {
   width: 100%;
@@ -334,34 +367,76 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
 }
+
 .ol-col {
   width: 200px;
+  min-width: 200px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 38px;
   height: 32px;
   border: 0;
   background-color: #fff;
-  color: #006be6;
+  border-radius: 4px;
+  cursor: pointer;
 }
 .ol-col button:first-child {
   width: 80px;
+  color: #006be6;
+}
+.ol-col button:first-child:hover {
+  background-color: #f0f4f9;
+}
+.ol-col button:nth-child(2) {
+  color: #006be6;
+}
+.ol-col button:nth-child(2):hover {
+  background-color: #f0f4f9;
 }
 .ol-col button:last-child {
   color: red;
+}
+.ol-col button:last-child:hover {
+  background-color: #fff2f0;
 }
 </style>

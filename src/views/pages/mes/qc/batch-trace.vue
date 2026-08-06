@@ -36,33 +36,33 @@
           <table>
             <thead>
               <tr>
-                <th>批次编号</th>
-                <th>产品物料编码</th>
-                <th>产品物料名称</th>
-                <th>规格型号</th>
-                <th>单位</th>
-                <th>供应商编码</th>
-                <th>供应商名称</th>
-                <th>客户编码</th>
-                <th>客户名称</th>
-                <th>销售订单编号</th>
-                <th>采购订单编号</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">批次编号</div></th>
+                <th><div class="th-inner">产品物料编码</div></th>
+                <th><div class="th-inner">产品物料名称</div></th>
+                <th><div class="th-inner">规格型号</div></th>
+                <th><div class="th-inner">单位</div></th>
+                <th><div class="th-inner">供应商编码</div></th>
+                <th><div class="th-inner">供应商名称</div></th>
+                <th><div class="th-inner">客户编码</div></th>
+                <th><div class="th-inner">客户名称</div></th>
+                <th><div class="th-inner">销售订单编号</div></th>
+                <th><div class="th-inner">采购订单编号</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td>{{ item.batchNo }}</td>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td style="color: #006be6">{{ item.batchNo }}</td>
                 <td>{{ item.materialCode }}</td>
                 <td>{{ item.materialName }}</td>
                 <td>{{ item.spec }}</td>
                 <td>{{ item.unit }}</td>
-                <td>{{ item.supplierCode }}</td>
-                <td>{{ item.supplierName }}</td>
-                <td>{{ item.customerCode }}</td>
-                <td>{{ item.customerName }}</td>
-                <td>{{ item.soCode }}</td>
-                <td>{{ item.poCode }}</td>
+                <td>{{ item.supplierCode || '-' }}</td>
+                <td>{{ item.supplierName || '-' }}</td>
+                <td>{{ item.customerCode || '-' }}</td>
+                <td>{{ item.customerName || '-' }}</td>
+                <td>{{ item.soCode || '-' }}</td>
+                <td>{{ item.poCode || '-' }}</td>
                 <td class="ol-col">
                   <button>批次追溯</button>
                 </td>
@@ -70,7 +70,7 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共10条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -223,7 +223,7 @@ export default {
         },
       ],
     };
-  },
+  }
 };
 </script>
 
@@ -239,7 +239,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -377,29 +376,62 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
 }
+
 .ol-col {
-  width: 110px;
+  width: 100px;
+  min-width: 100px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 56px;
   height: 32px;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
   color: #006be6;
+}
+.ol-col button:hover {
+  background-color: #f0f4f9;
 }
 
 .main-floot {

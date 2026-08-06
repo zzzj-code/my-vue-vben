@@ -73,25 +73,29 @@
         <div class="main-tab">
           <table>
             <thead>
-                <tr>
-                    <th class="col-name">线索名称</th>
-                    <th>线索来源</th>
-                    <th>手机</th>
-                    <th>电话</th>
-                    <th>邮箱</th>
-                    <th>地址</th>
-                    <th>客户行业</th>
-                    <th>客户级别</th>
-                    <th>下次联系时间</th>
-                    <th>备注</th>
-                    <th>最后跟进时间</th>
-                    <th>最后跟进记录</th>
-                    <th>负责人</th>
-                    <th>所属部门</th>
-                    <th>更新时间</th>
-                    <th>创建时间</th>
-                    <th class="ol-col">操作</th>
-                </tr>
+              <tr>
+                <th class="col-name">
+                  <div class="th-inner">线索名称</div>
+                </th>
+                <th><div class="th-inner">线索来源</div></th>
+                <th><div class="th-inner">手机</div></th>
+                <th><div class="th-inner">电话</div></th>
+                <th><div class="th-inner">邮箱</div></th>
+                <th><div class="th-inner">地址</div></th>
+                <th><div class="th-inner">客户行业</div></th>
+                <th><div class="th-inner">客户级别</div></th>
+                <th><div class="th-inner">下次联系时间</div></th>
+                <th><div class="th-inner">备注</div></th>
+                <th><div class="th-inner">最后跟进时间</div></th>
+                <th><div class="th-inner">最后跟进记录</div></th>
+                <th><div class="th-inner">负责人</div></th>
+                <th><div class="th-inner">所属部门</div></th>
+                <th><div class="th-inner">更新时间</div></th>
+                <th><div class="th-inner">创建时间</div></th>
+                <th class="ol-col">
+                  <div class="th-inner no-border">操作</div>
+                </th>
+              </tr>
             </thead>
           </table>
         </div>
@@ -123,7 +127,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -147,7 +150,6 @@ export default {
 .top-box div {
   flex: 0 0 calc(33.333% - 10px);
   height: 42px;
-  /* border: 1px solid red; */
 }
 .top-box div span {
   display: inline-block;
@@ -200,7 +202,6 @@ export default {
 .main-top {
   width: 100%;
   height: 77px;
-  /* border: 1px solid red; */
   display: flex;
   align-items: center;
 }
@@ -218,9 +219,7 @@ export default {
 .top-tab div {
   width: 76px;
   height: 100%;
-  /* border: 1px solid red; */
   font-size: 14px;
-  /* color: #ccc; */
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -236,7 +235,6 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* border: 1px solid red; */
   padding-right: 10px;
 }
 .top-2 button {
@@ -263,7 +261,6 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* border: 1px solid red; */
 }
 .top-3 button {
   width: 30px;
@@ -288,30 +285,69 @@ export default {
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
-  /* border: 1px solid #e6e6e6; */
+  font-size: 14px;
 }
 .main-tab th {
   height: 40px;
   background-color: #e6e1e1;
-  border-right: 1px solid #ccc;
-  min-width: 60px; 
-  max-width: 200px; 
+  border-right: none;
+  min-width: 60px;
+  max-width: 200px;
   white-space: nowrap;
+  padding: 0;
+}
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
   padding: 0 12px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
 }
-.col-name{
-    position: sticky;
-    left: 0;
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
 }
-.ol-col{
-    position: sticky;
-    right: 0;
+
+/* 固定列：左侧固定（线索名称） */
+.col-name {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background-color: #e6e1e1;
 }
+/* 固定列：右侧固定（操作） */
+.ol-col {
+  position: sticky;
+  right: 0;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.428);
+}
+
+/* 表格主体 td */
+.main-tab td {
+  text-align: center;
+  height: 40px;
+  border-bottom: 1px solid #ccc;
+  background-color: #fff;
+  padding: 0 12px;
+  border-right: 0;
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+
 .main-floot {
   width: 100%;
   height: 36px;
   margin-top: 5px;
-  /* border: 1px solid red; */
   font-size: 12px;
 }
 .main-floot span {

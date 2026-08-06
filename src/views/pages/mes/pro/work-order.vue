@@ -36,52 +36,77 @@
           <table>
             <thead>
               <tr>
-                <th>工单编码</th>
-                <th>工单名称</th>
-                <th>工单类型</th>
-                <th>工单来源</th>
-                <th>来源单据编号</th>
-                <th>产品编码</th>
-                <th>产品名称</th>
-                <th>规格型号</th>
-                <th>单位</th>
-                <th>工单数量</th>
-                <th>工单数量</th>
-                <th>客户编码</th>
-                <th>客户名称</th>
-                <th>需求日期</th>
-                <th>工单状态</th>
-                <th>创建时间</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">工单编码</div></th>
+                <th><div class="th-inner">工单名称</div></th>
+                <th><div class="th-inner">工单类型</div></th>
+                <th><div class="th-inner">工单来源</div></th>
+                <th><div class="th-inner">来源单据编号</div></th>
+                <th><div class="th-inner">产品编码</div></th>
+                <th><div class="th-inner">产品名称</div></th>
+                <th><div class="th-inner">规格型号</div></th>
+                <th><div class="th-inner">单位</div></th>
+                <th><div class="th-inner">工单数量</div></th>
+                <th><div class="th-inner">客户编码</div></th>
+                <th><div class="th-inner">客户名称</div></th>
+                <th><div class="th-inner">需求日期</div></th>
+                <th><div class="th-inner">工单状态</div></th>
+                <th><div class="th-inner">创建时间</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td style="color: #006be6;">{{ item.code }}</td>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td style="color: #006be6">{{ item.code }}</td>
                 <td>{{ item.name }}</td>
-                <td>{{ item.type }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: '#e6f6ff',
+                      color: '#006be6',
+                      border: '1px solid #006be6',
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.type }}</span>
+                </td>
                 <td>{{ item.source }}</td>
-                <td>{{ item.sourceCode }}</td>
+                <td>{{ item.sourceCode || '-' }}</td>
                 <td>{{ item.productCode }}</td>
                 <td>{{ item.productName }}</td>
                 <td>{{ item.spec }}</td>
                 <td>{{ item.unit }}</td>
                 <td>{{ item.qty }}</td>
-                <td>{{ item.qty2 }}</td>
-                <td>{{ item.customerCode }}</td>
-                <td>{{ item.customerName }}</td>
+                <td>{{ item.customerCode || '-' }}</td>
+                <td>{{ item.customerName || '-' }}</td>
                 <td>{{ item.demandDate }}</td>
-                <td>{{ item.status }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getStatusBg(item.status),
+                      color: getStatusColor(item.status),
+                      border: `1px solid ${getStatusColor(item.status)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.status }}</span>
+                </td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
                   <button>条码</button>
-                  <button></button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共20条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -104,7 +129,6 @@ export default {
           spec: "ZigBee 3.0 白色",
           unit: "台",
           qty: 100,
-          qty2: 100,
           customerCode: "CUST-001",
           customerName: "深圳市华科电子有限公司",
           demandDate: "2024-01-20",
@@ -123,7 +147,6 @@ export default {
           spec: "RGB 9W E27螺口",
           unit: "个",
           qty: 200,
-          qty2: 200,
           customerCode: "CUST-002",
           customerName: "东莞市恒达精密制造厂",
           demandDate: "2024-02-05",
@@ -142,7 +165,6 @@ export default {
           spec: "12V/2A 裸板",
           unit: "个",
           qty: 150,
-          qty2: 150,
           customerCode: "CUST-003",
           customerName: "广州市盛达贸易有限公司",
           demandDate: "2024-02-20",
@@ -161,7 +183,6 @@ export default {
           spec: "PCB 四层板 带元件",
           unit: "片",
           qty: 300,
-          qty2: 300,
           customerCode: "",
           customerName: "内部使用",
           demandDate: "2024-03-10",
@@ -180,7 +201,6 @@ export default {
           spec: "10A 250V WiFi版",
           unit: "个",
           qty: 120,
-          qty2: 120,
           customerCode: "CUST-005",
           customerName: "佛山市德力机械制造有限公司",
           demandDate: "2024-03-20",
@@ -199,7 +219,6 @@ export default {
           spec: "温湿度 SHT30",
           unit: "个",
           qty: 200,
-          qty2: 200,
           customerCode: "",
           customerName: "内部使用",
           demandDate: "2024-03-25",
@@ -218,7 +237,6 @@ export default {
           spec: "ZigBee 3.0 黑色",
           unit: "台",
           qty: 80,
-          qty2: 80,
           customerCode: "CUST-006",
           customerName: "中山市宏远电器有限公司",
           demandDate: "2024-04-05",
@@ -237,7 +255,6 @@ export default {
           spec: "RGB 9W E27螺口",
           unit: "个",
           qty: 150,
-          qty2: 150,
           customerCode: "CUST-007",
           customerName: "惠州市金源包装材料厂",
           demandDate: "2024-04-20",
@@ -256,7 +273,6 @@ export default {
           spec: "12V/2A 带外壳",
           unit: "个",
           qty: 100,
-          qty2: 100,
           customerCode: "CUST-008",
           customerName: "江门市天马玻璃制品有限公司",
           demandDate: "2024-05-05",
@@ -275,111 +291,35 @@ export default {
           spec: "10A 250V WiFi版",
           unit: "个",
           qty: 180,
-          qty2: 180,
           customerCode: "CUST-009",
           customerName: "肇庆市诚信五金制品厂",
           demandDate: "2024-05-20",
           status: "已完成",
           createTime: "2024-05-15 09:30",
         },
-        {
-          id: 11,
-          code: "MO-2024-011",
-          name: "主板半成品第二批次生产工单",
-          type: "生产工单",
-          source: "生产计划",
-          sourceCode: "PP-2024-003",
-          productCode: "P-2024-011",
-          productName: "主板半成品",
-          spec: "PCB 四层板 带元件",
-          unit: "片",
-          qty: 250,
-          qty2: 250,
-          customerCode: "",
-          customerName: "内部使用",
-          demandDate: "2024-06-01",
-          status: "生产中",
-          createTime: "2024-06-01 14:10",
-        },
-        {
-          id: 12,
-          code: "MO-2024-012",
-          name: "传感器半成品第二批次生产工单",
-          type: "生产工单",
-          source: "生产计划",
-          sourceCode: "PP-2024-004",
-          productCode: "P-2024-017",
-          productName: "传感器半成品",
-          spec: "温湿度 SHT30",
-          unit: "个",
-          qty: 180,
-          qty2: 180,
-          customerCode: "",
-          customerName: "内部使用",
-          demandDate: "2024-06-20",
-          status: "待审核",
-          createTime: "2024-06-20 11:45",
-        },
-        {
-          id: 13,
-          code: "MO-2024-013",
-          name: "智能网关第三批次生产工单",
-          type: "生产工单",
-          source: "销售订单",
-          sourceCode: "SO-2024-010",
-          productCode: "P-2024-006",
-          productName: "智能网关",
-          spec: "ZigBee 3.0 白色",
-          unit: "台",
-          qty: 60,
-          qty2: 60,
-          customerCode: "CUST-001",
-          customerName: "深圳市华科电子有限公司",
-          demandDate: "2024-07-15",
-          status: "待排产",
-          createTime: "2024-07-01 08:00",
-        },
-        {
-          id: 14,
-          code: "MO-2024-014",
-          name: "智能灯泡第三批次生产工单",
-          type: "生产工单",
-          source: "销售订单",
-          sourceCode: "SO-2024-011",
-          productCode: "P-2024-012",
-          productName: "智能灯泡",
-          spec: "RGB 9W E27螺口",
-          unit: "个",
-          qty: 200,
-          qty2: 200,
-          customerCode: "CUST-003",
-          customerName: "广州市盛达贸易有限公司",
-          demandDate: "2024-07-20",
-          status: "生产中",
-          createTime: "2024-07-10 16:20",
-        },
-        {
-          id: 15,
-          code: "MO-2024-015",
-          name: "电源适配器第三批次生产工单",
-          type: "生产工单",
-          source: "销售订单",
-          sourceCode: "SO-2024-012",
-          productCode: "P-2024-005",
-          productName: "电源适配器",
-          spec: "12V/2A 带外壳",
-          unit: "个",
-          qty: 130,
-          qty2: 130,
-          customerCode: "CUST-010",
-          customerName: "东莞市华辉精密模具厂",
-          demandDate: "2024-08-01",
-          status: "已完成",
-          createTime: "2024-07-20 13:00",
-        },
       ],
     };
   },
+  methods: {
+    getStatusColor(status) {
+      const map = {
+        '待审核': '#faad14',
+        '待排产': '#8c8c8c',
+        '生产中': '#1890ff',
+        '已完成': '#52c41a'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '待审核': '#fffbe6',
+        '待排产': '#f5f5f5',
+        '生产中': '#e6f7ff',
+        '已完成': '#f6ffed'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -395,7 +335,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -524,7 +463,7 @@ export default {
 }
 .main-tab table {
   width: max-content;
-  min-width: 2270px;
+  min-width: 2100px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -533,32 +472,62 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
 }
+
 .ol-col {
-  width: 240px;
+  width: 80px;
+  min-width: 80px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 56px;
   height: 32px;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
   color: #006be6;
 }
-.ol-col button:last-child {
-  color: red;
+.ol-col button:hover {
+  background-color: #f0f4f9;
 }
 
 .main-floot {

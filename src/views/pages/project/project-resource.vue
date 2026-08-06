@@ -10,22 +10,38 @@
         <table>
           <thead>
             <tr>
-              <th>成员</th>
-              <th>任务数</th>
-              <th>分配工时(h)</th>
-              <th>填报工时(h)</th>
-              <th>标准工时(h)</th>
-              <th>负载率</th>
+              <th><div class="th-inner">成员</div></th>
+              <th><div class="th-inner">任务数</div></th>
+              <th><div class="th-inner">分配工时(h)</div></th>
+              <th><div class="th-inner">填报工时(h)</div></th>
+              <th><div class="th-inner">标准工时(h)</div></th>
+              <th><div class="th-inner">负载率</div></th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in tabValue">
+            <tr v-for="item in tabValue" :key="item.id">
               <td>{{ item.member }}</td>
               <td>{{ item.taskCount }}</td>
               <td>{{ item.allocatedHours }}</td>
               <td>{{ item.filledHours }}</td>
               <td>{{ item.standardHours }}</td>
-              <td>{{ item.loadRate }}</td>
+              <td>
+                <span
+                  :style="{
+                    display: 'inline-block',
+                    padding: '0 12px',
+                    height: '24px',
+                    lineHeight: '24px',
+                    backgroundColor: getLoadRateBg(item.loadRate),
+                    color: getLoadRateColor(item.loadRate),
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    fontWeight: '500'
+                  }"
+                >
+                  {{ item.loadRate }}%
+                </span>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -69,6 +85,18 @@ export default {
       ],
     };
   },
+  methods: {
+    getLoadRateColor(rate) {
+      if (rate >= 90) return '#52c41a';
+      if (rate >= 70) return '#faad14';
+      return '#ff4d4f';
+    },
+    getLoadRateBg(rate) {
+      if (rate >= 90) return '#f6ffed';
+      if (rate >= 70) return '#fffbe6';
+      return '#fff2f0';
+    }
+  }
 };
 </script>
 
@@ -91,9 +119,11 @@ export default {
   width: 100%;
   height: 56px;
   background-color: #fff;
-  border-radius: 5px;
+  border-radius: 10px;
   padding: 12px;
   margin-bottom: 12px;
+  display: flex;
+  align-items: center;
 }
 .app-top span {
   display: inline-block;
@@ -117,27 +147,88 @@ export default {
   background-color: #006be6;
   color: #fff;
   border-radius: 10px;
+  cursor: pointer;
 }
 .app-tab {
   width: 100%;
-  height: 213px;
+  height: 320px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  overflow: auto;
 }
 .app-tab table {
   width: 100%;
-  height: 100%;
-  border: 1px solid #ccc;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   background-color: #fff;
-  border-radius: 10px 10px 0 0;
+  font-size: 14px;
 }
-table th {
-  border: 1px solid #ccc;
-  height: 47px;
+.app-tab th {
+  height: 40px;
+  background-color: #e9e6e6;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
-table td {
-  height: 55px;
-  border: 1px solid #ccc;
-  padding: 0 20px;
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 12px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 最后一列不显示右边框 */
+.app-tab th:last-child .th-inner {
+  border-right: none;
+}
+
+.app-tab td {
+  height: 48px;
+  padding: 0 12px;
   text-align: center;
+  border-bottom: 1px solid #ccc;
+  background-color: #fff;
+}
+
+/* 列宽分配 */
+.app-tab th:first-child,
+.app-tab td:first-child {
+  width: 18%;
+  min-width: 100px;
+}
+.app-tab th:nth-child(2),
+.app-tab td:nth-child(2) {
+  width: 12%;
+  min-width: 80px;
+}
+.app-tab th:nth-child(3),
+.app-tab td:nth-child(3) {
+  width: 15%;
+  min-width: 100px;
+}
+.app-tab th:nth-child(4),
+.app-tab td:nth-child(4) {
+  width: 15%;
+  min-width: 100px;
+}
+.app-tab th:nth-child(5),
+.app-tab td:nth-child(5) {
+  width: 15%;
+  min-width: 100px;
+}
+.app-tab th:nth-child(6),
+.app-tab td:nth-child(6) {
+  width: 25%;
+  min-width: 120px;
 }
 </style>

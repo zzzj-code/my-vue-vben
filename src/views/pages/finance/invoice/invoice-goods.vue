@@ -34,18 +34,20 @@
           <table>
             <thead>
               <tr>
-                <th>序号</th>
-                <th>项目名称</th>
-                <th>税收分类编码</th>
-                <th>规格型号</th>
-                <th>单位</th>
-                <th>税率(%)</th>
-                <th>创建时间</th>
-                <th class="ol-col">操作</th>
+                <th><div>序号</div></th>
+                <th><div>项目名称</div></th>
+                <th><div>税收分类编码</div></th>
+                <th><div>规格型号</div></th>
+                <th><div>单位</div></th>
+                <th><div>税率(%)</div></th>
+                <th><div>创建时间</div></th>
+                <th class="ol-col"><div>操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <div class="asd">暂无数据</div>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="8" class="empty-row">暂无数据</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -59,21 +61,13 @@
 export default {
   data() {
     return {
-      tabValue: [
-        
-      ],
+      tabValue: [],
     };
   },
 };
 </script>
 
 <style scoped>
-.asd{
-    position: absolute;
-    top: 60%;
-    left: 51%;
-    font-size: 14px;
-}
 .page-wrapper {
   width: 1030px;
   display: grid;
@@ -84,7 +78,6 @@ export default {
 .app {
   width: 1014px;
   height: 590px;
-  /* border: 1px solid red; */
   padding: 10px;
   position: absolute;
   top: -380px;
@@ -215,8 +208,23 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
+}
+.main-tab th > div {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-weight: 600;
+  color: #333;
+}
+.main-tab th.ol-col > div {
+  border-right: none;
 }
 .main-tab td {
   text-align: center;
@@ -226,11 +234,13 @@ export default {
   padding: 0 20px;
   border-right: 0;
 }
+.empty-row {
+  color: #666;
+}
 .ol-col {
   width: 160px;
   position: sticky;
   right: 0;
-  border-left: 1px solid #ccc;
 }
 .ol-col button {
   width: 38px;

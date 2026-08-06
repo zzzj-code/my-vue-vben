@@ -36,27 +36,67 @@
           <table>
             <thead>
               <tr>
-                <th>方案编码</th>
-                <th>方案名称</th>
-                <th>盘点类型</th>
-                <th>开始时间</th>
-                <th>结束时间</th>
-                <th>是否盲盘</th>
-                <th>是否冻结库存</th>
-                <th>状态</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">方案编码</div></th>
+                <th><div class="th-inner">方案名称</div></th>
+                <th><div class="th-inner">盘点类型</div></th>
+                <th><div class="th-inner">开始时间</div></th>
+                <th><div class="th-inner">结束时间</div></th>
+                <th><div class="th-inner">是否盲盘</div></th>
+                <th><div class="th-inner">是否冻结库存</div></th>
+                <th><div class="th-inner">状态</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td style="color: #006be6">{{ item.code }}</td>
                 <td>{{ item.name }}</td>
-                <td>{{ item.type }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: '#e6f6ff',
+                      color: '#006be6',
+                      border: '1px solid #006be6',
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.type }}</span>
+                </td>
                 <td>{{ item.startTime }}</td>
                 <td>{{ item.endTime }}</td>
-                <td>{{ item.isBlind }}</td>
-                <td>{{ item.isFreeze }}</td>
-                <td>{{ item.status }}</td>
+                <td>
+                  <span
+                    :style="{
+                      color: item.isBlind === '是' ? '#52c41a' : '#8c8c8c'
+                    }"
+                  >{{ item.isBlind }}</span>
+                </td>
+                <td>
+                  <span
+                    :style="{
+                      color: item.isFreeze === '是' ? '#52c41a' : '#8c8c8c'
+                    }"
+                  >{{ item.isFreeze }}</span>
+                </td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getStatusBg(item.status),
+                      color: getStatusColor(item.status),
+                      border: `1px solid ${getStatusColor(item.status)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.status }}</span>
+                </td>
                 <td class="ol-col">
                   <button>编辑</button>
                   <button>删除</button>
@@ -65,7 +105,7 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共3条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -109,9 +149,51 @@ export default {
           isFreeze: "否",
           status: "已启用",
         },
+        {
+          id: 4,
+          code: "INV-2024-004",
+          name: "半成品仓库临时盘点",
+          type: "专项盘点",
+          startTime: "2024-08-10 09:00",
+          endTime: "2024-08-10 17:00",
+          isBlind: "否",
+          isFreeze: "否",
+          status: "已结束",
+        },
+        {
+          id: 5,
+          code: "INV-2024-005",
+          name: "贵重物品专项盘点",
+          type: "专项盘点",
+          startTime: "2024-10-01 08:00",
+          endTime: "2024-10-01 18:00",
+          isBlind: "是",
+          isFreeze: "是",
+          status: "待执行",
+        },
       ],
     };
   },
+  methods: {
+    getStatusColor(status) {
+      const map = {
+        '已启用': '#52c41a',
+        '进行中': '#1890ff',
+        '已结束': '#8c8c8c',
+        '待执行': '#faad14'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '已启用': '#f6ffed',
+        '进行中': '#e6f7ff',
+        '已结束': '#f5f5f5',
+        '待执行': '#fffbe6'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -127,7 +209,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -265,32 +346,70 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
+
 .ol-col {
-  width: 160px;
+  width: 140px;
+  min-width: 140px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 56px;
   height: 32px;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ol-col button:first-child {
   color: #006be6;
+}
+.ol-col button:first-child:hover {
+  background-color: #f0f4f9;
 }
 .ol-col button:last-child {
   color: red;
+}
+.ol-col button:last-child:hover {
+  background-color: #fff2f0;
 }
 
 .main-floot {

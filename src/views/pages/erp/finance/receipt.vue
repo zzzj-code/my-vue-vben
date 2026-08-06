@@ -9,7 +9,7 @@
           </div>
           <div>
             <span>收款时间</span>
-            <input type="text"/>
+            <input type="text" />
           </div>
           <div>
             <button>重置</button>
@@ -38,24 +38,24 @@
             <thead>
               <tr>
                 <th class="col-check">
-                  <input type="checkbox" disabled/>
+                  <div class="th-inner"><input type="checkbox" disabled /></div>
                 </th>
-                <th class="col-id">收款单号</th>
-                <th>客户</th>
-                <th>收款时间</th>
-                <th>创建人</th>
-                <th>财务人员</th>
-                <th>收款账户</th>
-                <th>合计收款</th>
-                <th>优惠金额</th>
-                <th>实际收款</th>
-                <th>状态</th>
-                <th class="ol-col" style="width: 260px;">操作</th>
+                <th class="col-id"><div class="th-inner">收款单号</div></th>
+                <th><div class="th-inner">客户</div></th>
+                <th><div class="th-inner">收款时间</div></th>
+                <th><div class="th-inner">创建人</div></th>
+                <th><div class="th-inner">财务人员</div></th>
+                <th><div class="th-inner">收款账户</div></th>
+                <th><div class="th-inner">合计收款</div></th>
+                <th><div class="th-inner">优惠金额</div></th>
+                <th><div class="th-inner">实际收款</div></th>
+                <th><div class="th-inner">状态</div></th>
+                <th class="ol-col" style="width: 260px;">
+                  <div class="th-inner no-border">操作</div>
+                </th>
               </tr>
             </thead>
-            <tbody>
-              
-            </tbody>
+            <tbody></tbody>
           </table>
         </div>
         <div class="main-floot">共0条数据<span>20条/页</span></div>
@@ -68,8 +68,7 @@
 export default {
   data() {
     return {
-      tabValue: [
-      ],
+      tabValue: [],
     };
   },
 };
@@ -87,7 +86,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -110,7 +108,6 @@ export default {
 .top-inp div {
   width: 330px;
   height: 100%;
-  /* border: 1px solid red; */
   font-size: 14px;
   color: #006be6;
 }
@@ -243,30 +240,67 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #f0eaea;
+  border-right: none;
   text-align: center;
-  padding: 0 24px;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   height: 40px;
+  font-size: 14px;
   border-bottom: 1px solid #ccc;
   text-align: center;
-  padding: 0 24px;
+  padding: 0 8px;
   background-color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
+
+/* 固定列：左侧复选框 */
 .col-check {
   position: sticky;
   left: 0;
+  z-index: 2;
+  background-color: #f0eaea;
 }
-.col-id {
-  position: sticky;
-  left: 62px;
+.col-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
+
+/* 固定列：右侧操作 */
 .ol-col {
   position: sticky;
   right: 0;
+  z-index: 2;
+  background-color: #fff;
+  width: 260px;
+  min-width: 260px;
 }
+
 .main-floot {
   width: 100%;
   height: 36px;

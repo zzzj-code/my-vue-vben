@@ -39,23 +39,55 @@
             <thead>
               <tr>
                 <th class="col-check" style="width: 50px">
-                  <input type="checkbox" name="" id="" />
+                  <div>
+                    <input type="checkbox" name="" id="" />
+                  </div>
                 </th>
-                <th class="col-id" style="width: 120px">单据编号</th>
-                <th class="col-name" style="width: 100px">单据状态</th>
-                <th style="width: 80px">姓名</th>
-                <th style="width: 150px">手机号</th>
-                <th style="width: 120px">邮箱</th>
-                <th style="width: 120px">员工所属部门</th>
-                <th style="width: 100px">职位</th>
-                <th style="width: 120px">职务</th>
-                <th style="width: 120px">人员状态</th>
-                <th style="width: 180px">入职日期</th>
-                <th style="width: 120px">预计转正日期</th>
-                <th style="width: 180px">申请人</th>
-                <th style="width: 100px">员工所属公司</th>
-                <th style="width: 160px">创建时间</th>
-                <th class="oc-col" style="width: 220px">操作</th>
+                <th class="col-id" style="width: 120px">
+                  <div>单据编号</div>
+                </th>
+                <th class="col-name" style="width: 100px">
+                  <div>单据状态</div>
+                </th>
+                <th style="width: 80px">
+                  <div>姓名</div>
+                </th>
+                <th style="width: 150px">
+                  <div>手机号</div>
+                </th>
+                <th style="width: 120px">
+                  <div>邮箱</div>
+                </th>
+                <th style="width: 120px">
+                  <div>员工所属部门</div>
+                </th>
+                <th style="width: 100px">
+                  <div>职位</div>
+                </th>
+                <th style="width: 120px">
+                  <div>职务</div>
+                </th>
+                <th style="width: 120px">
+                  <div>人员状态</div>
+                </th>
+                <th style="width: 180px">
+                  <div>入职日期</div>
+                </th>
+                <th style="width: 120px">
+                  <div>预计转正日期</div>
+                </th>
+                <th style="width: 180px">
+                  <div>申请人</div>
+                </th>
+                <th style="width: 100px">
+                  <div>员工所属公司</div>
+                </th>
+                <th style="width: 160px">
+                  <div>创建时间</div>
+                </th>
+                <th class="oc-col" style="width: 220px; border: 0;">
+                  <div>操作</div>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -381,12 +413,17 @@ export default {
   border-collapse: separate;
   border-spacing: 0;
   /* border: 1px solid #e6e6e6; */
+  font-size: 14px;
 }
 .main-tab table th {
-  border-right: 1px solid #ccc;
   text-align: center;
-  background-color: #e9e6e6;
+  background-color: #f3f1f1;
   height: 40px;
+  padding: 8px;
+}
+.main-tab table th div{
+  border-right: 1px solid #ccc;
+  height: 24px;
 }
 .main-tab table td {
   height: 40px;

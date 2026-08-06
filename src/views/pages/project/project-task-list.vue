@@ -122,47 +122,82 @@
             <div class="right-main-1">
               <table>
                 <thead>
-                    <tr>
-                        <th><input type="checkbox"></th>
-                        <th>执行明细</th>
-                        <th>所属主任务</th>
-                        <th>负责人</th>
-                        <th>指派人</th>
-                        <th>进度</th>
-                        <th>状态</th>
-                        <th>优先级</th>
-                        <th>计划结束</th>
-                        <th>已耗/预估工时</th>
-                        <th>实际成本</th>
-                        <th>创建时间</th>
-                        <th class="ol-col">操作</th>
-                    </tr>
+                  <tr>
+                    <th><div class="th-inner"><input type="checkbox"></div></th>
+                    <th><div class="th-inner">执行明细</div></th>
+                    <th><div class="th-inner">所属主任务</div></th>
+                    <th><div class="th-inner">负责人</div></th>
+                    <th><div class="th-inner">指派人</div></th>
+                    <th><div class="th-inner">进度</div></th>
+                    <th><div class="th-inner">状态</div></th>
+                    <th><div class="th-inner">优先级</div></th>
+                    <th><div class="th-inner">计划结束</div></th>
+                    <th><div class="th-inner">已耗/预估工时</div></th>
+                    <th><div class="th-inner">实际成本</div></th>
+                    <th><div class="th-inner">创建时间</div></th>
+                    <th class="ol-col"><div class="th-inner no-border">操作</div></th>
+                  </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="item in tabValue">
-                        <td><input type="checkbox"></td>
-                        <td>{{ item.taskName }}</td>
-                        <td>{{ item.parentTask }}</td>
-                        <td>{{ item.assignee }}</td>
-                        <td>{{ item.assigner }}</td>
-                        <td>{{ item.progress }}</td>
-                        <td>{{ item.status }}</td>
-                        <td>{{ item.priority }}</td>
-                        <td>{{ item.planEnd }}</td>
-                        <td>{{ item.hours }}</td>
-                        <td>{{ item.actualCost }}</td>
-                        <td>{{ item.createTime }}</td>
-                        <td class="ol-col">
-                            <button>详情</button>
-                            <button>编辑</button>
-                            <button>归档</button>
-                            <button style="color: red;">删除</button>
-                        </td>
-                    </tr>
+                  <tr v-for="item in tabValue" :key="item.id">
+                    <td><input type="checkbox"></td>
+                    <td>{{ item.taskName }}</td>
+                    <td>{{ item.parentTask }}</td>
+                    <td>{{ item.assignee }}</td>
+                    <td>{{ item.assigner }}</td>
+                    <td>
+                      <div class="progress-wrapper">
+                        <div class="progress-bar">
+                          <div class="progress-fill" :style="{ width: item.progress }"></div>
+                        </div>
+                        <span class="progress-text">{{ item.progress }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span
+                        :style="{
+                          display: 'inline-block',
+                          padding: '0 12px',
+                          height: '24px',
+                          lineHeight: '24px',
+                          backgroundColor: getStatusBg(item.status),
+                          color: getStatusColor(item.status),
+                          border: `1px solid ${getStatusColor(item.status)}`,
+                          borderRadius: '12px',
+                          fontSize: '12px'
+                        }"
+                      >{{ item.status }}</span>
+                    </td>
+                    <td>
+                      <span
+                        :style="{
+                          display: 'inline-block',
+                          padding: '0 8px',
+                          height: '24px',
+                          lineHeight: '24px',
+                          backgroundColor: getPriorityBg(item.priority),
+                          color: getPriorityColor(item.priority),
+                          border: `1px solid ${getPriorityColor(item.priority)}`,
+                          borderRadius: '12px',
+                          fontSize: '12px'
+                        }"
+                      >{{ item.priority }}</span>
+                    </td>
+                    <td>{{ item.planEnd }}</td>
+                    <td>{{ item.hours }}</td>
+                    <td>{{ item.actualCost }}</td>
+                    <td>{{ item.createTime }}</td>
+                    <td class="ol-col">
+                      <button>详情</button>
+                      <button>编辑</button>
+                      <button>归档</button>
+                      <button style="color: red;">删除</button>
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
-            <div class="right-main-floot">共8条记录<span>20条/页</span></div>
+            <div class="right-main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
           </div>
         </div>
       </div>
@@ -376,7 +411,33 @@ export default {
         node.expanded = !node.expanded;
       }
     },
-  },
+    getPriorityColor(priority) {
+      const map = { '高': '#ff4d4f', '中': '#faad14', '低': '#52c41a' };
+      return map[priority] || '#333';
+    },
+    getPriorityBg(priority) {
+      const map = { '高': '#fff2f0', '中': '#fffbe6', '低': '#f6ffed' };
+      return map[priority] || '#fff';
+    },
+    getStatusColor(status) {
+      const map = {
+        '进行中': '#1890ff',
+        '已完成': '#52c41a',
+        '未开始': '#8c8c8c',
+        '已延期': '#ff4d4f'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '进行中': '#e6f7ff',
+        '已完成': '#f6ffed',
+        '未开始': '#f5f5f5',
+        '已延期': '#fff2f0'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -391,7 +452,6 @@ export default {
 .app {
   width: 1014px;
   height: 680px;
-  /* border: 1px solid red; */
   padding: 10px;
   position: absolute;
   top: -380px;
@@ -403,12 +463,12 @@ export default {
   margin-bottom: 16px;
   border: 1px solid #ccc;
   border-radius: 10px;
+  background-color: #fff;
 }
 .top-1 {
   width: 100%;
   height: 32px;
   margin-bottom: 12px;
-  /* border: 1px solid red; */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -435,6 +495,7 @@ export default {
   border-radius: 10px;
   background-color: #006be6;
   color: #fff;
+  cursor: pointer;
 }
 .top-1 .btn2 {
   width: 63px;
@@ -442,6 +503,7 @@ export default {
   border: 1px solid #ccc;
   border-radius: 10px;
   background-color: #fff;
+  cursor: pointer;
 }
 .top-2 {
   width: 100%;
@@ -463,7 +525,6 @@ export default {
 .app-main {
   width: 100%;
   height: 556px;
-  /* border: 1px solid red; */
   display: flex;
   justify-content: space-between;
 }
@@ -545,7 +606,6 @@ export default {
 .main-right {
   width: 732px;
   height: 100%;
-  /* border: 1px solid red; */
 }
 .right-top {
   width: 100%;
@@ -683,7 +743,7 @@ export default {
 }
 .right-main-1 table {
   width: max-content;
-  min-width: 1100px;
+  min-width: 1350px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -692,27 +752,101 @@ export default {
 }
 .right-main-1 th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #e9e6e6;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .right-main-1 td {
   height: 40px;
   text-align: center;
   background-color: #fff;
   border-bottom: 1px solid #ccc;
-  padding: 0 24px;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
 }
-.ol-col{
-    width: 360px;
-    position: sticky;
-    right: 0;
+
+/* 复选框列 */
+.right-main-1 td:first-child,
+.right-main-1 th:first-child {
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
 }
-.ol-col button{
-    width: 56px;
-    height: 32px;
-    border: 0;
-    background-color: #fff;
-    color: #006be6;
+
+/* 进度条样式 */
+.progress-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.progress-bar {
+  width: 50px;
+  height: 6px;
+  background-color: #e8eaed;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #006be6, #4a9eff);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+.progress-text {
+  font-size: 12px;
+  color: #333;
+  min-width: 36px;
+}
+
+.ol-col {
+  width: 220px;
+  min-width: 220px;
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  border-left: 1px solid #ccc;
+  background-color: #fff;
+}
+.ol-col button {
+  width: 38px;
+  height: 32px;
+  border: 0;
+  background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ol-col button:hover {
+  background-color: #f0f4f9;
+}
+.ol-col button:nth-child(2),
+.ol-col button:nth-child(3) {
+  color: #006be6;
+}
+.ol-col button:first-child {
+  color: #006be6;
 }
 .right-main-floot {
   width: 100%;

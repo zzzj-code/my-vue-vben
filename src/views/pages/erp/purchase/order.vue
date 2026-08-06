@@ -38,38 +38,50 @@
             <thead>
               <tr>
                 <th class="col-check">
-                  <input type="checkbox" name="" id="" />
+                  <div class="th-inner"><input type="checkbox" /></div>
                 </th>
-                <th class="col-id">订单单号</th>
-                <th>产品信息</th>
-                <th>供应商</th>
-                <th>订单时间</th>
-                <th>创建人</th>
-                <th>总数量</th>
-                <th>入库数量</th>
-                <th>退货数量</th>
-                <th>金额合计</th>
-                <th>含税金额</th>
-                <th>支付定金</th>
-                <th>状态</th>
-                <th class="ol-col">操作</th>
+                <th class="col-id"><div class="th-inner">订单单号</div></th>
+                <th><div class="th-inner">产品信息</div></th>
+                <th><div class="th-inner">供应商</div></th>
+                <th><div class="th-inner">订单时间</div></th>
+                <th><div class="th-inner">创建人</div></th>
+                <th><div class="th-inner">总数量</div></th>
+                <th><div class="th-inner">入库数量</div></th>
+                <th><div class="th-inner">退货数量</div></th>
+                <th><div class="th-inner">金额合计</div></th>
+                <th><div class="th-inner">含税金额</div></th>
+                <th><div class="th-inner">支付定金</div></th>
+                <th><div class="th-inner">状态</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td class="col-check"><input type="checkbox" name="" id=""></td>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td class="col-check"><input type="checkbox" /></td>
                 <td class="col-id">{{ item.id }}</td>
                 <td>{{ item.product }}</td>
                 <td>{{ item.supplier }}</td>
                 <td>{{ item.orderTime }}</td>
                 <td>{{ item.creator }}</td>
                 <td>{{ item.quantity }}</td>
-                <td>{{ item.入库数量 }}</td>
-                <td>{{ item.退货数量 }}</td>
-                <td>{{ item.amount }}</td>
-                <td>{{ item.taxAmount }}</td>
-                <td>{{ item.deposit }}</td>
-                <td>{{ item.status }}</td>
+                <td>{{ item.inQuantity }}</td>
+                <td>{{ item.returnQuantity }}</td>
+                <td>¥{{ item.amount.toFixed(2) }}</td>
+                <td>¥{{ item.taxAmount.toFixed(2) }}</td>
+                <td>¥{{ item.deposit.toFixed(2) }}</td>
+                <td>
+                  <span :style="{
+                    color: getStatusColor(item.status),
+                    backgroundColor: getStatusBg(item.status),
+                    padding: '2px 12px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    display: 'inline-block',
+                    fontWeight: '500'
+                  }">
+                    {{ item.status }}
+                  </span>
+                </td>
                 <td class="ol-col">详情&nbsp;&nbsp;编辑&nbsp;&nbsp;删除</td>
               </tr>
             </tbody>
@@ -93,8 +105,8 @@ export default {
           orderTime: "2024-01-15 14:30",
           creator: "张伟",
           quantity: 50,
-          入库数量: 48,
-          退货数量: 2,
+          inQuantity: 48,
+          returnQuantity: 2,
           amount: 349950,
           taxAmount: 394425,
           deposit: 100000,
@@ -107,8 +119,8 @@ export default {
           orderTime: "2024-01-20 09:15",
           creator: "李娜",
           quantity: 30,
-          入库数量: 30,
-          退货数量: 0,
+          inQuantity: 30,
+          returnQuantity: 0,
           amount: 239970,
           taxAmount: 271166,
           deposit: 50000,
@@ -121,8 +133,8 @@ export default {
           orderTime: "2024-01-25 16:45",
           creator: "王强",
           quantity: 100,
-          入库数量: 95,
-          退货数量: 5,
+          inQuantity: 95,
+          returnQuantity: 5,
           amount: 699900,
           taxAmount: 790887,
           deposit: 200000,
@@ -135,8 +147,8 @@ export default {
           orderTime: "2024-02-01 11:20",
           creator: "刘洋",
           quantity: 80,
-          入库数量: 0,
-          退货数量: 0,
+          inQuantity: 0,
+          returnQuantity: 0,
           amount: 799920,
           taxAmount: 903909,
           deposit: 300000,
@@ -145,6 +157,26 @@ export default {
       ],
     };
   },
+  methods: {
+    getStatusColor(status) {
+      const map = {
+        '已完成': '#52c41a',
+        '已入库': '#1890ff',
+        '部分入库': '#faad14',
+        '待审核': '#ff4d4f'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '已完成': '#f6ffed',
+        '已入库': '#e6f7ff',
+        '部分入库': '#fffbe6',
+        '待审核': '#fff2f0'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -160,7 +192,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -183,7 +214,6 @@ export default {
 .top-inp div {
   width: 330px;
   height: 100%;
-  /* border: 1px solid red; */
   font-size: 14px;
   color: #006be6;
 }
@@ -312,33 +342,68 @@ export default {
   border-collapse: separate;
   border-spacing: 0;
   border: 1px solid #e6e6e6;
+  font-size: 14px;
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #f0eaea;
+  border-right: none;
   text-align: center;
-  padding: 0 24px;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   height: 40px;
+  font-size: 14px;
   border-bottom: 1px solid #ccc;
   text-align: center;
-  padding: 0 24px;
+  padding: 0 8px;
   background-color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
+
+/* 固定列：左侧复选框 */
 .col-check {
   position: sticky;
   left: 0;
+  z-index: 2;
+  background-color: #f0eaea;
 }
-.col-id {
-  position: sticky;
-  left: 62px;
+.col-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
+/* 固定列：右侧操作 */
 .ol-col {
   position: sticky;
   right: 0;
+  z-index: 2;
+  background-color: #fff;
 }
+
 .main-floot {
   width: 100%;
   height: 36px;

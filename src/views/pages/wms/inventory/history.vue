@@ -62,70 +62,30 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>单据号</th>
-                <th>单据类型</th>
-                <th>商品信息</th>
-                <th>规格信息</th>
-                <th>仓库</th>
-                <th>操作时间</th>
+                <th><div class="th-inner">单据号</div></th>
+                <th><div class="th-inner">单据类型</div></th>
+                <th><div class="th-inner">商品信息</div></th>
+                <th><div class="th-inner">规格信息</div></th>
+                <th><div class="th-inner">仓库</div></th>
+                <th><div class="th-inner">操作时间</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>YK202605120001</td>
-                <td><span class="tag tag-blue">移库单</span></td>
+              <tr v-for="(item, index) in tableData" :key="index">
+                <td style="color: #006be6">{{ item.docNo }}</td>
                 <td>
-                  <div class="product-name">可口可乐汽水</div>
-                  <div class="product-code">商品编号：SPU-COLA</div>
+                  <span class="tag tag-blue">{{ item.docType }}</span>
                 </td>
                 <td>
-                  <div class="spec-name">330ml*24 罐</div>
-                  <div class="spec-code">规格编号：SKU-COLA-330-24</div>
-                </td>
-                <td>北京1</td>
-                <td>2026-07-31 22:25:05</td>
-              </tr>
-              <tr>
-                <td>YK202605120001</td>
-                <td><span class="tag tag-blue">移库单</span></td>
-                <td>
-                  <div class="product-name">可口可乐汽水</div>
-                  <div class="product-code">商品编号：SPU-COLA</div>
+                  <div class="product-name">{{ item.productName }}</div>
+                  <div class="product-code">商品编号：{{ item.productCode }}</div>
                 </td>
                 <td>
-                  <div class="spec-name">330ml*24 罐</div>
-                  <div class="spec-code">规格编号：SKU-COLA-330-24</div>
+                  <div class="spec-name">{{ item.specName }}</div>
+                  <div class="spec-code">规格编号：{{ item.specCode }}</div>
                 </td>
-                <td>上海1</td>
-                <td>2026-07-31 22:25:05</td>
-              </tr>
-              <tr>
-                <td>YK202605120001</td>
-                <td><span class="tag tag-blue">移库单</span></td>
-                <td>
-                  <div class="product-name">A4 复印纸</div>
-                  <div class="product-code">商品编号：SPU-A4-PAPER</div>
-                </td>
-                <td>
-                  <div class="spec-name">70g 8 包/箱</div>
-                  <div class="spec-code">规格编号：SKU-A4-70G-8</div>
-                </td>
-                <td>北京1</td>
-                <td>2026-07-31 22:25:05</td>
-              </tr>
-              <tr>
-                <td>YK202605120001</td>
-                <td><span class="tag tag-blue">移库单</span></td>
-                <td>
-                  <div class="product-name">A4 复印纸</div>
-                  <div class="product-code">商品编号：SPU-A4-PAPER</div>
-                </td>
-                <td>
-                  <div class="spec-name">70g 8 包/箱</div>
-                  <div class="spec-code">规格编号：SKU-A4-70G-8</div>
-                </td>
-                <td>上海1</td>
-                <td>2026-07-31 22:25:05</td>
+                <td>{{ item.warehouse }}</td>
+                <td>{{ item.operateTime }}</td>
               </tr>
             </tbody>
           </table>
@@ -147,7 +107,70 @@
 export default {
   name: 'InventoryFlow',
   data() {
-    return {}
+    return {
+      tableData: [
+        {
+          docNo: 'YK202605120001',
+          docType: '移库单',
+          productName: '可口可乐汽水',
+          productCode: 'SPU-COLA',
+          specName: '330ml*24 罐',
+          specCode: 'SKU-COLA-330-24',
+          warehouse: '北京1',
+          operateTime: '2026-07-31 22:25:05',
+        },
+        {
+          docNo: 'YK202605120001',
+          docType: '移库单',
+          productName: '可口可乐汽水',
+          productCode: 'SPU-COLA',
+          specName: '330ml*24 罐',
+          specCode: 'SKU-COLA-330-24',
+          warehouse: '上海1',
+          operateTime: '2026-07-31 22:25:05',
+        },
+        {
+          docNo: 'YK202605120001',
+          docType: '移库单',
+          productName: 'A4 复印纸',
+          productCode: 'SPU-A4-PAPER',
+          specName: '70g 8 包/箱',
+          specCode: 'SKU-A4-70G-8',
+          warehouse: '北京1',
+          operateTime: '2026-07-31 22:25:05',
+        },
+        {
+          docNo: 'YK202605120001',
+          docType: '移库单',
+          productName: 'A4 复印纸',
+          productCode: 'SPU-A4-PAPER',
+          specName: '70g 8 包/箱',
+          specCode: 'SKU-A4-70G-8',
+          warehouse: '上海1',
+          operateTime: '2026-07-31 22:25:05',
+        },
+        {
+          docNo: 'RK20260801001',
+          docType: '入库单',
+          productName: '华为 Mate 60 Pro',
+          productCode: 'SPU-HW-MATE60',
+          specName: '256GB 雅丹黑',
+          specCode: 'SKU-HW-256-BLK',
+          warehouse: '深圳1',
+          operateTime: '2026-08-01 10:30:00',
+        },
+        {
+          docNo: 'RK20260801002',
+          docType: '入库单',
+          productName: '小米 14 Ultra',
+          productCode: 'SPU-XM-14U',
+          specName: '512GB 白色',
+          specCode: 'SKU-XM-512-WHT',
+          warehouse: '广州1',
+          operateTime: '2026-08-01 14:20:00',
+        },
+      ],
+    }
   }
 }
 </script>
@@ -368,7 +391,7 @@ export default {
 .table-container {
   flex: 1;
   overflow-x: auto;
-  padding: 0 20px;
+  padding: 0 20px 10px;
 }
 
 .data-table {
@@ -383,15 +406,37 @@ export default {
   background-color: #ccc;
   font-weight: 500;
   text-align: left;
-  padding: 12px 16px;
+  padding: 0;
   border-bottom: 1px solid #ebeef5;
   white-space: nowrap;
+}
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 12px 16px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 最后一列不显示右边框 */
+.data-table thead th:last-child .th-inner {
+  border-right: none;
 }
 
 .data-table tbody td {
   padding: 14px 16px;
   border-bottom: 1px solid #ebeef5;
+  border-right: 1px solid #ebeef5;
   vertical-align: middle;
+}
+
+.data-table tbody td:last-child {
+  border-right: none;
 }
 
 .data-table tbody tr:hover {
@@ -422,10 +467,10 @@ export default {
 /* 标签 */
 .tag {
   display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 2px 12px;
+  border-radius: 12px;
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.8;
 }
 
 .tag-blue {
@@ -465,54 +510,5 @@ export default {
   background-color: #fff;
   cursor: pointer;
   outline: none;
-}
-
-.pagination-right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.page-btn {
-  min-width: 28px;
-  height: 28px;
-  padding: 0 6px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  background-color: #fff;
-  color: #606266;
-  font-size: 13px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.page-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
-.page-btn:hover:not(:disabled):not(.active) {
-  color: #409eff;
-  border-color: #c6e2ff;
-}
-
-.page-btn.active {
-  background-color: #409eff;
-  border-color: #409eff;
-  color: #fff;
-}
-
-.page-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.page-ellipsis {
-  padding: 0 4px;
-  color: #909399;
-  font-size: 14px;
 }
 </style>

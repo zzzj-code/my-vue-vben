@@ -35,33 +35,45 @@
           <table>
             <thead>
               <tr>
-                <th>客商主编码</th>
-                <th>供应商名称</th>
-                <th>联系人</th>
-                <th>手机号码</th>
-                <th>联系电话</th>
-                <th>电子邮箱</th>
-                <th>状态</th>
-                <th>排序</th>
-                <th>备注</th>
+                <th><div class="th-inner">客商主编码</div></th>
+                <th><div class="th-inner">供应商名称</div></th>
+                <th><div class="th-inner">联系人</div></th>
+                <th><div class="th-inner">手机号码</div></th>
+                <th><div class="th-inner">联系电话</div></th>
+                <th><div class="th-inner">电子邮箱</div></th>
+                <th><div class="th-inner">状态</div></th>
+                <th><div class="th-inner">排序</div></th>
+                <th><div class="th-inner no-border">备注</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.contact }}</td>
                 <td>{{ item.phone }}</td>
                 <td>{{ item.tel }}</td>
                 <td>{{ item.email }}</td>
-                <td>{{ item.status }}</td>
+                <td>
+                  <span :style="{
+                    color: item.status === '启用' ? '#52c41a' : '#ff4d4f',
+                    backgroundColor: item.status === '启用' ? '#f6ffed' : '#fff2f0',
+                    padding: '2px 12px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    display: 'inline-block',
+                    fontWeight: '500'
+                  }">
+                    {{ item.status }}
+                  </span>
+                </td>
                 <td>{{ item.sort }}</td>
                 <td>{{ item.remark }}</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共8条数据<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条数据<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -178,7 +190,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -201,7 +212,6 @@ export default {
 .top-inp div {
   width: 330px;
   height: 100%;
-  /* border: 1px solid red; */
   font-size: 14px;
   color: #006be6;
 }
@@ -314,23 +324,48 @@ export default {
   border-collapse: separate;
   border-spacing: 0;
   border: 1px solid #e6e6e6;
+  font-size: 14px;
 }
 .main-tab th {
   height: 40px;
-  font-size: 14px;
-  border-right: 1px solid #ccc;
   background-color: #f0eaea;
+  border-right: none;
   text-align: center;
-  padding: 0 24px;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 最后一列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   height: 40px;
   font-size: 14px;
   border-bottom: 1px solid #ccc;
   text-align: center;
-  padding: 0 24px;
+  padding: 0 8px;
   background-color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
+
 .main-floot {
   width: 100%;
   height: 36px;

@@ -69,11 +69,11 @@
             <table>
               <thead>
                 <tr>
-                  <th>商品信息</th>
-                  <th>规格信息</th>
-                  <th>金额(元)</th>
-                  <th>重量(kg)</th>
-                  <th class="ol-col">操作</th>
+                  <th><div class="th-inner">商品信息</div></th>
+                  <th><div class="th-inner">规格信息</div></th>
+                  <th><div class="th-inner">金额(元)</div></th>
+                  <th><div class="th-inner">重量(kg)</div></th>
+                  <th class="ol-col"><div class="th-inner no-border">操作</div></th>
                 </tr>
               </thead>
               <tbody>
@@ -556,8 +556,7 @@ export default {
 
 .main-tab1 th {
   height: 40px;
-  padding: 0 12px;
-  border-right: 1px solid #ccc;
+  padding: 0;
   border-bottom: 1px solid #ccc;
   background-color: #f3f0f0;
   text-align: center;
@@ -571,11 +570,28 @@ export default {
   border-bottom: 1px solid #ccc;
   border-right: 1px solid #ccc;
   text-align: center;
-  /* vertical-align: middle; */
 }
 
-.main-tab1 tbody tr:hover {
-  background-color: #f9f9f9;
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 12px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
+thead .ol-col {
+  background-color: #f3f0f0;
 }
 
 /* 商品信息单元格 */
@@ -583,6 +599,7 @@ export default {
   width: 180px;
   min-width: 180px;
   text-align: left !important;
+  border-right: 1px solid #ccc !important;
 }
 
 .p-name {
@@ -659,11 +676,12 @@ export default {
 .ol-col {
   width: 160px;
   min-width: 160px;
-  border-right: 0;
+  border-right: 0 !important;
   position: sticky;
   right: 0;
   background-color: #fff;
   border-left: 1px solid #ccc;
+  text-align: center !important;
 }
 
 thead .ol-col {
@@ -705,28 +723,5 @@ thead .ol-col {
   margin-left: 5px;
   font-size: 12px;
   outline: none;
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.page-btn {
-  min-width: 24px;
-  height: 24px;
-  padding: 0 4px;
-  border: 1px solid #ccc;
-  background-color: #fff;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.page-btn.active {
-  background-color: #006be6;
-  border-color: #006be6;
-  color: #fff;
 }
 </style>

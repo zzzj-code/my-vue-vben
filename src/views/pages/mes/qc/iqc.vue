@@ -36,26 +36,26 @@
           <table>
             <thead>
               <tr>
-                <th>来料检验单编号</th>
-                <th>来料检验单名称</th>
-                <th>供应商简称</th>
-                <th>供应商批次号</th>
-                <th>产品物料编码</th>
-                <th>产品物料名称</th>
-                <th>接收数量</th>
-                <th>检测数量</th>
-                <th>不合格数</th>
-                <th>检测结果</th>
-                <th>来料日期</th>
-                <th>检测日期</th>
-                <th>检测人员</th>
-                <th>单据状态</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">来料检验单编号</div></th>
+                <th><div class="th-inner">来料检验单名称</div></th>
+                <th><div class="th-inner">供应商简称</div></th>
+                <th><div class="th-inner">供应商批次号</div></th>
+                <th><div class="th-inner">产品物料编码</div></th>
+                <th><div class="th-inner">产品物料名称</div></th>
+                <th><div class="th-inner">接收数量</div></th>
+                <th><div class="th-inner">检测数量</div></th>
+                <th><div class="th-inner">不合格数</div></th>
+                <th><div class="th-inner">检测结果</div></th>
+                <th><div class="th-inner">来料日期</div></th>
+                <th><div class="th-inner">检测日期</div></th>
+                <th><div class="th-inner">检测人员</div></th>
+                <th><div class="th-inner">单据状态</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td>{{ item.code }}</td>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td style="color: #006be6">{{ item.code }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.supplierName }}</td>
                 <td>{{ item.batchNo }}</td>
@@ -64,11 +64,39 @@
                 <td>{{ item.receiveQty }}</td>
                 <td>{{ item.checkQty }}</td>
                 <td>{{ item.defectQty }}</td>
-                <td>{{ item.result }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getResultBg(item.result),
+                      color: getResultColor(item.result),
+                      border: `1px solid ${getResultColor(item.result)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.result }}</span>
+                </td>
                 <td>{{ item.receiveDate }}</td>
                 <td>{{ item.checkDate }}</td>
                 <td>{{ item.checker }}</td>
-                <td>{{ item.status }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getStatusBg(item.status),
+                      color: getStatusColor(item.status),
+                      border: `1px solid ${getStatusColor(item.status)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.status }}</span>
+                </td>
                 <td class="ol-col">
                   <button>详情</button>
                 </td>
@@ -76,7 +104,7 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共9条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -243,6 +271,36 @@ export default {
       ],
     };
   },
+  methods: {
+    getResultColor(result) {
+      const map = {
+        '合格': '#52c41a',
+        '不合格': '#ff4d4f'
+      };
+      return map[result] || '#333';
+    },
+    getResultBg(result) {
+      const map = {
+        '合格': '#f6ffed',
+        '不合格': '#fff2f0'
+      };
+      return map[result] || '#fff';
+    },
+    getStatusColor(status) {
+      const map = {
+        '已检验': '#52c41a',
+        '待检验': '#faad14'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '已检验': '#f6ffed',
+        '待检验': '#fffbe6'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -258,7 +316,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -387,7 +444,7 @@ export default {
 }
 .main-tab table {
   width: max-content;
-  min-width: 1100px;
+  min-width: 1700px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -396,29 +453,62 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
 }
+
 .ol-col {
-  width: 160px;
+  width: 80px;
+  min-width: 80px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 56px;
   height: 32px;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
   color: #006be6;
+}
+.ol-col button:hover {
+  background-color: #f0f4f9;
 }
 
 .main-floot {

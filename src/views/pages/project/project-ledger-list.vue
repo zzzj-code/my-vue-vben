@@ -28,13 +28,7 @@
             项目台账
             <div class="top-nav">
               <div
-                v-for="item in [
-                  '全部',
-                  '我负责的',
-                  '我参与的',
-                  '进行中',
-                  '已逾期',
-                ]"
+                v-for="item in ['全部', '我负责的', '我参与的', '进行中', '已逾期']"
                 :key="item"
                 :class="{ active: activeNav === item }"
                 @click="switchNav(item)"
@@ -59,75 +53,98 @@
           <table>
             <thead>
               <tr>
-                <th><input type="checkbox" /></th>
-                <th>项目编号</th>
-                <th>项目名称</th>
-                <th>项目类型</th>
-                <th>优先级</th>
-                <th>立项状态</th>
-                <th>进度</th>
-                <th>项目经理</th>
-                <th>所属部门</th>
-                <th>对方单位</th>
-                <th>计划开始</th>
-                <th>计划结束</th>
-                <th>预算金额</th>
-                <th>创建时间</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner"><input type="checkbox" /></div></th>
+                <th><div class="th-inner">项目编号</div></th>
+                <th><div class="th-inner">项目名称</div></th>
+                <th><div class="th-inner">项目类型</div></th>
+                <th><div class="th-inner">优先级</div></th>
+                <th><div class="th-inner">立项状态</div></th>
+                <th><div class="th-inner">进度</div></th>
+                <th><div class="th-inner">项目经理</div></th>
+                <th><div class="th-inner">所属部门</div></th>
+                <th><div class="th-inner">对方单位</div></th>
+                <th><div class="th-inner">计划开始</div></th>
+                <th><div class="th-inner">计划结束</div></th>
+                <th><div class="th-inner">预算金额</div></th>
+                <th><div class="th-inner">创建时间</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td><input type="checkbox" /></td>
                 <td style="color: #006be6">{{ item.projectNo }}</td>
                 <td>{{ item.projectName }}</td>
                 <td>
                   <span
-                    style="
-                      display: inline-block;
-                      width: 52px;
-                      height: 22px;
-                      background-color: #006be656;
-                      border-radius: 5px;
-                      border: 1px solid #006be6;
-                      color: #006be6;
-                      font-size: 12px;
-                    "
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 10px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: '#e6f6ff',
+                      color: '#006be6',
+                      border: '1px solid #006be6',
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
                   >{{ item.projectType }}</span>
                 </td>
                 <td>
                   <span
-                    style="
-                      display: inline-block;
-                      width: 28px;
-                      height: 22px;
-                      background-color: #006be656;
-                      border-radius: 5px;
-                      border: 1px solid #006be6;
-                      color: #006be6;
-                      font-size: 12px;
-                    "
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 8px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getPriorityBg(item.priority),
+                      color: getPriorityColor(item.priority),
+                      border: `1px solid ${getPriorityColor(item.priority)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
                   >{{ item.priority }}</span>
                 </td>
-                <td>{{ item.status }}</td>
-                <td>{{ item.progress }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getStatusBg(item.status),
+                      color: getStatusColor(item.status),
+                      border: `1px solid ${getStatusColor(item.status)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.status }}</span>
+                </td>
+                <td>
+                  <div class="progress-wrapper">
+                    <div class="progress-bar">
+                      <div class="progress-fill" :style="{ width: item.progress }"></div>
+                    </div>
+                    <span class="progress-text">{{ item.progress }}</span>
+                  </div>
+                </td>
                 <td>{{ item.manager }}</td>
                 <td>{{ item.department }}</td>
                 <td>{{ item.counterparty }}</td>
                 <td>{{ item.planStart }}</td>
                 <td>{{ item.planEnd }}</td>
-                <td>{{ item.budget }}</td>
+                <td>¥{{ item.budget.toLocaleString() }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button></button>
-                  <button>详情</button>
-                  <button></button>
+                  <button @click="handleDetail(item)">详情</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共4条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -152,7 +169,7 @@ export default {
           counterparty: "市政数局",
           planStart: "2026-07-01",
           planEnd: "2026-12-31",
-          budget: "¥2,800,000",
+          budget: 2800000,
           createTime: "2026-07-01",
         },
         {
@@ -168,7 +185,7 @@ export default {
           counterparty: "恒通集团",
           planStart: "2026-07-15",
           planEnd: "2026-11-30",
-          budget: "¥1,500,000",
+          budget: 1500000,
           createTime: "2026-07-03",
         },
         {
@@ -184,7 +201,7 @@ export default {
           counterparty: "云创科技",
           planStart: "2026-06-20",
           planEnd: "2026-10-15",
-          budget: "¥3,200,000",
+          budget: 3200000,
           createTime: "2026-06-28",
         },
         {
@@ -200,7 +217,7 @@ export default {
           counterparty: "内部项目",
           planStart: "2026-07-10",
           planEnd: "2026-09-20",
-          budget: "¥800,000",
+          budget: 800000,
           createTime: "2026-07-05",
         },
       ],
@@ -210,7 +227,46 @@ export default {
     switchNav(item) {
       this.activeNav = item;
     },
-  },
+    getPriorityColor(priority) {
+      const map = { '高': '#ff4d4f', '中': '#faad14', '低': '#52c41a' };
+      return map[priority] || '#333';
+    },
+    getPriorityBg(priority) {
+      const map = { '高': '#fff2f0', '中': '#fffbe6', '低': '#f6ffed' };
+      return map[priority] || '#fff';
+    },
+    getStatusColor(status) {
+      const map = {
+        '已立项': '#52c41a',
+        '审核中': '#faad14',
+        '已驳回': '#ff4d4f',
+        '进行中': '#1890ff',
+        '已逾期': '#ff4d4f'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '已立项': '#f6ffed',
+        '审核中': '#fffbe6',
+        '已驳回': '#fff2f0',
+        '进行中': '#e6f7ff',
+        '已逾期': '#fff2f0'
+      };
+      return map[status] || '#fff';
+    },
+    handleDetail(item) {
+      alert(`项目详情：${item.projectName}\n编号：${item.projectNo}\n预算：¥${item.budget.toLocaleString()}`);
+    },
+    handleEdit(item) {
+      alert(`编辑项目：${item.projectName}`);
+    },
+    handleDelete(item) {
+      if (confirm(`确定要删除项目"${item.projectName}"吗？`)) {
+        this.tabValue = this.tabValue.filter(i => i.id !== item.id);
+      }
+    }
+  }
 };
 </script>
 
@@ -225,7 +281,6 @@ export default {
 .app {
   width: 1014px;
   height: 590px;
-  /* border: 1px solid red; */
   padding: 10px;
   position: absolute;
   top: -380px;
@@ -243,7 +298,6 @@ export default {
 .top-inp {
   width: 100%;
   height: 42px;
-  /* border: 1px solid red; */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -251,7 +305,6 @@ export default {
 .top-inp .inp-1 {
   width: 246px;
   height: 100%;
-  /* border: 1px solid red; */
 }
 .top-inp .inp-1 span {
   display: inline-block;
@@ -310,6 +363,7 @@ export default {
   font-weight: 600;
   display: flex;
   align-items: center;
+  gap: 12px;
 }
 .top-1 .top-nav {
   width: 338px;
@@ -330,7 +384,7 @@ export default {
   align-items: center;
   cursor: pointer;
 }
-.active {
+.top-nav .active {
   background-color: #fff;
 }
 .top-2 {
@@ -385,6 +439,7 @@ export default {
   border: 1px solid #ccc;
   border-radius: 50%;
   background-color: #fff;
+  cursor: pointer;
 }
 .main-tab {
   width: 100%;
@@ -397,7 +452,7 @@ export default {
 }
 .main-tab table {
   width: max-content;
-  min-width: 1100px;
+  min-width: 1450px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -406,30 +461,109 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #e9e6e6;
-  padding: 0 20px;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   height: 40px;
   text-align: center;
   background-color: #fff;
   border-bottom: 1px solid #ccc;
-  padding: 0 24px;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
 }
+
+/* 复选框列 */
+.main-tab td:first-child,
+.main-tab th:first-child {
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+}
+
+/* 进度条样式 */
+.progress-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.progress-bar {
+  width: 60px;
+  height: 6px;
+  background-color: #e8eaed;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #006be6, #4a9eff);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+.progress-text {
+  font-size: 12px;
+  color: #333;
+  min-width: 36px;
+}
+
 .ol-col {
-  width: 240px;
+  width: 160px;
+  min-width: 160px;
   position: sticky;
   right: 0;
+  z-index: 2;
+  border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 38px;
   height: 32px;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ol-col button:first-child {
+  color: #006be6;
+}
+.ol-col button:first-child:hover {
+  background-color: #f0f4f9;
 }
 .ol-col button:nth-child(2) {
   color: #006be6;
+}
+.ol-col button:nth-child(2):hover {
+  background-color: #f0f4f9;
+}
+.ol-col button:last-child {
+  color: red;
+}
+.ol-col button:last-child:hover {
+  background-color: #fff2f0;
 }
 .main-floot {
   width: 100%;

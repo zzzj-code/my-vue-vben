@@ -36,22 +36,50 @@
           <table>
             <thead>
               <tr>
-                <th>来源单据类型</th>
-                <th>来源单据编号</th>
-                <th>检验类型</th>
-                <th>物料编码</th>
-                <th>物料名称</th>
-                <th>规格型号</th>
-                <th>待检数量</th>
-                <th>单位</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">来源单据类型</div></th>
+                <th><div class="th-inner">来源单据编号</div></th>
+                <th><div class="th-inner">检验类型</div></th>
+                <th><div class="th-inner">物料编码</div></th>
+                <th><div class="th-inner">物料名称</div></th>
+                <th><div class="th-inner">规格型号</div></th>
+                <th><div class="th-inner">待检数量</div></th>
+                <th><div class="th-inner">单位</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td>{{ item.sourceType }}</td>
-                <td>{{ item.sourceCode }}</td>
-                <td>{{ item.checkType }}</td>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getSourceTypeBg(item.sourceType),
+                      color: getSourceTypeColor(item.sourceType),
+                      border: `1px solid ${getSourceTypeColor(item.sourceType)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.sourceType }}</span>
+                </td>
+                <td style="color: #006be6">{{ item.sourceCode }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: '#e6f6ff',
+                      color: '#006be6',
+                      border: '1px solid #006be6',
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.checkType }}</span>
+                </td>
                 <td>{{ item.materialCode }}</td>
                 <td>{{ item.materialName }}</td>
                 <td>{{ item.spec }}</td>
@@ -64,7 +92,7 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共13条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -207,9 +235,36 @@ export default {
           qty: 80,
           unit: "台",
         },
+        {
+          id: 13,
+          sourceType: "生产工单",
+          sourceCode: "MO-2024-008",
+          checkType: "过程检验",
+          materialCode: "P-2024-012",
+          materialName: "智能灯泡",
+          spec: "RGB 9W E27螺口",
+          qty: 150,
+          unit: "个",
+        },
       ],
     };
   },
+  methods: {
+    getSourceTypeColor(type) {
+      const map = {
+        '采购入库单': '#52c41a',
+        '生产工单': '#1890ff'
+      };
+      return map[type] || '#333';
+    },
+    getSourceTypeBg(type) {
+      const map = {
+        '采购入库单': '#f6ffed',
+        '生产工单': '#e6f7ff'
+      };
+      return map[type] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -225,7 +280,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -363,29 +417,62 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
 }
+
 .ol-col {
-  width: 130px;
+  width: 100px;
+  min-width: 100px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
-  width: 56px;
+  width: 72px;
   height: 32px;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
   color: #006be6;
+}
+.ol-col button:hover {
+  background-color: #f0f4f9;
 }
 
 .main-floot {

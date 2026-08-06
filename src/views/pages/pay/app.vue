@@ -35,27 +35,27 @@
           <table>
             <thead>
               <tr>
-                <th rowspan="2">应用标识</th>
-                <th rowspan="2">应用名</th>
-                <th rowspan="2">状态</th>
-                <th colspan="5">支付宝配置</th>
-                <th colspan="6">微信配置</th>
-                <th rowspan="2" style="width: 48px;">钱包支付配置</th>
-                <th rowspan="2" style="width: 48px;">模拟支付配置</th>
-                <th rowspan="2" class="ol-col">操作</th>
+                <th rowspan="2"><div>应用标识</div></th>
+                <th rowspan="2"><div>应用名</div></th>
+                <th rowspan="2"><div>状态</div></th>
+                <th colspan="5" style="border-bottom: 1px solid #ccc;"><div>支付宝配置</div></th>
+                <th colspan="6" style="border-bottom: 1px solid #ccc;"><div>微信配置</div></th>
+                <th rowspan="2" style="width: 48px;"><div>钱包支付配置</div></th>
+                <th rowspan="2" style="width: 48px;"><div>模拟支付配置</div></th>
+                <th rowspan="2" class="ol-col"><div>操作</div></th>
               </tr>
               <tr>
-                <th>APP</th>
-                <th>PC网站</th>
-                <th>WAP网站</th>
-                <th>扫码</th>
-                <th>条码</th>
-                <th>小程序</th>
-                <th>JSAPI</th>
-                <th>APP</th>
-                <th>Native</th>
-                <th>WAP网站</th>
-                <th>条码</th>
+                <th><div>APP</div></th>
+                <th><div>PC网站</div></th>
+                <th><div>WAP网站</div></th>
+                <th><div>扫码</div></th>
+                <th><div>条码</div></th>
+                <th><div>小程序</div></th>
+                <th><div>JSAPI</div></th>
+                <th><div>APP</div></th>
+                <th><div>Native</div></th>
+                <th><div>WAP网站</div></th>
+                <th><div>条码</div></th>
               </tr>
             </thead>
             <tbody>
@@ -195,6 +195,10 @@ export default {
 </script>
 
 <style scoped>
+.main-tab table th div{
+  border-right: 1px solid #ccc ;
+  padding: 0 8px;
+}
 .page-wrapper {
   width: 1030px;
   display: grid;
@@ -334,12 +338,12 @@ export default {
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
-  border: 1px solid #e6e6e6;
+  /* border: 1px solid #e6e6e6; */
   font-size: 14px;
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
+  /* border-right: 1px solid #ccc; */
   background-color: #ece8e8;
 }
 .main-tab td {

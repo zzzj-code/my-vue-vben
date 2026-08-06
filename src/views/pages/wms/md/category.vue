@@ -36,20 +36,34 @@
           <table>
             <thead>
               <tr>
-                <th>分类名称</th>
-                <th>分类编号</th>
-                <th>排序</th>
-                <th>状态</th>
-                <th>创建时间</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">分类名称</div></th>
+                <th><div class="th-inner">分类编号</div></th>
+                <th><div class="th-inner">排序</div></th>
+                <th><div class="th-inner">状态</div></th>
+                <th><div class="th-inner">创建时间</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.categoryCode">
                 <td>{{ item.categoryName }}</td>
-                <td>{{ item.categoryCode }}</td>
+                <td style="color: #006be6">{{ item.categoryCode }}</td>
                 <td>{{ item.sort }}</td>
-                <td>{{ item.status }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: item.status === '启用' ? '#f6ffed' : '#fff2f0',
+                      color: item.status === '启用' ? '#52c41a' : '#ff4d4f',
+                      border: `1px solid ${item.status === '启用' ? '#52c41a' : '#ff4d4f'}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.status }}</span>
+                </td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
                   <button>+新增下级</button>
@@ -60,6 +74,7 @@
             </tbody>
           </table>
         </div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -128,7 +143,7 @@ export default {
         },
       ],
     };
-  },
+  }
 };
 </script>
 
@@ -144,7 +159,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -282,34 +296,93 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 12px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
+  padding: 0 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
+
 .ol-col {
-  width: 240px;
+  width: 200px;
+  min-width: 200px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 38px;
   height: 32px;
   border: 0;
   background-color: #fff;
-  color: #006be6;
+  border-radius: 4px;
+  cursor: pointer;
 }
 .ol-col button:first-child {
   width: 84px;
+  color: #006be6;
+}
+.ol-col button:first-child:hover {
+  background-color: #f0f4f9;
+}
+.ol-col button:nth-child(2) {
+  color: #006be6;
+}
+.ol-col button:nth-child(2):hover {
+  background-color: #f0f4f9;
 }
 .ol-col button:last-child {
   color: red;
+}
+.ol-col button:last-child:hover {
+  background-color: #fff2f0;
+}
+
+.main-floot {
+  width: 100%;
+  height: 36px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+.main-floot span {
+  display: inline-block;
+  width: 100px;
+  height: 24px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding-top: 3px;
+  margin-left: 5px;
+  text-align: center;
 }
 </style>

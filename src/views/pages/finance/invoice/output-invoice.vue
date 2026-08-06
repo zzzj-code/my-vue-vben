@@ -34,20 +34,20 @@
           <table>
             <thead>
               <tr>
-                <th>序号</th>
-                <th>单据编号</th>
-                <th>发票号码</th>
-                <th>购方名称</th>
-                <th>发票类型</th>
-                <th>价税合计</th>
-                <th>状态</th>
-                <th>开票日期</th>
-                <th class="ol-col">操作</th>
+                <th><div>序号</div></th>
+                <th><div>单据编号</div></th>
+                <th><div>发票号码</div></th>
+                <th><div>购方名称</div></th>
+                <th><div>发票类型</div></th>
+                <th><div>价税合计</div></th>
+                <th><div>状态</div></th>
+                <th><div>开票日期</div></th>
+                <th class="ol-col"><div>操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td>1</td>
+              <tr v-for="(item,index) in tabValue" :key="index">
+                <td>{{ index+1 }}</td>
                 <td>{{ item.invoiceNo }}</td>
                 <td>{{ item.invoiceNumber }}</td>
                 <td>{{ item.buyerName }}</td>
@@ -97,7 +97,6 @@ export default {
 .app {
   width: 1014px;
   height: 590px;
-  /* border: 1px solid red; */
   padding: 10px;
   position: absolute;
   top: -380px;
@@ -228,8 +227,23 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
+}
+.main-tab th > div {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-weight: 600;
+  color: #333;
+}
+.main-tab th.ol-col > div {
+  border-right: none;
 }
 .main-tab td {
   text-align: center;
@@ -243,7 +257,6 @@ export default {
   width: 220px;
   position: sticky;
   right: 0;
-  border-left: 1px solid #ccc;
 }
 .ol-col button {
   width: 38px;

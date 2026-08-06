@@ -36,20 +36,26 @@
           <table>
             <thead>
               <tr>
-                <th>类型编码</th>
-                <th>类型名称</th>
-                <th>编码管理</th>
-                <th>保养维护类型</th>
-                <th>保养周期</th>
-                <th>创建时间</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">类型编码</div></th>
+                <th><div class="th-inner">类型名称</div></th>
+                <th><div class="th-inner">编码管理</div></th>
+                <th><div class="th-inner">保养维护类型</div></th>
+                <th><div class="th-inner">保养周期</div></th>
+                <th><div class="th-inner">创建时间</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td>{{ item.code }}</td>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td style="color: #006be6">{{ item.code }}</td>
                 <td>{{ item.name }}</td>
-                <td>{{ item.codeManage }}</td>
+                <td>
+                  <span
+                    :style="{
+                      color: item.codeManage === '是' ? '#52c41a' : '#8c8c8c'
+                    }"
+                  >{{ item.codeManage }}</span>
+                </td>
                 <td>{{ item.maintainType }}</td>
                 <td>{{ item.maintainCycle }}</td>
                 <td>{{ item.createTime }}</td>
@@ -61,7 +67,7 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共5条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -119,7 +125,7 @@ export default {
         },
       ],
     };
-  },
+  }
 };
 </script>
 
@@ -135,7 +141,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -272,30 +277,69 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
+
 .ol-col {
-  width: 180px;
-  /* border-left: 1px solid #ccc; */
+  width: 140px;
+  min-width: 140px;
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background-color: #fff;
 }
 .ol-col button {
   width: 56px;
   height: 32px;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ol-col button:first-child {
   color: #006be6;
+}
+.ol-col button:first-child:hover {
+  background-color: #f0f4f9;
 }
 .ol-col button:last-child {
   color: red;
+}
+.ol-col button:last-child:hover {
+  background-color: #fff2f0;
 }
 
 .main-floot {

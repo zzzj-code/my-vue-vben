@@ -35,30 +35,58 @@
           <table>
             <thead>
               <tr>
-                <th>序号</th>
-                <th>模板名称</th>
-                <th>模板编码</th>
-                <th>适用通道</th>
-                <th>标签尺寸</th>
-                <th>A4排版</th>
-                <th>码制</th>
-                <th>默认</th>
-                <th>状态</th>
-                <th>排序</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">序号</div></th>
+                <th><div class="th-inner">模板名称</div></th>
+                <th><div class="th-inner">模板编码</div></th>
+                <th><div class="th-inner">适用通道</div></th>
+                <th><div class="th-inner">标签尺寸</div></th>
+                <th><div class="th-inner">A4排版</div></th>
+                <th><div class="th-inner">码制</div></th>
+                <th><div class="th-inner">默认</div></th>
+                <th><div class="th-inner">状态</div></th>
+                <th><div class="th-inner">排序</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td>{{ item.id }}</td>
+              <tr v-for="(item, index) in tabValue" :key="item.id">
+                <td>{{ index + 1 }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.code }}</td>
                 <td>{{ item.channel }}</td>
                 <td>{{ item.size }}</td>
                 <td>{{ item.layout }}</td>
                 <td>{{ item.codeType }}</td>
-                <td>{{ item.isDefault }}</td>
-                <td>{{ item.status }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: item.isDefault ? '#f6ffed' : '#f5f5f5',
+                      color: item.isDefault ? '#52c41a' : '#8c8c8c',
+                      border: `1px solid ${item.isDefault ? '#52c41a' : '#d9d9d9'}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.isDefault ? '是' : '否' }}</span>
+                </td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: item.status === '启用' ? '#f6ffed' : '#fff2f0',
+                      color: item.status === '启用' ? '#52c41a' : '#ff4d4f',
+                      border: `1px solid ${item.status === '启用' ? '#52c41a' : '#ff4d4f'}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.status }}</span>
+                </td>
                 <td>{{ item.sort }}</td>
                 <td class="ol-col">
                   <button>编辑</button>
@@ -68,7 +96,7 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共7条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -180,7 +208,6 @@ export default {
 .app {
   width: 1014px;
   height: 590px;
-  /* border: 1px solid red; */
   padding: 10px;
   position: absolute;
   top: -380px;
@@ -198,7 +225,6 @@ export default {
 .top-inp {
   width: 100%;
   height: 42px;
-  /* border: 1px solid red; */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -206,7 +232,6 @@ export default {
 .top-inp .inp-1 {
   width: 246px;
   height: 100%;
-  /* border: 1px solid red; */
 }
 .top-inp .inp-1 span {
   display: inline-block;
@@ -270,7 +295,7 @@ export default {
   width: 10%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding-right: 10px;
 }
 .top-2 button:first-child {
@@ -315,31 +340,78 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #e9e6e6;
-  padding: 0 20px;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   height: 40px;
   text-align: center;
   background-color: #fff;
   border-bottom: 1px solid #ccc;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
 }
+
+/* 序号列 */
+.main-tab td:first-child,
+.main-tab th:first-child {
+  width: 50px;
+  min-width: 50px;
+  max-width: 50px;
+}
+
 .ol-col {
-  width: 180px;
+  width: 140px;
+  min-width: 140px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 38px;
   height: 32px;
-  color: #006be6;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ol-col button:first-child {
+  color: #006be6;
+}
+.ol-col button:first-child:hover {
+  background-color: #f0f4f9;
 }
 .ol-col button:last-child {
   color: red;
+}
+.ol-col button:last-child:hover {
+  background-color: #fff2f0;
 }
 .main-floot {
   width: 100%;

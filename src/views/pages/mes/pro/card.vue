@@ -36,21 +36,21 @@
           <table>
             <thead>
               <tr>
-                <th>流转卡编码</th>
-                <th>生产工单编号</th>
-                <th>工单名称</th>
-                <th>批次号</th>
-                <th>产品物料编码</th>
-                <th>产品物料名称</th>
-                <th>规格型号</th>
-                <th>单位</th>
-                <th>流转数量</th>
-                <th>单据状态</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">流转卡编码</div></th>
+                <th><div class="th-inner">生产工单编号</div></th>
+                <th><div class="th-inner">工单名称</div></th>
+                <th><div class="th-inner">批次号</div></th>
+                <th><div class="th-inner">产品物料编码</div></th>
+                <th><div class="th-inner">产品物料名称</div></th>
+                <th><div class="th-inner">规格型号</div></th>
+                <th><div class="th-inner">单位</div></th>
+                <th><div class="th-inner">流转数量</div></th>
+                <th><div class="th-inner">单据状态</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td style="color: #006be6">{{ item.code }}</td>
                 <td>{{ item.moCode }}</td>
                 <td>{{ item.moName }}</td>
@@ -60,7 +60,21 @@
                 <td>{{ item.spec }}</td>
                 <td>{{ item.unit }}</td>
                 <td>{{ item.qty }}</td>
-                <td>{{ item.status }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getStatusBg(item.status),
+                      color: getStatusColor(item.status),
+                      border: `1px solid ${getStatusColor(item.status)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.status }}</span>
+                </td>
                 <td class="ol-col">
                   <button>标签打印</button>
                 </td>
@@ -68,7 +82,7 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共4条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -131,9 +145,40 @@ export default {
           qty: 300,
           status: "已完结",
         },
+        {
+          id: 5,
+          code: "TC-2024-005",
+          moCode: "MO-2024-005",
+          moName: "智能插座生产工单",
+          batchNo: "B20240401005",
+          productCode: "P-2024-018",
+          productName: "智能插座",
+          spec: "10A 250V WiFi版",
+          unit: "个",
+          qty: 250,
+          status: "待开始",
+        },
       ],
     };
   },
+  methods: {
+    getStatusColor(status) {
+      const map = {
+        '待开始': '#8c8c8c',
+        '进行中': '#1890ff',
+        '已完结': '#52c41a'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '待开始': '#f5f5f5',
+        '进行中': '#e6f7ff',
+        '已完结': '#f6ffed'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -149,7 +194,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -287,29 +331,62 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
 }
+
 .ol-col {
-  width: 240px;
+  width: 120px;
+  min-width: 120px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 56px;
   height: 32px;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
   color: #006be6;
+}
+.ol-col button:hover {
+  background-color: #f0f4f9;
 }
 
 .main-floot {

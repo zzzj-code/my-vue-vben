@@ -36,21 +36,49 @@
           <table>
             <thead>
               <tr>
-                <th>往来企业编号</th>
-                <th>往来企业名称</th>
-                <th>往来企业类型</th>
-                <th>级别</th>
-                <th>联系人</th>
-                <th>备注</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">往来企业编号</div></th>
+                <th><div class="th-inner">往来企业名称</div></th>
+                <th><div class="th-inner">往来企业类型</div></th>
+                <th><div class="th-inner">级别</div></th>
+                <th><div class="th-inner">联系人</div></th>
+                <th><div class="th-inner">备注</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td>{{ item.enterpriseCode }}</td>
+              <tr v-for="item in tabValue" :key="item.enterpriseCode">
+                <td style="color: #006be6">{{ item.enterpriseCode }}</td>
                 <td>{{ item.enterpriseName }}</td>
-                <td>{{ item.enterpriseType }}</td>
-                <td>{{ item.level }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: '#e6f6ff',
+                      color: '#006be6',
+                      border: '1px solid #006be6',
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.enterpriseType }}</span>
+                </td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getLevelBg(item.level),
+                      color: getLevelColor(item.level),
+                      border: `1px solid ${getLevelColor(item.level)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.level }}</span>
+                </td>
                 <td>{{ item.contact }}</td>
                 <td>{{ item.remark }}</td>
                 <td class="ol-col">
@@ -61,6 +89,7 @@
             </tbody>
           </table>
         </div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -154,6 +183,24 @@ export default {
       ],
     };
   },
+  methods: {
+    getLevelColor(level) {
+      const map = {
+        'A级': '#52c41a',
+        'B级': '#1890ff',
+        'C级': '#faad14'
+      };
+      return map[level] || '#333';
+    },
+    getLevelBg(level) {
+      const map = {
+        'A级': '#f6ffed',
+        'B级': '#e6f7ff',
+        'C级': '#fffbe6'
+      };
+      return map[level] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -169,7 +216,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -306,28 +352,85 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 12px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
+  padding: 0 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
+
 .ol-col {
-  width: 160px;
+  width: 140px;
+  min-width: 140px;
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background-color: #fff;
 }
 .ol-col button {
   width: 38px;
   height: 32px;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ol-col button:first-child {
   color: #006be6;
+}
+.ol-col button:first-child:hover {
+  background-color: #f0f4f9;
 }
 .ol-col button:last-child {
   color: red;
+}
+.ol-col button:last-child:hover {
+  background-color: #fff2f0;
+}
+
+.main-floot {
+  width: 100%;
+  height: 36px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+.main-floot span {
+  display: inline-block;
+  width: 100px;
+  height: 24px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding-top: 3px;
+  margin-left: 5px;
+  text-align: center;
 }
 </style>

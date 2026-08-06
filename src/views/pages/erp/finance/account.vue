@@ -36,14 +36,14 @@
           <table>
             <thead>
               <tr>
-                <th>名称</th>
-                <th>编码</th>
-                <th>备注</th>
-                <th>排序</th>
-                <th>状态</th>
-                <th>是否默认</th>
-                <th>创建时间</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">名称</div></th>
+                <th><div class="th-inner">编码</div></th>
+                <th><div class="th-inner">备注</div></th>
+                <th><div class="th-inner">排序</div></th>
+                <th><div class="th-inner">状态</div></th>
+                <th><div class="th-inner">是否默认</div></th>
+                <th><div class="th-inner">创建时间</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
@@ -70,8 +70,7 @@
 export default {
   data() {
     return {
-      tabValue: [
-      ],
+      tabValue: [],
     };
   },
 };
@@ -89,7 +88,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -112,7 +110,6 @@ export default {
 .top-inp div {
   width: 330px;
   height: 100%;
-  /* border: 1px solid red; */
   font-size: 14px;
   color: #006be6;
 }
@@ -232,26 +229,52 @@ export default {
   border-collapse: separate;
   border-spacing: 0;
   border: 1px solid #e6e6e6;
+  font-size: 14px;
 }
 .main-tab th {
   height: 40px;
-  font-size: 14px;
-  border-right: 1px solid #ccc;
   background-color: #f0eaea;
+  border-right: none;
   text-align: center;
-  padding: 0 24px;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   height: 40px;
   font-size: 14px;
   border-bottom: 1px solid #ccc;
   text-align: center;
-  padding: 0 24px;
+  padding: 0 8px;
   background-color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
-.ol-col{
-    position: sticky;
-    right: 0;
+.ol-col {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background-color: #fff;
 }
 .main-floot {
   width: 100%;

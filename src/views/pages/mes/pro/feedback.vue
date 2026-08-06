@@ -36,27 +36,41 @@
           <table>
             <thead>
               <tr>
-                <th>报工单号</th>
-                <th>报工类型</th>
-                <th>工作站</th>
-                <th>工序</th>
-                <th>生产工单编码</th>
-                <th>产品物料编码</th>
-                <th>产品物料名称</th>
-                <th>规格型号</th>
-                <th>单位</th>
-                <th>报工数量</th>
-                <th>报工人</th>
-                <th>报工时间</th>
-                <th>审核人</th>
-                <th>状态</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">报工单号</div></th>
+                <th><div class="th-inner">报工类型</div></th>
+                <th><div class="th-inner">工作站</div></th>
+                <th><div class="th-inner">工序</div></th>
+                <th><div class="th-inner">生产工单编码</div></th>
+                <th><div class="th-inner">产品物料编码</div></th>
+                <th><div class="th-inner">产品物料名称</div></th>
+                <th><div class="th-inner">规格型号</div></th>
+                <th><div class="th-inner">单位</div></th>
+                <th><div class="th-inner">报工数量</div></th>
+                <th><div class="th-inner">报工人</div></th>
+                <th><div class="th-inner">报工时间</div></th>
+                <th><div class="th-inner">审核人</div></th>
+                <th><div class="th-inner">状态</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td style="color: #006be6">{{ item.code }}</td>
-                <td>{{ item.type }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: '#e6f6ff',
+                      color: '#006be6',
+                      border: '1px solid #006be6',
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.type }}</span>
+                </td>
                 <td>{{ item.station }}</td>
                 <td>{{ item.process }}</td>
                 <td>{{ item.moCode }}</td>
@@ -67,16 +81,31 @@
                 <td>{{ item.qty }}</td>
                 <td>{{ item.reporter }}</td>
                 <td>{{ item.reportTime }}</td>
-                <td>{{ item.approver }}</td>
-                <td>{{ item.status }}</td>
+                <td>{{ item.approver || '-' }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getStatusBg(item.status),
+                      color: getStatusColor(item.status),
+                      border: `1px solid ${getStatusColor(item.status)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.status }}</span>
+                </td>
                 <td class="ol-col">
-                  <button>审批</button>
+                  <button v-if="item.status === '待审核'">审批</button>
+                  <button v-else style="color: #8c8c8c;" disabled>已审批</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共9条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -243,6 +272,22 @@ export default {
       ],
     };
   },
+  methods: {
+    getStatusColor(status) {
+      const map = {
+        '待审核': '#faad14',
+        '已审核': '#52c41a'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '待审核': '#fffbe6',
+        '已审核': '#f6ffed'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -258,7 +303,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -396,29 +440,69 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
 }
+
 .ol-col {
-  width: 240px;
+  width: 100px;
+  min-width: 100px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 56px;
   height: 32px;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
   color: #006be6;
+}
+.ol-col button:hover {
+  background-color: #f0f4f9;
+}
+.ol-col button:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+.ol-col button:disabled:hover {
+  background-color: transparent;
 }
 
 .main-floot {

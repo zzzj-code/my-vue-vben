@@ -36,19 +36,19 @@
           <table>
             <thead>
               <tr>
-                <th>通知单编号</th>
-                <th>通知单名称</th>
-                <th>采购订单编号</th>
-                <th>供应商名称</th>
-                <th>联系人</th>
-                <th>联系方式</th>
-                <th>到货日期</th>
-                <th>单据状态</th>
-                <th class="ol-col">操作</th>
+                <th><div>通知单编号</div></th>
+                <th><div>通知单名称</div></th>
+                <th><div>采购订单编号</div></th>
+                <th><div>供应商名称</div></th>
+                <th><div>联系人</div></th>
+                <th><div>联系方式</div></th>
+                <th><div>到货日期</div></th>
+                <th><div>单据状态</div></th>
+                <th class="ol-col"><div>操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td style="color: #006be6">{{ item.code }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.poCode }}</td>
@@ -258,7 +258,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -392,12 +391,26 @@ export default {
   border-collapse: separate;
   border-spacing: 0;
   border: 1px solid #e6e6e6;
-  font-size: 14px;
+  font-size: 14px; 
 }
+/* th清除原有边框，交给内部div做右边框 */
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
+}
+.main-tab th  div {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
 }
 .main-tab td {
   text-align: center;
@@ -411,7 +424,6 @@ export default {
   width: 180px;
   position: sticky;
   right: 0;
-  border-left: 1px solid #ccc;
 }
 .ol-col button {
   width: 66px;
@@ -420,9 +432,6 @@ export default {
   background-color: #fff;
   color: #006be6;
 }
-/* .ol-col button:last-child {
-  color: red;
-} */
 
 .main-floot {
   width: 100%;

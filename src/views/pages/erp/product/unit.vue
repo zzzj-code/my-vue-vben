@@ -34,19 +34,31 @@
         <div class="main-tab">
           <table>
             <thead>
-              <tr class="col-tr">
-                <th>单位编号</th>
-                <th>单位名称</th>
-                <th>单位状态</th>
-                <th>创建时间</th>
-                <th>操作</th>
+              <tr>
+                <th><div class="th-inner">单位编号</div></th>
+                <th><div class="th-inner">单位名称</div></th>
+                <th><div class="th-inner">单位状态</div></th>
+                <th><div class="th-inner">创建时间</div></th>
+                <th><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
                 <td>{{ item.name }}</td>
-                <td>{{ item.status }}</td>
+                <td>
+                  <span :style="{
+                    color: item.status === '启用' ? '#52c41a' : '#ff4d4f',
+                    backgroundColor: item.status === '启用' ? '#f6ffed' : '#fff2f0',
+                    padding: '2px 12px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    display: 'inline-block',
+                    fontWeight: '500'
+                  }">
+                    {{ item.status }}
+                  </span>
+                </td>
                 <td>{{ item.createTime }}</td>
                 <td>{{ item.remark }}</td>
               </tr>
@@ -176,10 +188,6 @@ export default {
 </script>
 
 <style scoped>
-.col-tr{
-    position: sticky;
-    top: 0;
-}
 .page-wrapper {
   width: 1030px;
   display: grid;
@@ -191,7 +199,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -214,7 +221,6 @@ export default {
 .top-inp div {
   width: 330px;
   height: 100%;
-  /* border: 1px solid red; */
   font-size: 14px;
   color: #006be6;
 }
@@ -326,23 +332,48 @@ export default {
   border-collapse: separate;
   border-spacing: 0;
   border: 1px solid #e6e6e6;
+  font-size: 14px;
 }
 .main-tab th {
   height: 40px;
-  font-size: 14px;
-  border-right: 1px solid #ccc;
   background-color: #f0eaea;
+  border-right: none;
   text-align: center;
-  padding: 0 24px;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   height: 40px;
   font-size: 14px;
   border-bottom: 1px solid #ccc;
   text-align: center;
-  padding: 0 24px;
+  padding: 0 8px;
   background-color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
+
 .main-floot {
   width: 100%;
   height: 36px;

@@ -35,16 +35,16 @@
           <table>
             <thead>
               <tr>
-                <th>任务编号</th>
-                <th>应用名称</th>
-                <th>商户单信息</th>
-                <th>通知类型</th>
-                <th>关联编号</th>
-                <th>通知状态</th>
-                <th>最后通知时间</th>
-                <th>下次通知时间</th>
-                <th>通知次数</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">任务编号</div></th>
+                <th><div class="th-inner">应用名称</div></th>
+                <th><div class="th-inner">商户单信息</div></th>
+                <th><div class="th-inner">通知类型</div></th>
+                <th><div class="th-inner">关联编号</div></th>
+                <th><div class="th-inner">通知状态</div></th>
+                <th><div class="th-inner">最后通知时间</div></th>
+                <th><div class="th-inner">下次通知时间</div></th>
+                <th><div class="th-inner">通知次数</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
@@ -349,9 +349,8 @@ export default {
   overflow: auto;
 }
 .main-tab table {
-  width: max-content;
-  min-width: 1410px;
-  table-layout: auto;
+  width: 100%;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
   border: 1px solid #e6e6e6;
@@ -359,24 +358,70 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
-  padding: 0 12px;
+  border-right: none;
+  border-bottom: 2px solid #ccc;
+  padding: 0;
   white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
+/* 各列宽度控制 */
+.main-tab th:nth-child(1) { width: 12%; }
+.main-tab th:nth-child(2) { width: 12%; }
+.main-tab th:nth-child(3) { width: 14%; }
+.main-tab th:nth-child(4) { width: 10%; }
+.main-tab th:nth-child(5) { width: 10%; }
+.main-tab th:nth-child(6) { width: 10%; }
+.main-tab th:nth-child(7) { width: 12%; }
+.main-tab th:nth-child(8) { width: 12%; }
+.main-tab th:nth-child(9) { width: 8%; }
+.main-tab th:nth-child(10) { width: 10%; }
+
 .main-tab td {
   text-align: center;
   height: 56px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 12px;
-  border-right: 0;
+  padding: 4px 6px;
+  word-wrap: break-word;
+  word-break: break-all;
+  white-space: normal;
+  line-height: 1.4;
 }
+
+/* td 中的 div 和 span 换行处理 */
+.main-tab td div,
+.main-tab td span {
+  word-wrap: break-word;
+  word-break: break-all;
+  white-space: normal;
+}
+
 .ol-col {
   width: 80px;
   min-width: 80px;
   position: sticky;
   right: 0;
+  z-index: 2;
+  background-color: #fff;
   box-shadow: -2px 0 8px rgba(0,0,0,0.08);
 }
 .ol-col button {

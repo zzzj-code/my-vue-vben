@@ -36,27 +36,41 @@
           <table>
             <thead>
               <tr>
-                <th>编号</th>
-                <th>用户</th>
-                <th>工作站编码</th>
-                <th>工作站名称</th>
-                <th>操作类型</th>
-                <th>创建时间</th>
+                <th><div class="th-inner">编号</div></th>
+                <th><div class="th-inner">用户</div></th>
+                <th><div class="th-inner">工作站编码</div></th>
+                <th><div class="th-inner">工作站名称</div></th>
+                <th><div class="th-inner">操作类型</div></th>
+                <th><div class="th-inner">创建时间</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
                 <td>{{ item.user }}</td>
-                <td>{{ item.stationCode }}</td>
+                <td style="color: #006be6">{{ item.stationCode }}</td>
                 <td>{{ item.stationName }}</td>
-                <td>{{ item.operationType }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getOperationTypeBg(item.operationType),
+                      color: getOperationTypeColor(item.operationType),
+                      border: `1px solid ${getOperationTypeColor(item.operationType)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.operationType }}</span>
+                </td>
                 <td>{{ item.createTime }}</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共8条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -134,6 +148,32 @@ export default {
       ],
     };
   },
+  methods: {
+    getOperationTypeColor(type) {
+      const map = {
+        '开始生产': '#52c41a',
+        '暂停生产': '#faad14',
+        '结束生产': '#1890ff',
+        '报工': '#006be6',
+        '设备点检': '#722ed1',
+        '质检完成': '#52c41a',
+        '异常报告': '#ff4d4f'
+      };
+      return map[type] || '#333';
+    },
+    getOperationTypeBg(type) {
+      const map = {
+        '开始生产': '#f6ffed',
+        '暂停生产': '#fffbe6',
+        '结束生产': '#e6f7ff',
+        '报工': '#e6f6ff',
+        '设备点检': '#f9f0ff',
+        '质检完成': '#f6ffed',
+        '异常报告': '#fff2f0'
+      };
+      return map[type] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -149,7 +189,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -286,23 +325,40 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 最后一列不显示右边框 */
+.main-tab th:last-child .th-inner {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
-}
-.ol-col button {
-  width: 56px;
-  height: 32px;
-  border: 0;
-  background-color: #fff;
-  color: #006be6;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
 
 .main-floot {

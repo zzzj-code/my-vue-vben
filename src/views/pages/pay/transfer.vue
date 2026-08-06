@@ -35,18 +35,18 @@
           <table>
             <thead>
               <tr>
-                <th>编号</th>
-                <th>转账金额</th>
-                <th>转账单号</th>
-                <th>转账状态</th>
-                <th>转账渠道</th>
-                <th>创建时间</th>
-                <th>转账时间</th>
-                <th>转账标题</th>
-                <th>支付应用</th>
-                <th>收款人姓名</th>
-                <th>收款账号</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-cell">编号</div></th>
+                <th><div class="th-cell">转账金额</div></th>
+                <th><div class="th-cell">转账单号</div></th>
+                <th><div class="th-cell">转账状态</div></th>
+                <th><div class="th-cell">转账渠道</div></th>
+                <th><div class="th-cell">创建时间</div></th>
+                <th><div class="th-cell">转账时间</div></th>
+                <th><div class="th-cell">转账标题</div></th>
+                <th><div class="th-cell">支付应用</div></th>
+                <th><div class="th-cell">收款人姓名</div></th>
+                <th><div class="th-cell">收款账号</div></th>
+                <th class="ol-col"><div class="th-cell">操作</div></th>
               </tr>
             </thead>
             <tbody>
@@ -412,10 +412,23 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
-  padding: 0 12px;
+  padding: 0;
   white-space: nowrap;
+}
+.main-tab th:last-child {
+  border-right: none;
+}
+.th-cell {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+.main-tab th:last-child .th-cell {
+  border-right: none;
 }
 .main-tab td {
   text-align: center;

@@ -36,33 +36,37 @@
             <table>
               <thead>
                 <tr>
-                  <th class="col-name">客户名称</th>
-                  <th>客商主编码</th>
-                  <th>客户来源</th>
-                  <th>客户联系人</th>
-                  <th>手机</th>
-                  <th>电话</th>
-                  <th>邮箱</th>
-                  <th>客户级别</th>
-                  <th>客户行业</th>
-                  <th>下次联系时间</th>
-                  <th>备注</th>
-                  <th>锁定状态</th>
-                  <th>成交状态</th>
-                  <th>最后跟进时间</th>
-                  <th>最后跟进记录</th>
-                  <th>地址</th>
-                  <th>客户网址</th>
-                  <th>客户规模</th>
-                  <th>客户价值</th>
-                  <th>客户状态</th>
-                  <th>距离进入公海天数</th>
-                  <th>负责人</th>
-                  <th>所属部门</th>
-                  <th>更新时间</th>
-                  <th>创建时间</th>
-                  <th>创建人</th>
-                  <th class="ol-col">操作</th>
+                  <th class="col-name">
+                    <div class="th-inner">客户名称</div>
+                  </th>
+                  <th><div class="th-inner">客商主编码</div></th>
+                  <th><div class="th-inner">客户来源</div></th>
+                  <th><div class="th-inner">客户联系人</div></th>
+                  <th><div class="th-inner">手机</div></th>
+                  <th><div class="th-inner">电话</div></th>
+                  <th><div class="th-inner">邮箱</div></th>
+                  <th><div class="th-inner">客户级别</div></th>
+                  <th><div class="th-inner">客户行业</div></th>
+                  <th><div class="th-inner">下次联系时间</div></th>
+                  <th><div class="th-inner">备注</div></th>
+                  <th><div class="th-inner">锁定状态</div></th>
+                  <th><div class="th-inner">成交状态</div></th>
+                  <th><div class="th-inner">最后跟进时间</div></th>
+                  <th><div class="th-inner">最后跟进记录</div></th>
+                  <th><div class="th-inner">地址</div></th>
+                  <th><div class="th-inner">客户网址</div></th>
+                  <th><div class="th-inner">客户规模</div></th>
+                  <th><div class="th-inner">客户价值</div></th>
+                  <th><div class="th-inner">客户状态</div></th>
+                  <th><div class="th-inner">距离进入公海天数</div></th>
+                  <th><div class="th-inner">负责人</div></th>
+                  <th><div class="th-inner">所属部门</div></th>
+                  <th><div class="th-inner">更新时间</div></th>
+                  <th><div class="th-inner">创建时间</div></th>
+                  <th><div class="th-inner">创建人</div></th>
+                  <th class="ol-col">
+                    <div class="th-inner no-border">操作</div>
+                  </th>
                 </tr>
               </thead>
             </table>
@@ -206,24 +210,62 @@
   border-collapse: separate;
   border-spacing: 0;
   /* border: 1px solid #e6e6e6; */
+  font-size: 14px;
 }
 .main-tab th {
   height: 40px;
   background-color: #e6e1e1;
-  border-right: 1px solid #ccc;
-  min-width: 60px; 
-  max-width: 200px; 
+  border-right: none;
+  min-width: 60px;
+  max-width: 200px;
   white-space: nowrap;
+  border-bottom: 1px solid #ccc;
+}
+
+/* 表头内部 div：承载右边框 */
+.th-inner {
   padding: 0 12px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
-.col-name{
-    position: sticky;
-    left: 0;
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
 }
-.ol-col{
-    position: sticky;
-    right: 0;
+
+/* 固定列：左侧固定（客户名称） */
+.col-name {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background-color: #e6e1e1;
 }
+/* 固定列：右侧固定（操作） */
+.ol-col {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.428);
+}
+
+/* 表格主体 td 保持原有边框 */
+.main-tab td {
+  text-align: center;
+  height: 40px;
+  border-bottom: 1px solid #ccc;
+  background-color: #fff;
+  padding: 0 20px;
+  border-right: 0;
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .main-floot {
   width: 100%;
   height: 36px;

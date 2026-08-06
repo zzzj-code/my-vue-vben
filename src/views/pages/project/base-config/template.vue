@@ -36,19 +36,19 @@
           <table>
             <thead>
               <tr>
-                <th><input type="checkbox" /></th>
-                <th>模板名称</th>
-                <th>项目分类</th>
-                <th>默认工期(天)</th>
-                <th>排序</th>
-                <th>状态</th>
-                <th>模板说明</th>
-                <th>创建时间</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner"><input type="checkbox" /></div></th>
+                <th><div class="th-inner">模板名称</div></th>
+                <th><div class="th-inner">项目分类</div></th>
+                <th><div class="th-inner">默认工期(天)</div></th>
+                <th><div class="th-inner">排序</div></th>
+                <th><div class="th-inner">状态</div></th>
+                <th><div class="th-inner">模板说明</div></th>
+                <th><div class="th-inner">创建时间</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td><input type="checkbox" /></td>
                 <td>{{ item.templateName }}</td>
                 <td>{{ item.category }}</td>
@@ -56,15 +56,17 @@
                 <td>{{ item.sort }}</td>
                 <td>
                   <span
-                    style="
-                      display: inline-block;
-                      width: 40px;
-                      height: 22px;
-                      background-color: #e6f6ff;
-                      color: #006be6;
-                      border: 1px solid #006be6;
-                      border-radius: 5px;
-                    "
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: item.status === '开启' ? '#f6ffed' : '#fff2f0',
+                      color: item.status === '开启' ? '#52c41a' : '#ff4d4f',
+                      border: `1px solid ${item.status === '开启' ? '#52c41a' : '#ff4d4f'}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
                   >
                     {{ item.status }}
                   </span>
@@ -79,7 +81,7 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共1条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -97,8 +99,7 @@ export default {
           defaultDuration: 90,
           sort: 1,
           status: "开启",
-          description:
-            "适用于标准软件开发项目，包含需求、设计、开发、测试全流程",
+          description: "适用于标准软件开发项目，包含需求、设计、开发、测试全流程",
           createTime: "2026-07-01 10:30",
         },
         {
@@ -117,7 +118,7 @@ export default {
           category: "产品研发",
           defaultDuration: 120,
           sort: 3,
-          status: "开启",
+          status: "关闭",
           description: "适用于产品研发项目，采用敏捷开发模式，迭代交付",
           createTime: "2026-07-03 09:15",
         },
@@ -138,7 +139,6 @@ export default {
 .app {
   width: 1014px;
   height: 590px;
-  /* border: 1px solid red; */
   padding: 10px;
   position: absolute;
   top: -380px;
@@ -156,7 +156,6 @@ export default {
 .top-inp {
   width: 100%;
   height: 42px;
-  /* border: 1px solid red; */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -164,7 +163,6 @@ export default {
 .top-inp .inp-1 {
   width: 246px;
   height: 100%;
-  /* border: 1px solid red; */
 }
 .top-inp .inp-1 span {
   display: inline-block;
@@ -289,21 +287,58 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #e9e6e6;
-  padding: 0 20px;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   height: 40px;
   text-align: center;
   background-color: #fff;
   border-bottom: 1px solid #ccc;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
+
+/* 复选框列 */
+.main-tab td:first-child,
+.main-tab th:first-child {
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+}
+
 .ol-col {
   width: 180px;
+  min-width: 180px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 38px;
@@ -311,6 +346,11 @@ export default {
   color: #006be6;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ol-col button:hover {
+  background-color: #f0f4f9;
 }
 .ol-col button:last-child {
   color: red;

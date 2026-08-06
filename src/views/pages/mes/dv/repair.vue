@@ -36,34 +36,50 @@
           <table>
             <thead>
               <tr>
-                <th>维修单编码</th>
-                <th>维修单名称</th>
-                <th>设备名称</th>
-                <th>报修日期</th>
-                <th>保养人</th>
-                <th>状态</th>
-                <th>创建时间</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">维修单编码</div></th>
+                <th><div class="th-inner">维修单名称</div></th>
+                <th><div class="th-inner">设备名称</div></th>
+                <th><div class="th-inner">报修日期</div></th>
+                <th><div class="th-inner">维修人</div></th>
+                <th><div class="th-inner">状态</div></th>
+                <th><div class="th-inner">创建时间</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td style="color: #006be6">{{ item.equipmentCode }}</td>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td style="color: #006be6">{{ item.code }}</td>
+                <td>{{ item.name }}</td>
                 <td>{{ item.equipmentName }}</td>
-                <td>{{ item.planName }}</td>
-                <td>{{ item.checkTime }}</td>
-                <td>{{ item.checker }}</td>
-                <td>{{ item.status }}</td>
+                <td>{{ item.repairDate }}</td>
+                <td>{{ item.repairer }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getStatusBg(item.status),
+                      color: getStatusColor(item.status),
+                      border: `1px solid ${getStatusColor(item.status)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.status }}</span>
+                </td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
                   <button>编辑</button>
                   <button>删除</button>
+                  <button style="color: #faad14;">派单</button>
+                  <button style="color: #52c41a;">完成</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共8条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -76,87 +92,107 @@ export default {
       tabValue: [
         {
           id: 1,
-          equipmentCode: "EQ-2024-001",
+          code: "WX-2024-001",
+          name: "冲压机A异响维修",
           equipmentName: "冲压机A",
-          planName: "冲压设备点检保养方案",
-          checkTime: "2024-07-15 10:30",
-          checker: "张伟",
-          status: "合格",
+          repairDate: "2024-07-15",
+          repairer: "张伟",
+          status: "待派单",
           createTime: "2024-07-15 10:35",
         },
         {
           id: 2,
-          equipmentCode: "EQ-2024-002",
+          code: "WX-2024-002",
+          name: "注塑机A模具更换",
           equipmentName: "注塑机A",
-          planName: "注塑机月度保养方案",
-          checkTime: "2024-07-15 09:00",
-          checker: "李明",
-          status: "合格",
-          createTime: "2024-07-15 09:05",
+          repairDate: "2024-07-14",
+          repairer: "李明",
+          status: "进行中",
+          createTime: "2024-07-14 09:05",
         },
         {
           id: 3,
-          equipmentCode: "EQ-2024-003",
+          code: "WX-2024-003",
+          name: "CNC加工中心A主轴维修",
           equipmentName: "CNC加工中心A",
-          planName: "CNC设备周点检方案",
-          checkTime: "2024-07-14 14:20",
-          checker: "王芳",
-          status: "异常",
-          createTime: "2024-07-14 14:25",
+          repairDate: "2024-07-13",
+          repairer: "王芳",
+          status: "已完成",
+          createTime: "2024-07-13 14:25",
         },
         {
           id: 4,
-          equipmentCode: "EQ-2024-004",
+          code: "WX-2024-004",
+          name: "三坐标测量仪精度校准",
           equipmentName: "三坐标测量仪",
-          planName: "测量设备校准方案",
-          checkTime: "2024-07-14 11:00",
-          checker: "刘洋",
-          status: "合格",
-          createTime: "2024-07-14 11:05",
+          repairDate: "2024-07-12",
+          repairer: "刘洋",
+          status: "待派单",
+          createTime: "2024-07-12 11:05",
         },
         {
           id: 5,
-          equipmentCode: "EQ-2024-005",
+          code: "WX-2024-005",
+          name: "叉车A液压系统维修",
           equipmentName: "叉车A",
-          planName: "叉车季度保养方案",
-          checkTime: "2024-07-13 08:30",
-          checker: "陈静",
-          status: "合格",
-          createTime: "2024-07-13 08:35",
+          repairDate: "2024-07-11",
+          repairer: "陈静",
+          status: "进行中",
+          createTime: "2024-07-11 08:35",
         },
         {
           id: 6,
-          equipmentCode: "EQ-2024-006",
+          code: "WX-2024-006",
+          name: "AGV小车A导航故障维修",
           equipmentName: "AGV小车A",
-          planName: "AGV小车日常点检方案",
-          checkTime: "2024-07-13 09:30",
-          checker: "赵刚",
-          status: "异常",
-          createTime: "2024-07-13 09:35",
+          repairDate: "2024-07-10",
+          repairer: "赵刚",
+          status: "已驳回",
+          createTime: "2024-07-10 09:35",
         },
         {
           id: 7,
-          equipmentCode: "EQ-2024-007",
+          code: "WX-2024-007",
+          name: "空压机A压力异常维修",
           equipmentName: "空压机A",
-          planName: "空压机半年保养方案",
-          checkTime: "2024-07-12 08:00",
-          checker: "孙丽",
-          status: "合格",
-          createTime: "2024-07-12 08:05",
+          repairDate: "2024-07-09",
+          repairer: "孙丽",
+          status: "已完成",
+          createTime: "2024-07-09 08:05",
         },
         {
           id: 8,
-          equipmentCode: "EQ-2024-008",
+          code: "WX-2024-008",
+          name: "货架系统A结构加固",
           equipmentName: "货架系统A",
-          planName: "货架系统定期检查方案",
-          checkTime: "2024-07-12 10:00",
-          checker: "周明",
-          status: "合格",
-          createTime: "2024-07-12 10:05",
+          repairDate: "2024-07-08",
+          repairer: "周明",
+          status: "待派单",
+          createTime: "2024-07-08 10:05",
         },
       ],
     };
   },
+  methods: {
+    getStatusColor(status) {
+      const map = {
+        '待派单': '#8c8c8c',
+        '进行中': '#1890ff',
+        '已完成': '#52c41a',
+        '已驳回': '#ff4d4f'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '待派单': '#f5f5f5',
+        '进行中': '#e6f7ff',
+        '已完成': '#f6ffed',
+        '已驳回': '#fff2f0'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -172,7 +208,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -310,32 +345,82 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
 }
+
 .ol-col {
-  width: 260px;
+  width: 200px;
+  min-width: 200px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 56px;
   height: 32px;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ol-col button:hover {
+  background-color: #f0f4f9;
+}
+.ol-col button:first-child {
   color: #006be6;
 }
-.ol-col button:last-child {
+.ol-col button:nth-child(2) {
   color: red;
+}
+.ol-col button:nth-child(2):hover {
+  background-color: #fff2f0;
+}
+.ol-col button:nth-child(3) {
+  color: #faad14;
+}
+.ol-col button:nth-child(3):hover {
+  background-color: #fffbe6;
+}
+.ol-col button:last-child {
+  color: #52c41a;
+}
+.ol-col button:last-child:hover {
+  background-color: #f6ffed;
 }
 
 .main-floot {

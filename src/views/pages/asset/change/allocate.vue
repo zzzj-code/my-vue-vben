@@ -35,25 +35,87 @@
           <table>
             <thead>
               <tr>
-                <th>序号</th>
-                <th>单据编号</th>
-                <th>类型</th>
-                <th>操作日期</th>
-                <th>申请人</th>
-                <th>部门</th>
-                <th>预计归还</th>
-                <th>归还状态</th>
-                <th>审批状态</th>
-                <th>创建时间</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">序号</div></th>
+                <th><div class="th-inner">单据编号</div></th>
+                <th><div class="th-inner">类型</div></th>
+                <th><div class="th-inner">操作日期</div></th>
+                <th><div class="th-inner">申请人</div></th>
+                <th><div class="th-inner">部门</div></th>
+                <th><div class="th-inner">预计归还</div></th>
+                <th><div class="th-inner">归还状态</div></th>
+                <th><div class="th-inner">审批状态</div></th>
+                <th><div class="th-inner">创建时间</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <div class="asd">暂无数据</div>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="11" class="empty-cell">暂无数据</td>
+              </tr>
+              <tr v-for="(item, index) in tabValue" :key="item.id">
+                <td>{{ index + 1 }}</td>
+                <td style="color: #006be6">{{ item.documentNo }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: '#e6f6ff',
+                      color: '#006be6',
+                      border: '1px solid #006be6',
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.type }}</span>
+                </td>
+                <td>{{ item.operateDate }}</td>
+                <td>{{ item.applicant }}</td>
+                <td>{{ item.department }}</td>
+                <td>{{ item.expectedReturn }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getReturnStatusBg(item.returnStatus),
+                      color: getReturnStatusColor(item.returnStatus),
+                      border: `1px solid ${getReturnStatusColor(item.returnStatus)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.returnStatus }}</span>
+                </td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getApprovalStatusBg(item.approvalStatus),
+                      color: getApprovalStatusColor(item.approvalStatus),
+                      border: `1px solid ${getApprovalStatusColor(item.approvalStatus)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.approvalStatus }}</span>
+                </td>
+                <td>{{ item.createTime }}</td>
+                <td class="ol-col">
+                  <button>详情</button>
+                  <button>编辑</button>
+                  <button>删除</button>
+                  <button style="color: #faad14;">归还</button>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共0条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -64,19 +126,143 @@ export default {
   data() {
     return {
       tabValue: [
-       
+        {
+          id: 1,
+          documentNo: "LY-2026-001",
+          type: "领用",
+          operateDate: "2026-07-15",
+          applicant: "张伟",
+          department: "技术研发部",
+          expectedReturn: "2026-08-15",
+          returnStatus: "未归还",
+          approvalStatus: "已审批",
+          createTime: "2026-07-15 09:30:00",
+        },
+        {
+          id: 2,
+          documentNo: "LY-2026-002",
+          type: "领用",
+          operateDate: "2026-07-20",
+          applicant: "李芳",
+          department: "产品交付部",
+          expectedReturn: "2026-08-20",
+          returnStatus: "已归还",
+          approvalStatus: "已审批",
+          createTime: "2026-07-20 14:20:00",
+        },
+        {
+          id: 3,
+          documentNo: "LY-2026-003",
+          type: "借用",
+          operateDate: "2026-07-25",
+          applicant: "王磊",
+          department: "AI实验室",
+          expectedReturn: "2026-08-10",
+          returnStatus: "未归还",
+          approvalStatus: "待审批",
+          createTime: "2026-07-25 10:15:00",
+        },
+        {
+          id: 4,
+          documentNo: "LY-2026-004",
+          type: "领用",
+          operateDate: "2026-08-01",
+          applicant: "陈静",
+          department: "移动开发部",
+          expectedReturn: "2026-09-01",
+          returnStatus: "已归还",
+          approvalStatus: "已审批",
+          createTime: "2026-08-01 08:45:00",
+        },
+        {
+          id: 5,
+          documentNo: "LY-2026-005",
+          type: "借用",
+          operateDate: "2026-08-05",
+          applicant: "赵明",
+          department: "运维保障部",
+          expectedReturn: "2026-08-25",
+          returnStatus: "未归还",
+          approvalStatus: "已驳回",
+          createTime: "2026-08-05 16:30:00",
+        },
+        {
+          id: 6,
+          documentNo: "LY-2026-006",
+          type: "领用",
+          operateDate: "2026-08-10",
+          applicant: "孙婷",
+          department: "区块链事业部",
+          expectedReturn: "2026-09-10",
+          returnStatus: "逾期未还",
+          approvalStatus: "已审批",
+          createTime: "2026-08-10 11:00:00",
+        },
+        {
+          id: 7,
+          documentNo: "LY-2026-007",
+          type: "借用",
+          operateDate: "2026-08-12",
+          applicant: "刘洋",
+          department: "物联网部",
+          expectedReturn: "2026-08-30",
+          returnStatus: "已归还",
+          approvalStatus: "已审批",
+          createTime: "2026-08-12 09:20:00",
+        },
+        {
+          id: 8,
+          documentNo: "LY-2026-008",
+          type: "领用",
+          operateDate: "2026-08-15",
+          applicant: "周梅",
+          department: "数据智能部",
+          expectedReturn: "2026-09-15",
+          returnStatus: "未归还",
+          approvalStatus: "待审批",
+          createTime: "2026-08-15 13:40:00",
+        },
       ],
     };
   },
+  methods: {
+    getReturnStatusColor(status) {
+      const map = {
+        '已归还': '#52c41a',
+        '未归还': '#faad14',
+        '逾期未还': '#ff4d4f'
+      };
+      return map[status] || '#333';
+    },
+    getReturnStatusBg(status) {
+      const map = {
+        '已归还': '#f6ffed',
+        '未归还': '#fffbe6',
+        '逾期未还': '#fff2f0'
+      };
+      return map[status] || '#fff';
+    },
+    getApprovalStatusColor(status) {
+      const map = {
+        '已审批': '#52c41a',
+        '待审批': '#faad14',
+        '已驳回': '#ff4d4f'
+      };
+      return map[status] || '#333';
+    },
+    getApprovalStatusBg(status) {
+      const map = {
+        '已审批': '#f6ffed',
+        '待审批': '#fffbe6',
+        '已驳回': '#fff2f0'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
 <style scoped>
-.asd{
-    position: absolute;
-    top: 60%;
-    left: 45%;
-}
 .page-wrapper {
   width: 1030px;
   display: grid;
@@ -87,7 +273,6 @@ export default {
 .app {
   width: 1014px;
   height: 590px;
-  /* border: 1px solid red; */
   padding: 10px;
   position: absolute;
   top: -380px;
@@ -105,7 +290,6 @@ export default {
 .top-inp {
   width: 100%;
   height: 42px;
-  /* border: 1px solid red; */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -113,7 +297,6 @@ export default {
 .top-inp .inp-1 {
   width: 246px;
   height: 100%;
-  /* border: 1px solid red; */
 }
 .top-inp .inp-1 span {
   display: inline-block;
@@ -177,7 +360,7 @@ export default {
   width: 10%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding-right: 10px;
 }
 .top-2 button:first-child {
@@ -222,21 +405,94 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #e9e6e6;
-  padding: 0 20px;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   height: 40px;
   text-align: center;
   background-color: #fff;
   border-bottom: 1px solid #ccc;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
 }
+
+/* 序号列 */
+.main-tab td:first-child,
+.main-tab th:first-child {
+  width: 50px;
+  min-width: 50px;
+  max-width: 50px;
+}
+
+/* 空状态 */
+.empty-cell {
+  text-align: center;
+  color: #ccc;
+  font-size: 14px;
+  padding: 60px 0;
+  height: 200px;
+}
+
 .ol-col {
-  width: 280px;
+  width: 200px;
+  min-width: 200px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
+}
+.ol-col button {
+  width: 38px;
+  height: 32px;
+  border: 0;
+  background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ol-col button:hover {
+  background-color: #f0f4f9;
+}
+.ol-col button:first-child,
+.ol-col button:nth-child(2) {
+  color: #006be6;
+}
+.ol-col button:nth-child(3) {
+  color: red;
+}
+.ol-col button:nth-child(3):hover {
+  background-color: #fff2f0;
+}
+.ol-col button:last-child {
+  color: #faad14;
+}
+.ol-col button:last-child:hover {
+  background-color: #fffbe6;
 }
 .main-floot {
   width: 100%;

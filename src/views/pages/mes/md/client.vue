@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>客户列表</div>
           <div>
-            <button>+新增计量单位</button>
+            <button>+新增客户</button>
             <button>导入</button>
             <button>导出</button>
             <button>🔍</button>
@@ -37,28 +37,56 @@
           <table>
             <thead>
               <tr>
-                <th>客户编码</th>
-                <th>客户名称</th>
-                <th>客户简称</th>
-                <th>客户类型</th>
-                <th>客户电话</th>
-                <th>联系人1</th>
-                <th>联系人1电话</th>
-                <th>状态</th>
-                <th>创建时间</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">客户编码</div></th>
+                <th><div class="th-inner">客户名称</div></th>
+                <th><div class="th-inner">客户简称</div></th>
+                <th><div class="th-inner">客户类型</div></th>
+                <th><div class="th-inner">客户电话</div></th>
+                <th><div class="th-inner">联系人1</div></th>
+                <th><div class="th-inner">联系人1电话</div></th>
+                <th><div class="th-inner">状态</div></th>
+                <th><div class="th-inner">创建时间</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td style="color: #006be6">{{ item.code }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.shortName }}</td>
-                <td>{{ item.type }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: '#e6f6ff',
+                      color: '#006be6',
+                      border: '1px solid #006be6',
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.type }}</span>
+                </td>
                 <td>{{ item.phone }}</td>
                 <td>{{ item.contact1 }}</td>
                 <td>{{ item.contact1Phone }}</td>
-                <td>{{ item.status }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getStatusBg(item.status),
+                      color: getStatusColor(item.status),
+                      border: `1px solid ${getStatusColor(item.status)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.status }}</span>
+                </td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
                   <button>编辑</button>
@@ -68,7 +96,7 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共2条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -100,12 +128,64 @@ export default {
           phone: "0769-88885678",
           contact1: "李强",
           contact1Phone: "13800138002",
-          status: "启用",
+          status: "停用",
           createTime: "2024-01-20 14:20",
+        },
+        {
+          id: 3,
+          code: "CUST-2024-003",
+          name: "广州市联创科技有限公司",
+          shortName: "联创科技",
+          type: "科技型客户",
+          phone: "020-88889001",
+          contact1: "王芳",
+          contact1Phone: "13800138003",
+          status: "启用",
+          createTime: "2024-02-01 09:15",
+        },
+        {
+          id: 4,
+          code: "CUST-2024-004",
+          name: "珠海市格力电器销售公司",
+          shortName: "格力销售",
+          type: "贸易型客户",
+          phone: "0756-88885678",
+          contact1: "刘洋",
+          contact1Phone: "13800138004",
+          status: "启用",
+          createTime: "2024-02-10 16:40",
+        },
+        {
+          id: 5,
+          code: "CUST-2024-005",
+          name: "中山市华帝燃具有限公司",
+          shortName: "华帝燃具",
+          type: "生产型客户",
+          phone: "0760-88889002",
+          contact1: "陈静",
+          contact1Phone: "13800138005",
+          status: "启用",
+          createTime: "2024-03-01 11:00",
         },
       ],
     };
   },
+  methods: {
+    getStatusColor(status) {
+      const map = {
+        '启用': '#52c41a',
+        '停用': '#8c8c8c'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '启用': '#f6ffed',
+        '停用': '#f5f5f5'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -121,7 +201,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -260,32 +339,70 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
+
 .ol-col {
-  width: 160px;
+  width: 140px;
+  min-width: 140px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 56px;
   height: 32px;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ol-col button:first-child {
   color: #006be6;
+}
+.ol-col button:first-child:hover {
+  background-color: #f0f4f9;
 }
 .ol-col button:last-child {
   color: red;
+}
+.ol-col button:last-child:hover {
+  background-color: #fff2f0;
 }
 
 .main-floot {

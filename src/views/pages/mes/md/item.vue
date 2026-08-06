@@ -84,28 +84,56 @@
             <table>
               <thead>
                 <tr>
-                  <th>物料编码</th>
-                  <th>物料名称</th>
-                  <th>规格型号</th>
-                  <th>单位</th>
-                  <th>物料分类</th>
-                  <th>物料/产品</th>
-                  <th>安全库存</th>
-                  <th>状态</th>
-                  <th>创建时间</th>
-                  <th class="ol-col">操作</th>
+                  <th><div class="th-inner">物料编码</div></th>
+                  <th><div class="th-inner">物料名称</div></th>
+                  <th><div class="th-inner">规格型号</div></th>
+                  <th><div class="th-inner">单位</div></th>
+                  <th><div class="th-inner">物料分类</div></th>
+                  <th><div class="th-inner">物料/产品</div></th>
+                  <th><div class="th-inner">安全库存</div></th>
+                  <th><div class="th-inner">状态</div></th>
+                  <th><div class="th-inner">创建时间</div></th>
+                  <th class="ol-col"><div class="th-inner no-border">操作</div></th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="item in tabValue">
+                <tr v-for="item in tabValue" :key="item.code">
                   <td style="color: #006be6">{{ item.code }}</td>
                   <td>{{ item.name }}</td>
                   <td>{{ item.spec }}</td>
                   <td>{{ item.unit }}</td>
                   <td>{{ item.category }}</td>
-                  <td>{{ item.type }}</td>
+                  <td>
+                    <span
+                      :style="{
+                        display: 'inline-block',
+                        padding: '0 12px',
+                        height: '24px',
+                        lineHeight: '24px',
+                        backgroundColor: item.type === '物料' ? '#e6f6ff' : '#f6ffed',
+                        color: item.type === '物料' ? '#006be6' : '#52c41a',
+                        border: `1px solid ${item.type === '物料' ? '#006be6' : '#52c41a'}`,
+                        borderRadius: '12px',
+                        fontSize: '12px'
+                      }"
+                    >{{ item.type }}</span>
+                  </td>
                   <td>{{ item.safetyStock }}</td>
-                  <td>{{ item.status }}</td>
+                  <td>
+                    <span
+                      :style="{
+                        display: 'inline-block',
+                        padding: '0 12px',
+                        height: '24px',
+                        lineHeight: '24px',
+                        backgroundColor: getStatusBg(item.status),
+                        color: getStatusColor(item.status),
+                        border: `1px solid ${getStatusColor(item.status)}`,
+                        borderRadius: '12px',
+                        fontSize: '12px'
+                      }"
+                    >{{ item.status }}</span>
+                  </td>
                   <td>{{ item.createTime }}</td>
                   <td class="ol-col">
                     <button>编辑</button>
@@ -116,7 +144,7 @@
               </tbody>
             </table>
           </div>
-          <div class="main-floot">共18条记录<span>20条/页</span></div>
+          <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
         </div>
       </div>
     </div>
@@ -371,7 +399,21 @@ export default {
     selectTab(value) {
       this.selectedTab = value;
     },
-  },
+    getStatusColor(status) {
+      const map = {
+        '启用': '#52c41a',
+        '停用': '#8c8c8c'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '启用': '#f6ffed',
+        '停用': '#f5f5f5'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -387,7 +429,6 @@ export default {
   width: 1006px;
   height: 760px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
   display: flex;
@@ -395,7 +436,6 @@ export default {
 .app-left {
   width: 220px;
   height: 580px;
-  /* border: 1px solid red;  */
   background-color: #fff;
   border-radius: 10px;
 }
@@ -474,12 +514,9 @@ export default {
   color: #666;
 }
 
-/*  */
-
 .app-right {
   width: 802px;
   height: 580px;
-  /* border: 1px solid red; */
   margin-left: 5px;
 }
 .right-top {
@@ -625,36 +662,77 @@ export default {
 }
 .main-tab1 th {
   height: 40px;
-  padding: 0 6px;
-  border-right: 1px solid #ccc;
   background-color: #f3f0f0;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab1 td {
   height: 40px;
-  padding: 0 12px;
+  padding: 0 8px;
   background-color: #fff;
   border-bottom: 1px solid #ccc;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
 }
+
 .ol-col {
-  width: 220px;
-  border-right: 0;
+  width: 200px;
+  min-width: 200px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 56px;
   height: 32px;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ol-col button:first-child {
   color: #006be6;
+}
+.ol-col button:first-child:hover {
+  background-color: #f0f4f9;
 }
 .ol-col button:nth-child(2) {
   color: red;
 }
+.ol-col button:nth-child(2):hover {
+  background-color: #fff2f0;
+}
 .ol-col button:last-child {
   width: 80px;
+  color: #006be6;
+}
+.ol-col button:last-child:hover {
+  background-color: #f0f4f9;
 }
 .main-floot {
   width: 100%;

@@ -36,41 +36,70 @@
           <table>
             <thead>
               <tr>
-                <th>工作站编码</th>
-                <th>工作站名称</th>
-                <th>工单编码</th>
-                <th>工序名称</th>
-                <th>发起人</th>
-                <th>发起时间</th>
-                <th>呼叫原因</th>
-                <th>级别</th>
-                <th>处理时间</th>
-                <th>处理人</th>
-                <th>处置状态</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">工作站编码</div></th>
+                <th><div class="th-inner">工作站名称</div></th>
+                <th><div class="th-inner">工单编码</div></th>
+                <th><div class="th-inner">工序名称</div></th>
+                <th><div class="th-inner">发起人</div></th>
+                <th><div class="th-inner">发起时间</div></th>
+                <th><div class="th-inner">呼叫原因</div></th>
+                <th><div class="th-inner">级别</div></th>
+                <th><div class="th-inner">处理时间</div></th>
+                <th><div class="th-inner">处理人</div></th>
+                <th><div class="th-inner">处置状态</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td>{{ item.stationCode }}</td>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td style="color: #006be6">{{ item.stationCode }}</td>
                 <td>{{ item.stationName }}</td>
                 <td>{{ item.moCode }}</td>
                 <td>{{ item.processName }}</td>
                 <td>{{ item.initiator }}</td>
                 <td>{{ item.initTime }}</td>
                 <td>{{ item.reason }}</td>
-                <td>{{ item.level }}</td>
-                <td>{{ item.handleTime }}</td>
-                <td>{{ item.handler }}</td>
-                <td>{{ item.status }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getLevelBg(item.level),
+                      color: getLevelColor(item.level),
+                      border: `1px solid ${getLevelColor(item.level)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.level }}</span>
+                </td>
+                <td>{{ item.handleTime || '-' }}</td>
+                <td>{{ item.handler || '-' }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getStatusBg(item.status),
+                      color: getStatusColor(item.status),
+                      border: `1px solid ${getStatusColor(item.status)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.status }}</span>
+                </td>
                 <td class="ol-col">
                   <button>标签打印</button>
+                  <button v-if="item.status === '待处理'">处理</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共7条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -182,6 +211,38 @@ export default {
       ],
     };
   },
+  methods: {
+    getLevelColor(level) {
+      const map = {
+        '紧急': '#ff4d4f',
+        '严重': '#faad14',
+        '一般': '#1890ff'
+      };
+      return map[level] || '#333';
+    },
+    getLevelBg(level) {
+      const map = {
+        '紧急': '#fff2f0',
+        '严重': '#fffbe6',
+        '一般': '#e6f7ff'
+      };
+      return map[level] || '#fff';
+    },
+    getStatusColor(status) {
+      const map = {
+        '已处理': '#52c41a',
+        '待处理': '#faad14'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '已处理': '#f6ffed',
+        '待处理': '#fffbe6'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -197,7 +258,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -335,29 +395,68 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
 }
+
 .ol-col {
-  width: 240px;
+  width: 160px;
+  min-width: 160px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 56px;
   height: 32px;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
   color: #006be6;
+}
+.ol-col button:hover {
+  background-color: #f0f4f9;
+}
+.ol-col button:last-child {
+  color: #52c41a;
+}
+.ol-col button:last-child:hover {
+  background-color: #f6ffed;
 }
 
 .main-floot {

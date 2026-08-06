@@ -37,26 +37,58 @@
           <table>
             <thead>
               <tr>
-                <th>供应商编码</th>
-                <th>供应商名称</th>
-                <th>供应商简称</th>
-                <th>供应商等级</th>
-                <th>供应商评分</th>
-                <th>供应商电话</th>
-                <th>状态</th>
-                <th>备注</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">供应商编码</div></th>
+                <th><div class="th-inner">供应商名称</div></th>
+                <th><div class="th-inner">供应商简称</div></th>
+                <th><div class="th-inner">供应商等级</div></th>
+                <th><div class="th-inner">供应商评分</div></th>
+                <th><div class="th-inner">供应商电话</div></th>
+                <th><div class="th-inner">状态</div></th>
+                <th><div class="th-inner">备注</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td style="color: #006be6">{{ item.code }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.shortName }}</td>
-                <td>{{ item.level }}</td>
-                <td>{{ item.score }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getLevelBg(item.level),
+                      color: getLevelColor(item.level),
+                      border: `1px solid ${getLevelColor(item.level)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.level }}</span>
+                </td>
+                <td>
+                  <span :style="{
+                    color: item.score >= 90 ? '#52c41a' : item.score >= 80 ? '#faad14' : '#ff4d4f'
+                  }">{{ item.score }}分</span>
+                </td>
                 <td>{{ item.phone }}</td>
-                <td>{{ item.status }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getStatusBg(item.status),
+                      color: getStatusColor(item.status),
+                      border: `1px solid ${getStatusColor(item.status)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.status }}</span>
+                </td>
                 <td>{{ item.remark }}</td>
                 <td class="ol-col">
                   <button>编辑</button>
@@ -66,7 +98,7 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共3条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -107,12 +139,68 @@ export default {
           level: "A级",
           score: 91,
           phone: "020-88889012",
-          status: "启用",
+          status: "停用",
           remark: "质量优秀，配合度高",
+        },
+        {
+          id: 4,
+          code: "SUP-2024-004",
+          name: "佛山市金丰金属材料有限公司",
+          shortName: "金丰金属",
+          level: "C级",
+          score: 68,
+          phone: "0757-88885678",
+          status: "启用",
+          remark: "价格优势，质量待提升",
+        },
+        {
+          id: 5,
+          code: "SUP-2024-005",
+          name: "珠海市宏达电子有限公司",
+          shortName: "宏达电子",
+          level: "A级",
+          score: 93,
+          phone: "0756-88889001",
+          status: "启用",
+          remark: "核心供应商，战略合作",
         },
       ],
     };
   },
+  methods: {
+    getLevelColor(level) {
+      const map = {
+        'A级': '#52c41a',
+        'B级': '#1890ff',
+        'C级': '#faad14',
+        'D级': '#ff4d4f'
+      };
+      return map[level] || '#333';
+    },
+    getLevelBg(level) {
+      const map = {
+        'A级': '#f6ffed',
+        'B级': '#e6f7ff',
+        'C级': '#fffbe6',
+        'D级': '#fff2f0'
+      };
+      return map[level] || '#fff';
+    },
+    getStatusColor(status) {
+      const map = {
+        '启用': '#52c41a',
+        '停用': '#8c8c8c'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '启用': '#f6ffed',
+        '停用': '#f5f5f5'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -128,7 +216,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -267,32 +354,70 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
+
 .ol-col {
-  width: 160px;
+  width: 140px;
+  min-width: 140px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 56px;
   height: 32px;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ol-col button:first-child {
   color: #006be6;
+}
+.ol-col button:first-child:hover {
+  background-color: #f0f4f9;
 }
 .ol-col button:last-child {
   color: red;
+}
+.ol-col button:last-child:hover {
+  background-color: #fff2f0;
 }
 
 .main-floot {

@@ -36,23 +36,23 @@
           <table>
             <thead>
               <tr>
-                <th><input type="checkbox" name="" id="" /></th>
-                <th>条码</th>
-                <th>条码格式</th>
-                <th>业务类型</th>
-                <th>条码内容</th>
-                <th>业务编码</th>
-                <th>业务名称</th>
-                <th>状态</th>
-                <th class="ol-col">操作</th>
+                <th><div><input type="checkbox" /></div></th>
+                <th><div>条码</div></th>
+                <th><div>条码格式</div></th>
+                <th><div>业务类型</div></th>
+                <th><div>条码内容</div></th>
+                <th><div>业务编码</div></th>
+                <th><div>业务名称</div></th>
+                <th><div>状态</div></th>
+                <th class="ol-col"><div>操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td><input type="checkbox" name="" id="" /></td>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td><input type="checkbox" /></td>
                 <td>{{ item.barcode }}</td>
                 <td>{{ item.format }}</td>
-                <td>{{ item.bizName }}</td>
+                <td>{{ item.bizType }}</td>
                 <td>{{ item.content }}</td>
                 <td>{{ item.bizCode }}</td>
                 <td>{{ item.bizName }}</td>
@@ -295,7 +295,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -431,10 +430,24 @@ export default {
   border: 1px solid #e6e6e6;
   font-size: 14px;
 }
+/* th高度保持40px不变，去掉th本身右边框，边框交给内部div */
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
+}
+.main-tab th  div {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
 }
 .main-tab td {
   text-align: center;
@@ -448,7 +461,6 @@ export default {
   width: 200px;
   position: sticky;
   right: 0;
-  border-left: 1px solid #ccc;
 }
 .ol-col button {
   width: 46px;

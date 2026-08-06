@@ -84,21 +84,21 @@
             <table>
               <thead>
                 <tr>
-                  <th>产品物料编码</th>
-                  <th>产品物料名称</th>
-                  <th>规格型号</th>
-                  <th>在库数量</th>
-                  <th>单位</th>
-                  <th>批次号</th>
-                  <th>仓库</th>
-                  <th>库区</th>
-                  <th>库位</th>
-                  <th>入库日期</th>
-                  <th>冻结</th>
+                  <th><div>产品物料编码</div></th>
+                  <th><div>产品物料名称</div></th>
+                  <th><div>规格型号</div></th>
+                  <th><div>在库数量</div></th>
+                  <th><div>单位</div></th>
+                  <th><div>批次号</div></th>
+                  <th><div>仓库</div></th>
+                  <th><div>库区</div></th>
+                  <th><div>库位</div></th>
+                  <th><div>入库日期</div></th>
+                  <th class="ol-col"><div>冻结</div></th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="item in tabValue">
+                <tr v-for="item in tabValue" :key="item.id">
                   <td>{{ item.materialCode }}</td>
                   <td>{{ item.materialName }}</td>
                   <td>{{ item.spec }}</td>
@@ -109,7 +109,7 @@
                   <td>{{ item.area }}</td>
                   <td>{{ item.location }}</td>
                   <td>{{ item.storageDate }}</td>
-                  <td>{{ item.isFrozen }}</td>
+                  <td class="ol-col">{{ item.isFrozen }}</td>
                 </tr>
               </tbody>
             </table>
@@ -439,7 +439,6 @@ export default {
   width: 1006px;
   height: 760px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
   display: flex;
@@ -447,7 +446,6 @@ export default {
 .app-left {
   width: 220px;
   height: 580px;
-  /* border: 1px solid red;  */
   background-color: #fff;
   border-radius: 10px;
 }
@@ -526,12 +524,9 @@ export default {
   color: #666;
 }
 
-/*  */
-
 .app-right {
   width: 802px;
   height: 580px;
-  /* border: 1px solid red; */
   margin-left: 5px;
 }
 .right-top {
@@ -677,9 +672,23 @@ export default {
 }
 .main-tab1 th {
   height: 40px;
-  padding: 0 6px;
+  background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
+}
+.main-tab1 th > div {
+  padding: 0 8px;
   border-right: 1px solid #ccc;
-  background-color: #f3f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-weight: 600;
+  color: #333;
+}
+.main-tab1 th.ol-col > div {
+  border-right: none;
 }
 .main-tab1 td {
   height: 40px;
@@ -687,26 +696,13 @@ export default {
   background-color: #fff;
   border-bottom: 1px solid #ccc;
   text-align: center;
+  border-right:0;
 }
 .ol-col {
   width: 220px;
-  border-right: 0;
   position: sticky;
   right: 0;
-  border-left: 1px solid #ccc;
-}
-.ol-col button {
-  width: 56px;
-  height: 32px;
-  border: 0;
-  background-color: #fff;
-  color: #006be6;
-}
-.ol-col button:nth-child(2) {
-  color: red;
-}
-.ol-col button:last-child {
-  width: 80px;
+  /* 已去掉 border-left */
 }
 .main-floot {
   width: 100%;

@@ -35,17 +35,17 @@
           <table>
             <thead>
               <tr>
-                <th>编号</th>
-                <th>支付金额</th>
-                <th>退款金额</th>
-                <th>手续金额</th>
-                <th>订单号</th>
-                <th>支付状态</th>
-                <th>支付渠道</th>
-                <th>支付时间</th>
-                <th>支付应用</th>
-                <th>商品标题</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">编号</div></th>
+                <th><div class="th-inner">支付金额</div></th>
+                <th><div class="th-inner">退款金额</div></th>
+                <th><div class="th-inner">手续金额</div></th>
+                <th><div class="th-inner">订单号</div></th>
+                <th><div class="th-inner">支付状态</div></th>
+                <th><div class="th-inner">支付渠道</div></th>
+                <th><div class="th-inner">支付时间</div></th>
+                <th><div class="th-inner">支付应用</div></th>
+                <th><div class="th-inner">商品标题</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
@@ -81,9 +81,7 @@
                 </td>
                 <td>{{ item.payTime }}</td>
                 <td>{{ item.appName }}</td>
-                <td style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                  {{ item.productTitle }}
-                </td>
+                <td>{{ item.productTitle }}</td>
                 <td class="ol-col">
                   <button @click="handleDetail(item)">详情</button>
                 </td>
@@ -115,6 +113,9 @@ export default {
   computed: {
     totalPages() {
       return Math.ceil(this.allData.length / this.pageSize);
+    },
+    totalRecords() {
+      return this.allData.length;
     }
   },
   mounted() {
@@ -360,9 +361,8 @@ export default {
   overflow: auto;
 }
 .main-tab table {
-  width: max-content;
-  min-width: 1550px;
-  table-layout: auto;
+  width: 100%;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
   border: 1px solid #e6e6e6;
@@ -370,24 +370,71 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
-  padding: 0 12px;
+  border-right: none;
+  border-bottom: 2px solid #ccc;
+  padding: 0;
   white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
+/* 各列宽度控制 */
+.main-tab th:nth-child(1) { width: 6%; }
+.main-tab th:nth-child(2) { width: 9%; }
+.main-tab th:nth-child(3) { width: 9%; }
+.main-tab th:nth-child(4) { width: 9%; }
+.main-tab th:nth-child(5) { width: 12%; }
+.main-tab th:nth-child(6) { width: 10%; }
+.main-tab th:nth-child(7) { width: 10%; }
+.main-tab th:nth-child(8) { width: 12%; }
+.main-tab th:nth-child(9) { width: 10%; }
+.main-tab th:nth-child(10) { width: 12%; }
+.main-tab th:nth-child(11) { width: 8%; }
+
 .main-tab td {
   text-align: center;
   height: 56px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 12px;
-  border-right: 0;
+  padding: 4px 6px;
+  word-wrap: break-word;
+  word-break: break-all;
+  white-space: normal;
+  line-height: 1.4;
 }
+
+/* td 中的 div 和 span 换行处理 */
+.main-tab td div,
+.main-tab td span {
+  word-wrap: break-word;
+  word-break: break-all;
+  white-space: normal;
+}
+
 .ol-col {
   width: 80px;
   min-width: 80px;
   position: sticky;
   right: 0;
+  z-index: 2;
+  background-color: #fff;
   box-shadow: -2px 0 8px rgba(0,0,0,0.08);
 }
 .ol-col button {
@@ -411,7 +458,6 @@ export default {
   font-size: 12px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
 }
 .left-info {
   display: flex;
@@ -426,5 +472,37 @@ export default {
   border: 1px solid #ccc;
   text-align: center;
   padding-top: 3px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pagination button {
+  padding: 2px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  height: 24px;
+  font-size: 12px;
+}
+.pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.pagination button:hover:not(:disabled) {
+  background-color: #006be6;
+  color: #fff;
+  border-color: #006be6;
+}
+.pagination span {
+  font-weight: 500;
+  min-width: 40px;
+  text-align: center;
+  border: none;
+  padding-top: 0;
+  height: auto;
 }
 </style>

@@ -34,14 +34,14 @@
           <table>
             <thead>
               <tr>
-                <th>序号</th>
-                <th>方向</th>
-                <th>单据编号</th>
-                <th>发票号码</th>
-                <th>对方单位</th>
-                <th>发票类型</th>
-                <th>价税合计</th>
-                <th>开票日期</th>
+                <th><div>序号</div></th>
+                <th><div>方向</div></th>
+                <th><div>单据编号</div></th>
+                <th><div>发票号码</div></th>
+                <th><div>对方单位</div></th>
+                <th><div>发票类型</div></th>
+                <th><div>价税合计</div></th>
+                <th><div>开票日期</div></th>
               </tr>
             </thead>
             <tbody>
@@ -69,7 +69,7 @@ export default {
   data() {
     return {
       tabValue: [
-        
+
       ],
     };
   },
@@ -87,7 +87,6 @@ export default {
 .app {
   width: 1014px;
   height: 590px;
-  /* border: 1px solid red; */
   padding: 10px;
   position: absolute;
   top: -380px;
@@ -213,13 +212,24 @@ export default {
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
-  /* border: 1px solid #e6e6e6; */
   font-size: 14px;
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
+}
+.main-tab th > div {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-weight: 600;
+  color: #333;
 }
 .main-tab td {
   text-align: center;

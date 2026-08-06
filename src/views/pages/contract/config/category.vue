@@ -18,15 +18,33 @@
           <table>
             <thead>
               <tr>
-                <th class="col-id">ID</th>
-                <th class="col-name">组织名称</th>
-                <th style="width: 40px;"><input type="checkbox" /></th>
-                <th style="width: 28px;">组织类型</th>
-                <th style="width: 138px;">负责人</th>
-                <th style="width: 100px;">显示顺序</th>
-                <th style="width: 100px;">组织状态</th>
-                <th style="width: 168px;">创建时间</th>
-                <th class="op-col">操作</th>
+                <th class="col-id">
+                  <div>ID</div>
+                </th>
+                <th class="col-name">
+                  <div>组织名称</div>
+                </th>
+                <th style="width: 40px;">
+                  <div><input type="checkbox" /></div>
+                </th>
+                <th style="width: 28px;">
+                  <div>组织类型</div>
+                </th>
+                <th style="width: 138px;">
+                  <div>负责人</div>
+                </th>
+                <th style="width: 100px;">
+                  <div>显示顺序</div>
+                </th>
+                <th style="width: 100px;">
+                  <div>组织状态</div>
+                </th>
+                <th style="width: 168px;">
+                  <div>创建时间</div>
+                </th>
+                <th class="op-col">
+                  <div>操作</div>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -304,11 +322,13 @@
   text-align: center;
   padding: 8px 10px;
   border-bottom: 1px solid #f0f0f0;
-  border-right: 1px solid #e6e6e6; /* 列分隔线 */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   background-color: #f7f5f5;
+}
+.main-center table th div{
+  border-right: 1px solid #e6e6e6;
 }
 .main-center table td{
     height: 40px;

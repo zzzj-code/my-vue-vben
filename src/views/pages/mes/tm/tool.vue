@@ -36,42 +36,70 @@
           <table>
             <thead>
               <tr>
-                <th>工具编码</th>
-                <th>工具名称</th>
-                <th>工具类型</th>
-                <th>品牌</th>
-                <th>型号规格</th>
-                <th>库存数量</th>
-                <th>可用数量</th>
-                <th>保养维护类型</th>
-                <th>下次保养</th>
-                <th>状态</th>
-                <th>创建时间</th>
-                <th class="ol-col">操作</th>
+                <th><div class="th-inner">工具编码</div></th>
+                <th><div class="th-inner">工具名称</div></th>
+                <th><div class="th-inner">工具类型</div></th>
+                <th><div class="th-inner">品牌</div></th>
+                <th><div class="th-inner">型号规格</div></th>
+                <th><div class="th-inner">库存数量</div></th>
+                <th><div class="th-inner">可用数量</div></th>
+                <th><div class="th-inner">保养维护类型</div></th>
+                <th><div class="th-inner">下次保养</div></th>
+                <th><div class="th-inner">状态</div></th>
+                <th><div class="th-inner">创建时间</div></th>
+                <th class="ol-col"><div class="th-inner no-border">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td style="color: #006be6;">T00064</td>
-                <td>旧量具</td>
-                <td>量具</td>
-                <td>国产</td>
-                <td>LJ-50</td>
-                <td>1</td>
-                <td>0</td>
-                <td>定期维护</td>
-                <td>-</td>
-                <td>报废</td>
-                <td>2022-10-01 10:00:00</td>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td style="color: #006be6">{{ item.code }}</td>
+                <td>{{ item.name }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: '#e6f6ff',
+                      color: '#006be6',
+                      border: '1px solid #006be6',
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.toolType }}</span>
+                </td>
+                <td>{{ item.brand }}</td>
+                <td>{{ item.spec }}</td>
+                <td>{{ item.stockQty }}</td>
+                <td>{{ item.availableQty }}</td>
+                <td>{{ item.maintenanceType }}</td>
+                <td>{{ item.nextMaintenance || '-' }}</td>
+                <td>
+                  <span
+                    :style="{
+                      display: 'inline-block',
+                      padding: '0 12px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      backgroundColor: getStatusBg(item.status),
+                      color: getStatusColor(item.status),
+                      border: `1px solid ${getStatusColor(item.status)}`,
+                      borderRadius: '12px',
+                      fontSize: '12px'
+                    }"
+                  >{{ item.status }}</span>
+                </td>
+                <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                    <button>编辑</button>
-                    <button>删除</button>
+                  <button>编辑</button>
+                  <button>删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共1条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -82,10 +110,169 @@ export default {
   data() {
     return {
       tabValue: [
-        
+        {
+          id: 1,
+          code: "T00001",
+          name: "游标卡尺",
+          toolType: "量具",
+          brand: "三丰",
+          spec: "0-150mm 0.02mm",
+          stockQty: 5,
+          availableQty: 5,
+          maintenanceType: "定期校准",
+          nextMaintenance: "2026-08-15",
+          status: "启用",
+          createTime: "2023-01-15 09:30:00",
+        },
+        {
+          id: 2,
+          code: "T00002",
+          name: "千分尺",
+          toolType: "量具",
+          brand: "三丰",
+          spec: "0-25mm 0.01mm",
+          stockQty: 3,
+          availableQty: 2,
+          maintenanceType: "定期校准",
+          nextMaintenance: "2026-09-01",
+          status: "启用",
+          createTime: "2023-02-20 14:20:00",
+        },
+        {
+          id: 3,
+          code: "T00003",
+          name: "数控刀架",
+          toolType: "刀具",
+          brand: "山特维克",
+          spec: "SDNCN-12-08",
+          stockQty: 8,
+          availableQty: 6,
+          maintenanceType: "日常保养",
+          nextMaintenance: "2026-08-20",
+          status: "启用",
+          createTime: "2023-03-10 10:00:00",
+        },
+        {
+          id: 4,
+          code: "T00004",
+          name: "铣刀",
+          toolType: "刀具",
+          brand: "肯纳",
+          spec: "D10×R0.5×100L",
+          stockQty: 12,
+          availableQty: 8,
+          maintenanceType: "日常保养",
+          nextMaintenance: "2026-08-25",
+          status: "启用",
+          createTime: "2023-04-05 16:40:00",
+        },
+        {
+          id: 5,
+          code: "T00005",
+          name: "百分表",
+          toolType: "量具",
+          brand: "上工",
+          spec: "0-10mm 0.01mm",
+          stockQty: 2,
+          availableQty: 1,
+          maintenanceType: "定期校准",
+          nextMaintenance: "2026-07-30",
+          status: "维修中",
+          createTime: "2023-05-12 11:20:00",
+        },
+        {
+          id: 6,
+          code: "T00006",
+          name: "角磨机",
+          toolType: "电动工具",
+          brand: "博世",
+          spec: "GWS 7-125",
+          stockQty: 3,
+          availableQty: 3,
+          maintenanceType: "定期维护",
+          nextMaintenance: "2026-09-10",
+          status: "启用",
+          createTime: "2023-06-18 08:50:00",
+        },
+        {
+          id: 7,
+          code: "T00007",
+          name: "气动扳手",
+          toolType: "气动工具",
+          brand: "英格索兰",
+          spec: "2135TiMAX",
+          stockQty: 2,
+          availableQty: 2,
+          maintenanceType: "定期维护",
+          nextMaintenance: "2026-08-28",
+          status: "启用",
+          createTime: "2023-07-22 13:30:00",
+        },
+        {
+          id: 8,
+          code: "T00008",
+          name: "旧量具",
+          toolType: "量具",
+          brand: "国产",
+          spec: "LJ-50",
+          stockQty: 1,
+          availableQty: 0,
+          maintenanceType: "定期维护",
+          nextMaintenance: "-",
+          status: "报废",
+          createTime: "2022-10-01 10:00:00",
+        },
+        {
+          id: 9,
+          code: "T00009",
+          name: "电烙铁",
+          toolType: "电动工具",
+          brand: "白光",
+          spec: "936 恒温",
+          stockQty: 4,
+          availableQty: 3,
+          maintenanceType: "日常保养",
+          nextMaintenance: "2026-09-05",
+          status: "启用",
+          createTime: "2023-08-15 15:10:00",
+        },
+        {
+          id: 10,
+          code: "T00010",
+          name: "内六角扳手组",
+          toolType: "手工具",
+          brand: "世达",
+          spec: "09101 9件套",
+          stockQty: 6,
+          availableQty: 6,
+          maintenanceType: "-",
+          nextMaintenance: "-",
+          status: "启用",
+          createTime: "2023-09-20 09:00:00",
+        },
       ],
     };
   },
+  methods: {
+    getStatusColor(status) {
+      const map = {
+        '启用': '#52c41a',
+        '停用': '#8c8c8c',
+        '维修中': '#faad14',
+        '报废': '#ff4d4f'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '启用': '#f6ffed',
+        '停用': '#f5f5f5',
+        '维修中': '#fffbe6',
+        '报废': '#fff2f0'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -101,7 +288,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -239,32 +425,70 @@ export default {
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #ece8e8;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   text-align: center;
   height: 40px;
   border-bottom: 1px solid #ccc;
   background-color: #fff;
-  padding: 0 20px;
-  border-right: 0;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
 }
+
 .ol-col {
-  width: 180px;
+  width: 140px;
+  min-width: 140px;
   position: sticky;
   right: 0;
+  z-index: 2;
   border-left: 1px solid #ccc;
+  background-color: #fff;
 }
 .ol-col button {
   width: 56px;
   height: 32px;
   border: 0;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ol-col button:first-child {
   color: #006be6;
+}
+.ol-col button:first-child:hover {
+  background-color: #f0f4f9;
 }
 .ol-col button:last-child {
   color: red;
+}
+.ol-col button:last-child:hover {
+  background-color: #fff2f0;
 }
 
 .main-floot {

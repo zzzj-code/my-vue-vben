@@ -52,27 +52,31 @@
           <table>
             <thead>
               <tr>
-                <th class="col-name">线索名称</th>
-                <th>线索来源</th>
-                <th>手机</th>
-                <th>电话</th>
-                <th>邮箱</th>
-                <th>地址</th>
-                <th>客户行业</th>
-                <th>客户级别</th>
-                <th>下次联系时间</th>
-                <th>备注</th>
-                <th>最后跟进时间</th>
-                <th>最后跟进记录</th>
-                <th>负责人</th>
-                <th>所属部门</th>
-                <th>更新时间</th>
-                <th>创建时间</th>
-                <th class="ol-col">操作</th>
+                <th class="col-name">
+                  <div class="th-inner">线索名称</div>
+                </th>
+                <th><div class="th-inner">线索来源</div></th>
+                <th><div class="th-inner">手机</div></th>
+                <th><div class="th-inner">电话</div></th>
+                <th><div class="th-inner">邮箱</div></th>
+                <th><div class="th-inner">地址</div></th>
+                <th><div class="th-inner">客户行业</div></th>
+                <th><div class="th-inner">客户级别</div></th>
+                <th><div class="th-inner">下次联系时间</div></th>
+                <th><div class="th-inner">备注</div></th>
+                <th><div class="th-inner">最后跟进时间</div></th>
+                <th><div class="th-inner">最后跟进记录</div></th>
+                <th><div class="th-inner">负责人</div></th>
+                <th><div class="th-inner">所属部门</div></th>
+                <th><div class="th-inner">更新时间</div></th>
+                <th><div class="th-inner">创建时间</div></th>
+                <th class="ol-col">
+                  <div class="th-inner no-border">操作</div>
+                </th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td class="col-name">{{ item.name }}</td>
                 <td>{{ item.source }}</td>
                 <td>{{ item.mobile }}</td>
@@ -106,6 +110,139 @@ export default {
     return {
       activeTab: "mine",
       tabValue: [
+        {
+          id: 1,
+          name: "张三科技",
+          source: "官网咨询",
+          mobile: "138****1234",
+          phone: "010-8888****",
+          email: "zhangsan@tech.com",
+          address: "北京市朝阳区建国路88号",
+          industry: "互联网",
+          level: "A级",
+          nextContact: "2026-08-05 14:00",
+          remark: "有意向，需跟进",
+          lastFollowTime: "2026-07-28 10:30",
+          lastFollowRecord: "已沟通产品方案，客户感兴趣",
+          owner: "王经理",
+          department: "销售一部",
+          updateTime: "2026-07-28 10:30",
+          createTime: "2026-07-20 09:00",
+        },
+        {
+          id: 2,
+          name: "李四制造",
+          source: "客户转介绍",
+          mobile: "139****5678",
+          phone: "021-6666****",
+          email: "lisi@make.com",
+          address: "上海市浦东新区张江路100号",
+          industry: "制造业",
+          level: "B级",
+          nextContact: "2026-08-10 09:30",
+          remark: "需准备报价单",
+          lastFollowTime: "2026-07-27 16:20",
+          lastFollowRecord: "已发送产品资料，等待回复",
+          owner: "李主管",
+          department: "销售二部",
+          updateTime: "2026-07-27 16:20",
+          createTime: "2026-07-18 14:30",
+        },
+        {
+          id: 3,
+          name: "王五教育",
+          source: "线下展会",
+          mobile: "137****9012",
+          phone: "0755-5555****",
+          email: "wangwu@edu.com",
+          address: "深圳市南山区科技园路66号",
+          industry: "教育行业",
+          level: "A级",
+          nextContact: "2026-08-01 15:00",
+          remark: "决策人已明确，近期签约",
+          lastFollowTime: "2026-07-28 11:00",
+          lastFollowRecord: "已确认合作意向，准备合同",
+          owner: "张经理",
+          department: "销售一部",
+          updateTime: "2026-07-28 11:00",
+          createTime: "2026-07-15 10:00",
+        },
+        {
+          id: 4,
+          name: "赵六医疗",
+          source: "线上广告",
+          mobile: "136****3456",
+          phone: "010-7777****",
+          email: "zhaoliu@med.com",
+          address: "北京市海淀区中关村路88号",
+          industry: "医疗健康",
+          level: "C级",
+          nextContact: "2026-08-12 10:00",
+          remark: "预算有限，需多次沟通",
+          lastFollowTime: "2026-07-26 09:00",
+          lastFollowRecord: "初步沟通，客户在比较竞品",
+          owner: "王经理",
+          department: "销售一部",
+          updateTime: "2026-07-26 09:00",
+          createTime: "2026-07-12 16:20",
+        },
+        {
+          id: 5,
+          name: "孙七金融",
+          source: "合作伙伴推荐",
+          mobile: "135****7890",
+          phone: "021-9999****",
+          email: "sunqi@finance.com",
+          address: "上海市静安区南京西路200号",
+          industry: "金融行业",
+          level: "A级",
+          nextContact: "2026-07-30 14:30",
+          remark: "紧急需求，优先处理",
+          lastFollowTime: "2026-07-28 13:00",
+          lastFollowRecord: "已提供解决方案，客户满意",
+          owner: "李主管",
+          department: "销售二部",
+          updateTime: "2026-07-28 13:00",
+          createTime: "2026-07-10 11:00",
+        },
+        {
+          id: 6,
+          name: "周八零售",
+          source: "官网咨询",
+          mobile: "134****9012",
+          phone: "0755-4444****",
+          email: "zhouba@retail.com",
+          address: "深圳市福田区华强路50号",
+          industry: "零售行业",
+          level: "B级",
+          nextContact: "2026-08-08 09:00",
+          remark: "需要演示产品",
+          lastFollowTime: "2026-07-25 15:30",
+          lastFollowRecord: "已预约线上演示",
+          owner: "张经理",
+          department: "销售一部",
+          updateTime: "2026-07-25 15:30",
+          createTime: "2026-07-08 13:40",
+        },
+        {
+          id: 7,
+          name: "吴九物流",
+          source: "客户转介绍",
+          mobile: "133****2345",
+          phone: "010-3333****",
+          email: "wujiu@logistics.com",
+          address: "北京市通州区物流园区8号",
+          industry: "物流行业",
+          level: "B级",
+          nextContact: "2026-08-06 16:00",
+          remark: "重点跟进客户",
+          lastFollowTime: "2026-07-27 10:00",
+          lastFollowRecord: "已沟通合作细节",
+          owner: "王经理",
+          department: "销售一部",
+          updateTime: "2026-07-27 10:00",
+          createTime: "2026-07-05 09:20",
+        },
       ],
     };
   },
@@ -124,7 +261,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -148,7 +284,6 @@ export default {
 .top-box div {
   flex: 0 0 calc(33.333% - 10px);
   height: 42px;
-  /* border: 1px solid red; */
 }
 .top-box div span {
   display: inline-block;
@@ -197,7 +332,6 @@ export default {
 .main-top {
   width: 100%;
   height: 77px;
-  /* border: 1px solid red; */
   display: flex;
   align-items: center;
 }
@@ -215,9 +349,7 @@ export default {
 .top-tab div {
   width: 76px;
   height: 100%;
-  /* border: 1px solid red; */
   font-size: 14px;
-  /* color: #ccc; */
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -233,7 +365,6 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* border: 1px solid red; */
   padding-right: 10px;
 }
 .top-2 button {
@@ -260,7 +391,6 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* border: 1px solid red; */
 }
 .top-3 button {
   width: 30px;
@@ -285,37 +415,68 @@ export default {
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
-  /* border: 1px solid #e6e6e6; */
+  font-size: 14px;
 }
 .main-tab th {
-  min-width: 100px;
   height: 40px;
   background-color: #e6e1e1;
-  border-right: 1px solid #ccc;
+  border-right: none;
   min-width: 60px;
   max-width: 200px;
   white-space: nowrap;
-  padding: 0 12px;
+  padding: 0;
 }
-.main-tab td{
-    height: 40px;
-    border-bottom: 1px solid #ccc;
-    background-color: #fff;
-    text-align: center;
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
 }
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
+.main-tab td {
+  height: 40px;
+  border-bottom: 1px solid #ccc;
+  background-color: #fff;
+  text-align: center;
+  padding: 0 8px;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+/* 固定列：左侧固定（线索名称） */
 .col-name {
   position: sticky;
   left: 0;
+  z-index: 2;
+  background-color: #e6e1e1;
 }
+/* 固定列：右侧固定（操作） */
 .ol-col {
   position: sticky;
   right: 0;
+  z-index: 2;
+  background-color: #fff;
 }
+
 .main-floot {
   width: 100%;
   height: 36px;
   margin-top: 5px;
-  /* border: 1px solid red; */
   font-size: 12px;
 }
 .main-floot span {

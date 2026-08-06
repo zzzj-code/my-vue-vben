@@ -48,46 +48,50 @@
         <div class="main-tab">
           <table>
             <thead>
-                <tr>
-                    <th class="col-name">线索名称</th>
-                    <th>线索来源</th>
-                    <th>手机</th>
-                    <th>电话</th>
-                    <th>邮箱</th>
-                    <th>地址</th>
-                    <th>客户行业</th>
-                    <th>客户级别</th>
-                    <th>下次联系时间</th>
-                    <th>备注</th>
-                    <th>最后跟进时间</th>
-                    <th>最后跟进记录</th>
-                    <th>负责人</th>
-                    <th>所属部门</th>
-                    <th>更新时间</th>
-                    <th>创建时间</th>
-                    <th>操作</th>
-                </tr>
+              <tr>
+                <th class="col-name">
+                  <div class="th-inner">线索名称</div>
+                </th>
+                <th><div class="th-inner">线索来源</div></th>
+                <th><div class="th-inner">手机</div></th>
+                <th><div class="th-inner">电话</div></th>
+                <th><div class="th-inner">邮箱</div></th>
+                <th><div class="th-inner">地址</div></th>
+                <th><div class="th-inner">客户行业</div></th>
+                <th><div class="th-inner">客户级别</div></th>
+                <th><div class="th-inner">下次联系时间</div></th>
+                <th><div class="th-inner">备注</div></th>
+                <th><div class="th-inner">最后跟进时间</div></th>
+                <th><div class="th-inner">最后跟进记录</div></th>
+                <th><div class="th-inner">负责人</div></th>
+                <th><div class="th-inner">所属部门</div></th>
+                <th><div class="th-inner">更新时间</div></th>
+                <th><div class="th-inner">创建时间</div></th>
+                <th class="ol-col">
+                  <div class="th-inner no-border">操作</div>
+                </th>
+              </tr>
             </thead>
             <tbody>
-                <tr v-for="item in 4">
-                    <td class="col-name">官网咨询</td>
-                    <td>张三科技</td>
-                    <td>138****1234</td>
-                    <td>010-8888****</td>
-                    <td>zhangsan@tech.com</td>
-                    <td>北京市朝阳区建国路88号</td>
-                    <td>互联网</td>
-                    <td>A级</td>
-                    <td>2026-08-05 14:00</td>
-                    <td>有意向，需跟进</td>
-                    <td>2026-07-28 10:30</td>
-                    <td>已沟通产品方案，客户感兴趣</td>
-                    <td>王经理</td>
-                    <td>销售一部</td>
-                    <td>2026-07-28 10:30</td>
-                    <td>2026-07-20 09:00</td>
-                    <td>删除</td>
-                </tr>
+              <tr v-for="item in 4" :key="item">
+                <td class="col-name">官网咨询</td>
+                <td>张三科技</td>
+                <td>138****1234</td>
+                <td>010-8888****</td>
+                <td>zhangsan@tech.com</td>
+                <td>北京市朝阳区建国路88号</td>
+                <td>互联网</td>
+                <td>A级</td>
+                <td>2026-08-05 14:00</td>
+                <td>有意向，需跟进</td>
+                <td>2026-07-28 10:30</td>
+                <td>已沟通产品方案，客户感兴趣</td>
+                <td>王经理</td>
+                <td>销售一部</td>
+                <td>2026-07-28 10:30</td>
+                <td>2026-07-20 09:00</td>
+                <td class="ol-col">删除</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -119,7 +123,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -143,7 +146,6 @@ export default {
 .top-box div {
   flex: 0 0 calc(33.333% - 10px);
   height: 42px;
-  /* border: 1px solid red; */
 }
 .top-box div span {
   display: inline-block;
@@ -192,35 +194,12 @@ export default {
 .main-top {
   width: 100%;
   height: 77px;
-  /* border: 1px solid red; */
   display: flex;
   align-items: center;
 }
 .top-1 {
   width: 65%;
   height: 46px;
-  /* border-bottom: 1px solid #ccc; */
-}
-.top-tab {
-  width: 246px;
-  height: 100%;
-  display: flex;
-  justify-content: space-between;
-}
-.top-tab div {
-  width: 76px;
-  height: 100%;
-  /* border: 1px solid red; */
-  font-size: 14px;
-  /* color: #ccc; */
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-.active {
-  color: black;
-  font-weight: 500;
-  border-bottom: 1px solid #006be6;
 }
 .top-2 {
   width: 25%;
@@ -228,7 +207,6 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* border: 1px solid red; */
   padding-right: 10px;
 }
 .top-2 button {
@@ -242,6 +220,8 @@ export default {
   width: 106px;
   border: 0;
   background-color: #fff;
+  color: #006be6;
+  border: 1px solid #ccc;
 }
 .top-2 button:nth-child(2) {
   width: 78px;
@@ -257,7 +237,6 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* border: 1px solid red; */
 }
 .top-3 button {
   width: 30px;
@@ -282,38 +261,68 @@ export default {
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
-  /* border: 1px solid #e6e6e6; */
+  font-size: 14px;
 }
 .main-tab th {
-  min-width: 100px;
   height: 40px;
   background-color: #e6e1e1;
-  border-right: 1px solid #ccc;
-  min-width: 60px; 
-  max-width: 200px; 
+  border-right: none;
+  min-width: 60px;
+  max-width: 200px;
   white-space: nowrap;
-  padding: 0 12px;
+  padding: 0;
 }
-.main-tab td{
-    height: 40px;
-    border-bottom: 1px solid #ccc;
-    background-color: #fff;
-    text-align: center;
-    font-size: 14px;
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
 }
-.col-name{
-    position: sticky;
-    left: 0;
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
 }
-.ol-col{
-    position: sticky;
-    right: 0;
+
+.main-tab td {
+  height: 40px;
+  border-bottom: 1px solid #ccc;
+  background-color: #fff;
+  text-align: center;
+  padding: 0 8px;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
+
+/* 固定列：左侧固定（线索名称） */
+.col-name {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background-color: #e6e1e1;
+}
+/* 固定列：右侧固定（操作） */
+.ol-col {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background-color: #fff;
+}
+
 .main-floot {
   width: 100%;
   height: 36px;
   margin-top: 5px;
-  /* border: 1px solid red; */
   font-size: 12px;
 }
 .main-floot span {

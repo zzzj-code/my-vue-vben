@@ -38,27 +38,54 @@
             <thead>
               <tr>
                 <th class="col-check">
-                  <input type="checkbox" name="" id="" />
+                  <div class="th-inner"><input type="checkbox" /></div>
                 </th>
-                <th class="col-id">退货单号</th>
-                <th>退货产品信息</th>
-                <th>供应商</th>
-                <th>退货时间</th>
-                <th>创建人</th>
-                <th>总数量</th>
-                <th>应退金额</th>
-                <th>已退金额</th>
-                <th>未退金额</th>
-                <th>审批状态</th>
-                <th class="ol-col" style="width: 260px;">操作</th>
+                <th class="col-id"><div class="th-inner">退货单号</div></th>
+                <th><div class="th-inner">退货产品信息</div></th>
+                <th><div class="th-inner">供应商</div></th>
+                <th><div class="th-inner">退货时间</div></th>
+                <th><div class="th-inner">创建人</div></th>
+                <th><div class="th-inner">总数量</div></th>
+                <th><div class="th-inner">应退金额</div></th>
+                <th><div class="th-inner">已退金额</div></th>
+                <th><div class="th-inner">未退金额</div></th>
+                <th><div class="th-inner">审批状态</div></th>
+                <th class="ol-col" style="width: 260px;">
+                  <div class="th-inner no-border">操作</div>
+                </th>
               </tr>
             </thead>
             <tbody>
-                
+              <tr v-for="item in tabValue" :key="item.id">
+                <td class="col-check"><input type="checkbox" /></td>
+                <td class="col-id">{{ item.id }}</td>
+                <td>{{ item.product }}</td>
+                <td>{{ item.supplier }}</td>
+                <td>{{ item.returnTime }}</td>
+                <td>{{ item.creator }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>¥{{ item.shouldAmount.toFixed(2) }}</td>
+                <td>¥{{ item.paidAmount.toFixed(2) }}</td>
+                <td>¥{{ item.unpaidAmount.toFixed(2) }}</td>
+                <td>
+                  <span :style="{
+                    color: getStatusColor(item.status),
+                    backgroundColor: getStatusBg(item.status),
+                    padding: '2px 12px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    display: 'inline-block',
+                    fontWeight: '500'
+                  }">
+                    {{ item.status }}
+                  </span>
+                </td>
+                <td class="ol-col">详情&nbsp;&nbsp;编辑&nbsp;&nbsp;删除</td>
+              </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共4条数据<span>20条/页</span></div>
+        <div class="main-floot">共{{ tabValue.length }}条数据<span>20条/页</span></div>
       </div>
     </div>
   </div>
@@ -69,9 +96,75 @@ export default {
   data() {
     return {
       tabValue: [
+        {
+          id: "RET-2024-001",
+          product: "华为 Mate 60 Pro 256GB",
+          supplier: "华为技术有限公司",
+          returnTime: "2024-01-18 10:30",
+          creator: "张伟",
+          quantity: 2,
+          shouldAmount: 13998.00,
+          paidAmount: 13998.00,
+          unpaidAmount: 0.00,
+          status: "已退款",
+        },
+        {
+          id: "RET-2024-002",
+          product: "小米 14 Ultra 512GB",
+          supplier: "小米科技有限公司",
+          returnTime: "2024-01-28 14:20",
+          creator: "王强",
+          quantity: 5,
+          shouldAmount: 34995.00,
+          paidAmount: 20000.00,
+          unpaidAmount: 14995.00,
+          status: "部分退款",
+        },
+        {
+          id: "RET-2024-003",
+          product: "联想 ThinkPad X1 Carbon",
+          supplier: "联想集团有限公司",
+          returnTime: "2024-02-05 09:15",
+          creator: "李娜",
+          quantity: 1,
+          shouldAmount: 7999.00,
+          paidAmount: 0.00,
+          unpaidAmount: 7999.00,
+          status: "待审核",
+        },
+        {
+          id: "RET-2024-004",
+          product: "Apple iPhone 15 Pro Max",
+          supplier: "苹果电子产品商贸有限公司",
+          returnTime: "2024-02-10 16:40",
+          creator: "刘洋",
+          quantity: 3,
+          shouldAmount: 29997.00,
+          paidAmount: 29997.00,
+          unpaidAmount: 0.00,
+          status: "已退款",
+        },
       ],
     };
   },
+  methods: {
+    getStatusColor(status) {
+      const map = {
+        '已退款': '#52c41a',
+        '部分退款': '#faad14',
+        '待审核': '#ff4d4f'
+      };
+      return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = {
+        '已退款': '#f6ffed',
+        '部分退款': '#fffbe6',
+        '待审核': '#fff2f0'
+      };
+      return map[status] || '#fff';
+    }
+  }
 };
 </script>
 
@@ -87,7 +180,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -110,7 +202,6 @@ export default {
 .top-inp div {
   width: 330px;
   height: 100%;
-  /* border: 1px solid red; */
   font-size: 14px;
   color: #006be6;
 }
@@ -239,33 +330,72 @@ export default {
   border-collapse: separate;
   border-spacing: 0;
   border: 1px solid #e6e6e6;
+  font-size: 14px;
 }
 .main-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #f0eaea;
+  border-right: none;
   text-align: center;
-  padding: 0 24px;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .main-tab td {
   height: 40px;
+  font-size: 14px;
   border-bottom: 1px solid #ccc;
   text-align: center;
-  padding: 0 24px;
+  padding: 0 8px;
   background-color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
+
+/* 固定列：左侧复选框 */
 .col-check {
   position: sticky;
   left: 0;
+  z-index: 2;
+  background-color: #f0eaea;
 }
-.col-id {
-  position: sticky;
-  left: 62px;
+.col-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
+
+
+/* 固定列：右侧操作 */
 .ol-col {
   position: sticky;
   right: 0;
+  z-index: 2;
+  background-color: #fff;
+  width: 260px;
+  min-width: 260px;
 }
+
 .main-floot {
   width: 100%;
   height: 36px;

@@ -17,27 +17,29 @@
         <table>
           <thead>
             <tr>
-              <th>项目类型</th>
-              <th>启用能力包</th>
-              <th>默认tab</th>
-              <th>立项流程key</th>
-              <th>变更流程key</th>
-              <th class="ol-col">操作</th>
+              <th><div class="th-inner">项目类型</div></th>
+              <th><div class="th-inner">启用能力包</div></th>
+              <th><div class="th-inner">默认tab</div></th>
+              <th><div class="th-inner">立项流程key</div></th>
+              <th><div class="th-inner">变更流程key</div></th>
+              <th class="ol-col"><div class="th-inner no-border">操作</div></th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in tabValue">
+            <tr v-for="item in tabValue" :key="item.id">
               <td>
                 <span
-                  style="
-                    display: inline-block;
-                    width: 52px;
-                    height: 22px;
-                    background-color: #e6f6ff;
-                    color: #006be6;
-                    border: 1px solid #006be6;
-                    border-radius: 5px;
-                  "
+                  :style="{
+                    display: 'inline-block',
+                    padding: '0 12px',
+                    height: '24px',
+                    lineHeight: '24px',
+                    backgroundColor: '#e6f6ff',
+                    color: '#006be6',
+                    border: '1px solid #006be6',
+                    borderRadius: '12px',
+                    fontSize: '12px'
+                  }"
                 >
                   {{ item.projectType }}
                 </span>
@@ -104,11 +106,9 @@ export default {
 .app {
   width: 1014px;
   height: 590px;
-  /* border: 1px solid red; */
   padding: 10px;
   position: absolute;
   top: -380px;
-  padding: 10px;
   background-color: #fff;
   border-radius: 10px;
 }
@@ -175,21 +175,50 @@ export default {
 }
 .app-tab th {
   height: 40px;
-  border-right: 1px solid #ccc;
   background-color: #e9e6e6;
-  padding: 0 20px;
+  border-right: none;
+  padding: 0;
+  white-space: nowrap;
 }
+
+/* ===== 表头内部 div：承载右边框 ===== */
+.th-inner {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 操作列不显示右边框 */
+.th-inner.no-border {
+  border-right: none;
+}
+
 .app-tab td {
   height: 40px;
   text-align: center;
   background-color: #fff;
   border-bottom: 1px solid #ccc;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
 }
+
 .ol-col {
   width: 160px;
+  min-width: 160px;
   border-left: 1px solid #ccc;
   position: sticky;
   right: 0;
+  z-index: 2;
+  background-color: #fff;
 }
 .ol-col button {
   width: 56px;
@@ -197,6 +226,11 @@ export default {
   border: 0;
   color: #006be6;
   background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ol-col button:hover {
+  background-color: #f0f4f9;
 }
 .ol-col button:last-child {
   color: red;
