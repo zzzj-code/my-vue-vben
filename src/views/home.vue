@@ -58,7 +58,7 @@
                 <li><router-link to="/pay" active-class="nav-active1">支付管理</router-link></li>
                 <li><router-link to="/report" active-class="nav-active1">报表管理</router-link></li>
                 <li><router-link to="/mdm" active-class="nav-active1">主数据</router-link></li>
-                <li><router-link to="/no" active-class="nav-active1">工单管理</router-link></li>
+                <li><router-link to="/ticket" active-class="nav-active1">工单管理</router-link></li>
                 <li><router-link to="/no" active-class="nav-active1">公众号管理</router-link></li>
                 <li><router-link to="/no" active-class="nav-active1">AI 大模型</router-link></li>
                 <li><router-link to="/no" active-class="nav-active1">IM 即时通讯</router-link></li>

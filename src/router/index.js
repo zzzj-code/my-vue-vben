@@ -67,6 +67,9 @@ import report from '@/views/report.vue'
 //主数据
 import mdm from '@/views/mdm.vue'
 
+//工单管理
+import ticket from '@/views/ticket.vue'
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -1483,6 +1486,29 @@ const router = createRouter({
             {
               path: '/ledger/project-ledger',
               component: () => import('@/views/pages/mdm/ledger/project-ledger.vue')//项目台账
+            }
+          ]
+        },
+        {
+          path: '/ticket',
+          component: ticket,
+          redirect: '/ticket-bill-list',
+          children: [
+            {
+              path: '/ticket-bill-list',
+              component: () => import('@/views/pages/ticket/ticket-bill-list.vue')//工单列表
+            },
+            {
+              path: '/ticket-pool',
+              component: () => import('@/views/pages/ticket/ticket-pool.vue')//工单池
+            },
+            {
+              path: '/handler-group',
+              component: () => import('@/views/pages/ticket/handler-group.vue')//处理组管理
+            },
+            {
+              path: '/sla-rule',
+              component: () => import('@/views/pages/ticket/sla-rule.vue')//SLA规则
             }
           ]
         }
