@@ -70,6 +70,9 @@ import mdm from '@/views/mdm.vue'
 //工单管理
 import ticket from '@/views/ticket.vue'
 
+//公众号管理
+import mp from '@/views/mp.vue'
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -1509,6 +1512,53 @@ const router = createRouter({
             {
               path: '/sla-rule',
               component: () => import('@/views/pages/ticket/sla-rule.vue')//SLA规则
+            }
+          ]
+        },
+        {
+          path: '/mp',
+          component: mp,
+          redirect: '/mp/account',
+          children: [
+            {
+              path: '/mp/account',
+              component: () => import('@/views/pages/mp/account.vue')//账号管理
+            },
+            {
+              path: '/mp/statistics',
+              component: () => import('@/views/pages/mp/statistics.vue')//数据统计
+            },
+            {
+              path: '/mp/tag',
+              component: () => import('@/views/pages/mp/tag.vue')//标签管理
+            },
+            {
+              path: '/mp/user',
+              component: () => import('@/views/pages/mp/user.vue')//粉丝管理类
+            },
+            {
+              path: '/mp/message',
+              component: () => import('@/views/pages/mp/message.vue')//消息管理
+            },
+            {
+              path: '/mp/menu',
+              component: () => import('@/views/pages/mp/menu.vue')//菜单管理
+            },
+            {
+              path: '/mp/auto-reply',
+              component: () => import('@/views/pages/mp/auto-reply.vue')//自动回复
+            },
+            {
+              path:'/mp/material',
+              component: () => import('@/views/pages/mp/material.vue')//素材管理
+            },
+            {
+              path: '/mp/draft',
+              component: () => import('@/views/pages/mp/draft.vue')//图文草稿箱
+            },
+            {
+              path: '/mp/free-publish',
+              component: () => import('@/views/pages/mp/free-publish.vue')//图文发表记录
             }
           ]
         }

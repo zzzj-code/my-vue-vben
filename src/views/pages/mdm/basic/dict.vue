@@ -428,7 +428,7 @@ export default {
 .data-table thead th {
   height: 36px;
   padding: 0 10px;
-  background-color: #fafafa;
+  background-color: #e7e6e6;
   border-bottom: 1px solid #ebeef5;
   /* border-right: 1px solid #ebeef5; */
   color: #606266;
@@ -486,10 +486,11 @@ export default {
   right: 0;
   background: #fff;
   z-index: 2;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+  /* box-shadow: 0 -2px 10px rgba(0,0,0,0.2); */
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
 }
 .data-table thead th.op-fixed {
-  background-color: #fafafa;
+  background-color: #e7e6e6;
 }
 
 .op-edit,
