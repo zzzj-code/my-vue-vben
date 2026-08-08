@@ -73,6 +73,9 @@ import ticket from '@/views/ticket.vue'
 //公众号管理
 import mp from '@/views/mp.vue'
 
+//ai大模型
+import ai from '@/views/ai.vue'
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -1559,6 +1562,77 @@ const router = createRouter({
             {
               path: '/mp/free-publish',
               component: () => import('@/views/pages/mp/free-publish.vue')//图文发表记录
+            }
+          ]
+        },
+        {
+          path: '/ai',
+          component: ai,
+          redirect: '/ai/chat',
+          children: [
+            {
+              path: '/ai/chat',
+              component: () => import('@/views/pages/ai/chat.vue')//ai对话
+            },
+            {
+              path: '/ai/image',
+              component: () => import('@/views/pages/ai/image.vue')//ai绘画
+            },
+            {
+              path: '/ai/write',
+              component: () => import('@/views/pages/ai/write.vue')//ai写作
+            },
+            {
+              path: '/ai/music',
+              component: () => import('@/views/pages/ai/music.vue')//ai音乐
+            },
+            {
+              path: '/ai/knowledge',
+              component: () => import('@/views/pages/ai/knowledge.vue')//ai知识库
+            },
+            {
+              path: '/ai/workflow',
+              component: () => import('@/views/pages/ai/workflow.vue')//ai工作流
+            },
+            {
+              path: '/ai/mind-map',
+              component: () => import('@/views/pages/ai/mind-map.vue')//ai思维导图
+            },
+            {
+              path: '/api-key',
+              component: () => import('@/views/pages/ai/console/api-key.vue')//api密钥
+            },
+            {
+              path: '/console/model',
+              component: () => import('@/views/pages/ai/console/model.vue')//模型配置
+            },
+            {
+              path: '/console/chat-role',
+              component: () => import('@/views/pages/ai/console/chat-role.vue')//聊天角色
+            },
+            {
+              path: '/console/tool',
+              component: () => import('@/views/pages/ai/console/tool.vue')//工具管理
+            },
+            {
+              path: '/chat-conversation',
+              component: () => import('@/views/pages/ai/console/chat-conversation.vue')//聊天管理
+            },
+            {
+              path: '/console/image',
+              component: () => import('@/views/pages/ai/console/image.vue')//绘画管理
+            },
+            {
+              path: '/console/music',
+              component: () => import('@/views/pages/ai/console/music.vue')//音乐管理
+            },
+            {
+              path: '/console/write',
+              component: () => import('@/views/pages/ai/console/write.vue')//写作管理
+            },
+            {
+              path: '/console/mind-map',
+              component: () => import('@/views/pages/ai/console/mind-map.vue')//导图管理
             }
           ]
         }
