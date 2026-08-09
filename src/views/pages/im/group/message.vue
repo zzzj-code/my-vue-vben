@@ -1,0 +1,396 @@
+<template>
+  <div class="page-wrapper">
+    <div class="app">
+      <div class="app-top">
+        <div class="top-inp">
+          <div>
+            <span>群</span>
+            <input type="text" placeholder="" />
+          </div>
+          <div>
+            <span>发送人</span>
+            <input type="text" placeholder="" />
+          </div>
+          <div>
+            <button>重置</button>
+            <button>搜索</button>
+            收起^
+          </div>
+        </div>
+      </div>
+      <div class="app-main">
+        <div class="main-top">
+          <div>群聊消息列表</div>
+          <div>
+            <button style="background-color: #fff">+新增工具</button>
+            <button>🔍</button>
+          </div>
+          <div>
+            <button>⟳</button>
+            <button>⛶</button>
+            <button>⊞</button>
+          </div>
+        </div>
+        <div class="main-tab">
+          <table>
+            <thead>
+              <tr>
+                <th><div class="th-cell">编号</div></th>
+                <th><div class="th-cell">群</div></th>
+                <th><div class="th-cell">发送人</div></th>
+                <th><div class="th-cell">类型</div></th>
+                <th><div class="th-cell">@用户</div></th>
+                <th><div class="th-cell">内容预览</div></th>
+                <th><div class="th-cell">状态</div></th>
+                <th><div class="th-cell">回执</div></th>
+                <th><div class="th-cell">发送时间</div></th>
+                <th class="ol-col"><div class="th-cell">操作</div></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td>{{ item.id }}</td>
+                <td>{{ item.group }}</td>
+                <td>{{ item.sender }}</td>
+                <td>{{ item.type }}</td>
+                <td>{{ item.atUsers }}</td>
+                <td>{{ item.preview }}</td>
+                <td>{{ item.status }}</td>
+                <td>{{ item.receipt }}</td>
+                <td>{{ item.sendTime }}</td>
+                <td class="ol-col">
+                  <button>详情</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="main-floot">
+          <div class="left-info">
+            共{{ tabValue.length }}条记录
+            <span>20条/页</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      tabValue: [
+        {
+          id: 1,
+          group: "前端技术交流群",
+          sender: "张三",
+          type: "文本",
+          atUsers: "@李四",
+          preview: "这个API怎么调用？",
+          status: "已读",
+          receipt: "已送达",
+          sendTime: "2026-08-09 10:30:00",
+        },
+        {
+          id: 2,
+          group: "前端技术交流群",
+          sender: "李四",
+          type: "图片",
+          atUsers: "-",
+          preview: "[图片] 代码截图",
+          status: "未读",
+          receipt: "已送达",
+          sendTime: "2026-08-09 10:45:00",
+        },
+        {
+          id: 3,
+          group: "项目开发组",
+          sender: "王五",
+          type: "文本",
+          atUsers: "@全体成员",
+          preview: "明天下午3点开会",
+          status: "已读",
+          receipt: "已送达",
+          sendTime: "2026-08-09 11:00:00",
+        },
+        {
+          id: 4,
+          group: "项目开发组",
+          sender: "赵六",
+          type: "文件",
+          atUsers: "-",
+          preview: "[文件] 需求文档V2.0.pdf",
+          status: "已读",
+          receipt: "已送达",
+          sendTime: "2026-08-09 11:30:00",
+        },
+        {
+          id: 5,
+          group: "闲聊茶馆",
+          sender: "孙七",
+          type: "语音",
+          atUsers: "-",
+          preview: "[语音] 10秒",
+          status: "未读",
+          receipt: "发送中",
+          sendTime: "2026-08-09 12:15:00",
+        },
+        {
+          id: 6,
+          group: "前端技术交流群",
+          sender: "周八",
+          type: "文本",
+          atUsers: "@张三",
+          preview: "用axios就可以了",
+          status: "已读",
+          receipt: "已送达",
+          sendTime: "2026-08-09 13:00:00",
+        },
+        {
+          id: 7,
+          group: "项目开发组",
+          sender: "张三",
+          type: "文本",
+          atUsers: "-",
+          preview: "收到，已确认需求",
+          status: "已读",
+          receipt: "已送达",
+          sendTime: "2026-08-09 14:20:00",
+        },
+        {
+          id: 8,
+          group: "闲聊茶馆",
+          sender: "李四",
+          type: "文本",
+          atUsers: "@孙七",
+          preview: "哈哈，你太逗了",
+          status: "未读",
+          receipt: "已送达",
+          sendTime: "2026-08-09 15:00:00",
+        },
+      ],
+    };
+  },
+};
+</script>
+
+<style scoped>
+.page-wrapper {
+  width: 1030px;
+  display: grid;
+  place-items: center;
+  background-color: #ecebeb;
+  position: relative;
+}
+.app {
+  width: 1006px;
+  height: 590px;
+  background-color: #ecebeb;
+  position: absolute;
+  top: -375px;
+}
+.app-top {
+  width: 100%;
+  height: 86px;
+  background-color: #fff;
+  border-radius: 10px 10px 0 0;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.top-inp {
+  width: 100%;
+  height: 42px;
+  display: flex;
+  justify-content: space-between;
+}
+.top-inp div {
+  width: 331px;
+  height: 42px;
+}
+.top-inp div span {
+  display: inline-block;
+  width: 100px;
+  height: 24px;
+  text-align: right;
+  margin-right: 8px;
+  font-size: 14px;
+}
+.top-inp div input {
+  width: 215px;
+  height: 32px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 10px;
+}
+.top-inp div:last-child {
+  font-size: 14px;
+  color: #006be6;
+  text-align: right;
+}
+.top-inp div button {
+  width: 63px;
+  height: 32px;
+  border-radius: 10px;
+  margin-right: 10px;
+}
+.top-inp div button:first-child {
+  border: 1px solid #ccc;
+  background-color: #fff;
+}
+.top-inp div button:last-child {
+  background-color: #006be6;
+  border: 0;
+  color: #fff;
+}
+
+.app-main {
+  width: 100%;
+  height: 492px;
+  background-color: #fff;
+  border-radius: 0 0 10px 10px;
+  padding: 10px;
+}
+.main-top {
+  width: 100%;
+  height: 47px;
+  display: flex;
+}
+.main-top div:first-child {
+  width: 70%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 600;
+}
+.main-top div:nth-child(2) {
+  width: 20%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-right: 10px;
+}
+.main-top div:nth-child(2) button {
+  width: 146px;
+  height: 32px;
+  background-color: #006be6;
+  border: 0;
+  color: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.main-top div:nth-child(2) button:last-child {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+.main-top div:last-child {
+  width: 10%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.main-top div:last-child button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.main-tab {
+  width: 100%;
+  height: 400px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+.main-tab table {
+  width: max-content;
+  min-width: 1270px;
+  table-layout: auto;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+}
+.main-tab th {
+  height: 40px;
+  background-color: #ece8e8;
+  padding: 0;
+  white-space: nowrap;
+  border-bottom: 1px solid #ccc;
+}
+.main-tab th:last-child {
+  border-right: none;
+}
+.th-cell {
+  padding: 0 8px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+.main-tab th:last-child .th-cell {
+  border-right: none;
+}
+.main-tab td {
+  text-align: center;
+  height: 56px;
+  border-bottom: 1px solid #ccc;
+  background-color: #fff;
+  padding: 0 12px;
+  border-right: 0;
+}
+.ol-col {
+  width: 100px;
+  min-width: 80px;
+  position: sticky;
+  right: 0;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.08);
+}
+.ol-col button {
+  width: 56px;
+  height: 32px;
+  border: 0;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #006be6;
+  cursor: pointer;
+}
+.ol-col button:hover {
+  background-color: #006be6;
+  color: #fff;
+}
+
+.main-floot {
+  width: 100%;
+  height: 36px;
+  margin-top: 5px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+.left-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.left-info span {
+  display: inline-block;
+  width: 100px;
+  height: 24px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  text-align: center;
+  padding-top: 3px;
+}
+</style>

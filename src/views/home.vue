@@ -61,7 +61,7 @@
                 <li><router-link to="/ticket" active-class="nav-active1">工单管理</router-link></li>
                 <li><router-link to="/mp" active-class="nav-active1">公众号管理</router-link></li>
                 <li><router-link to="/ai" active-class="nav-active1">AI 大模型</router-link></li>
-                <li><router-link to="/no" active-class="nav-active1">IM 即时通讯</router-link></li>
+                <li><router-link to="/ims" active-class="nav-active1">IM 即时通讯</router-link></li>
               </ul>
             </li>
           </ul>

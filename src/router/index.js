@@ -76,6 +76,9 @@ import mp from '@/views/mp.vue'
 //ai大模型
 import ai from '@/views/ai.vue'
 
+//im即时通讯
+import im from '@/views/im.vue'
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -1633,6 +1636,69 @@ const router = createRouter({
             {
               path: '/console/mind-map',
               component: () => import('@/views/pages/ai/console/mind-map.vue')//导图管理
+            }
+          ]
+        },
+        {
+          path: '/ims',
+          component: im,
+          redirect: '/im/statistics',
+          children: [
+            {
+              path: '/im/statistics',
+              component: () => import('@/views/pages/im/statistics.vue')//数据统计
+            },
+            {
+              path: '/private/friend',
+              component: () => import('@/views/pages/im/private/friend.vue')//好友列表
+            },
+            {
+              path: '/private/friend-request',
+              component: () => import('@/views/pages/im/private/friend-request.vue')//好友申请
+            },
+            {
+              path: '/private/message',
+              component: () => import('@/views/pages/im/private/message.vue')//好友消息
+            },
+            {
+              path: '/group/list',
+              component: () => import('@/views/pages/im/group/list.vue')//群聊列表
+            },
+            {
+              path: '/group/request',
+              component: () => import('@/views/pages/im/group/request.vue')//群聊申请
+            },
+            {
+              path: '/group/message',
+              component: () => import('@/views/pages/im/group/message.vue')//群聊消息
+            },
+            {
+              path: '/im/rtc',
+              component: () => import('@/views/pages/im/rtc.vue')//通话记录
+            },
+            {
+              path: '/im/sensitive-word',
+              component: () => import('@/views/pages/im/sensitive-word.vue')//敏感词管理
+            },
+            {
+              path: '/face/pack',
+              component: () => import('@/views/pages/im/face/pack.vue')//系统表情
+            },
+            {
+              path: '/face/user-item',
+              component: () => import('@/views/pages/im/face/user-item.vue')//用户表情
+            },
+            {
+              path: '/channel/list',
+              component: () => import('@/views/pages/im/channel/list.vue')//频道列表
+            },
+            {
+              path: '/channel/material',
+              component: () => import('@/views/pages/im/channel/material.vue')//频道素材
+            },
+            {
+              path: '/channel/message',
+              component: () => import('@/views/pages/im/channel/message.vue')//频道消息
             }
           ]
         }
