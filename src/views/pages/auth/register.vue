@@ -3,11 +3,13 @@
     <h2>创建一个账号 🚀</h2>
     <p>让您的应用程序管理变得简单而有趣</p>
   </div>
+  <!-- 表单，@submit.prevent 阻止默认提交，调用 handleRegister -->
   <form @submit.prevent="handleRegister">
     <div class="register-main">
+      <!-- 租户选择下拉 -->
       <div class="inp-select" ref="selectContainer">
         <div class="select">
-          <button @click="toggleDropdown">
+          <button type="button" @click="toggleDropdown">
             <span>{{ userName }}</span
             >▼
           </button>
@@ -18,33 +20,38 @@
           </ul>
         </div>
       </div>
+      <!-- 用户名输入框，v-model 双向绑定 -->
       <div class="inp-verify">
-        <input type="text" placeholder="请输入用户名" v-model="username" />
-        <span class="msg"></span>
+        <input type="text" placeholder="请输入用户名" v-model="form.username" />
+        <!-- 错误提示 -->
+        <span class="msg">{{ errors.username }}</span>
       </div>
+      <!-- 昵称输入框 -->
       <div class="inp-verify">
-        <input type="text" placeholder="请输入昵称" v-model="nickname" />
-        <span class="msg"></span>
+        <input type="text" placeholder="请输入昵称" v-model="form.nickname" />
+        <span class="msg">{{ errors.nickname }}</span>
       </div>
+      <!-- 密码输入框 -->
       <div class="inp-pwd1">
-        <input type="password" placeholder="请输入密码" v-model="password" />
+        <input type="password" placeholder="请输入密码" v-model="form.password" />
         <div class="pwd1-1"></div>
         <p>使用 8 个或更多字符，混合字母、数字和符号</p>
-        <span class="msg"></span>
+        <span class="msg">{{ errors.password }}</span>
       </div>
       <!-- 确认密码 -->
       <div class="inp-pwd">
         <input
           type="password"
           placeholder="确认密码"
-          v-model="confirmPassword"
+          v-model="form.confirmPassword"
         />
-        <span class="msg"></span>
+        <span class="msg">{{ errors.confirmPassword }}</span>
       </div>
       <!-- _____ -->
+      <!-- 同意协议复选框 -->
       <div class="register-check">
         <div class="chenck">
-          <input type="checkbox" id="agree" v-model="agree" />
+          <input type="checkbox" id="agree" v-model="form.agree" />
           <label for="agree"
             >我同意
             <router-link to="/login" class="aa"
@@ -54,8 +61,9 @@
         </div>
       </div>
     </div>
-    <button class="register-btn" type="submit">
-      注册
+    <!-- 注册按钮，loading 时禁用 -->
+    <button class="register-btn" type="submit" :disabled="loading">
+      {{ loading ? '注册中...' : '注册' }}
     </button>
   </form>
   <div class="floot">
@@ -64,32 +72,49 @@
 </template>
 
 <script>
-import axios from "axios";
+// 导入注册接口函数
+import { register } from '#/api/core/auth';
 
 export default {
+  // 组件数据
   data() {
     return {
+      // 租户下拉相关
       userName: "宇擎源码",
       showDropdown: false,
-      // 注册表单数据
-      username: "", //用户名
-      nickname: "", //昵称
-      password: "", //密码
-      confirmPassword: "", //确认密码
-      agree: false, //复选框
+      // 表单数据，统一放在 form 对象里，方便管理
+      form: {
+        username: "",        // 用户名
+        nickname: "",        // 昵称
+        password: "",        // 密码
+        confirmPassword: "", // 确认密码
+        agree: false         // 是否同意协议
+      },
+      // 错误提示信息，对应每个输入框下面的文字
+      errors: {
+        username: "",
+        nickname: "",
+        password: "",
+        confirmPassword: ""
+      },
+      // 提交 loading 状态，防止重复点击
+      loading: false
     };
   },
+  // 组件方法
   methods: {
-    // 选择下拉菜单
+    // 切换下拉菜单显示/隐藏
     toggleDropdown() {
       this.showDropdown = !this.showDropdown;
     },
+    // 选择下拉选项
     selectOption(name) {
       this.userName = name;
       this.showDropdown = false;
     },
-    // 点击外部关闭下拉菜单
+    // 点击页面外部时关闭下拉菜单
     handleClickOutside(event) {
+      // 判断点击的目标是否在 selectContainer 外部
       if (
         this.$refs.selectContainer &&
         !this.$refs.selectContainer.contains(event.target)
@@ -99,75 +124,95 @@ export default {
     },
     // 注册方法
     async handleRegister() {
-      // 1. 简单验证
-      if (!this.username.trim()) {
-        alert("请输入用户名");
-        console.log("验证失败：用户名为空");
+      // 先清空所有错误提示
+      this.errors = {
+        username: "",
+        nickname: "",
+        password: "",
+        confirmPassword: ""
+      };
+
+      // ========== 表单验证 ==========
+      // 验证用户名
+      if (!this.form.username.trim()) {
+        this.errors.username = "请输入用户名";
         return;
       }
-      if (!this.password) {
-        alert("请输入密码");
-        console.log("验证失败：密码为空");
-        return;
-      }
-      if (this.password.length < 6) {
-        alert("密码至少6位");
-        console.log("验证失败：密码少于6位");
-        return;
-      }
-      if (this.password !== this.confirmPassword) {
-        alert("两次密码输入不一致");
-        console.log("验证失败：两次密码不一致");
-        return;
-      }
-      if (!this.agree) {
-        alert("请勾选同意");
+      // 用户名长度至少3位
+      if (this.form.username.trim().length < 3) {
+        this.errors.username = "用户名至少3位";
         return;
       }
 
+      // 验证昵称
+      if (!this.form.nickname.trim()) {
+        this.errors.nickname = "请输入昵称";
+        return;
+      }
+
+      // 验证密码
+      if (!this.form.password) {
+        this.errors.password = "请输入密码";
+        return;
+      }
+      // 密码长度至少8位（和页面提示一致）
+      if (this.form.password.length < 8) {
+        this.errors.password = "密码至少8位";
+        return;
+      }
+
+      // 验证确认密码
+      if (!this.form.confirmPassword) {
+        this.errors.confirmPassword = "请确认密码";
+        return;
+      }
+      // 两次密码必须一致
+      if (this.form.password !== this.form.confirmPassword) {
+        this.errors.confirmPassword = "两次输入的密码不一致";
+        return;
+      }
+
+      // 验证是否同意协议
+      if (!this.form.agree) {
+        alert("请先同意隐私政策和条款");
+        return;
+      }
+
+      // 验证通过，开始提交
       this.loading = true;
 
       try {
-        console.log("发送注册请求:", {
-          username: this.username.trim(),
-          password: this.password,
+        // 调用注册接口
+        // 参数：用户名、密码、昵称
+        const res = await register({
+          username: this.form.username.trim(),
+          password: this.form.password,
+          nickname: this.form.nickname.trim()
         });
 
-        const res = await axios.post(
-          "https://hmajax.itheima.net/api/login",
-          {
-            username: this.username.trim(),
-            password: this.password,
-          },
-        );
-
-        console.log(res);
-        
-        console.log("注册响应:", res.data);
-
-        // 处理响应
-        if (res.data.code === 200) {
-          console.log("注册成功");
-          //注册成功跳转登录页
+        // 注册成功，res 包含 userId、accessToken、refreshToken
+        if (res) {
+          alert("注册成功，请使用新账号登录");
+          // 跳转到登录页
           this.$router.push("/login");
-        } else {
-          alert(res.data.message)
-          console.log("注册失败:", msg);
         }
       } catch (err) {
-        console.error("请求错误:", err);
-        console.dir(err)
+        // 注册失败，错误信息已在 request.js 里弹窗
+        console.error("注册失败", err);
+      } finally {
+        // 无论成功失败，都关闭 loading
+        this.loading = false;
       }
-    },
+    }
   },
+  // 组件挂载时添加全局点击事件监听
   mounted() {
-    // 添加全局点击事件监听
     document.addEventListener("click", this.handleClickOutside);
   },
+  // 组件销毁前移除事件监听，防止内存泄漏
   beforeDestroy() {
-    // 组件销毁前移除事件监听
     document.removeEventListener("click", this.handleClickOutside);
-  },
+  }
 };
 </script>
 

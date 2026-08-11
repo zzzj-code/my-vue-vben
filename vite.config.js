@@ -13,6 +13,16 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '#': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://ruoyioffice.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '/admin-api'),
+      },
     },
   },
 })

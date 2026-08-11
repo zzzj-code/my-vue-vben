@@ -6,11 +6,11 @@
   </div>
   <!--  -->
   <!-- 主体 -->
-  <form action="#" @submit="handleLogin">
+  <form action="#" @submit.prevent="handleLogin">
     <div class="login-inp">
       <div class="inp-select" ref="selectContainer">
         <div class="select">
-          <button @click="toggleDropdown">{{ userName }}<span>▼</span></button>
+          <button type="button" @click="toggleDropdown">{{ userName }}<span>▼</span></button>
           <ul v-show="showDropdown">
             <li @click="selectOption('宇擎源码')">宇擎源码</li>
             <li @click="selectOption('111')">111</li>
@@ -23,7 +23,6 @@
           v-model="login.username"
           type="text"
           placeholder="请输入用户名"
-          value="qwerasd"
         />
       </div>
       <div class="inp-verify">
@@ -31,7 +30,6 @@
           v-model="login.password"
           type="password"
           placeholder="请输入密码"
-          value="123456"
         />
       </div>
     </div>
@@ -39,7 +37,7 @@
     <!-- 复选框 -->
     <div class="login-chenck">
       <div class="chenck">
-        <input type="checkbox" id="agree" />
+        <input type="checkbox" id="agree" v-model="login.remember" />
         <label for="agree">记住账号</label>
       </div>
       <router-link to="/forgetPassword" class="aa">忘记密码?</router-link>
@@ -88,7 +86,8 @@
 </template>
 
 <script>
-import axios from "axios";
+import { loginApi } from '#/api/core/auth';
+
 export default {
   data() {
     return {
@@ -99,6 +98,7 @@ export default {
       login: {
         username: "",
         password: "",
+        remember: false,
       },
       loading: false, //登录加载
     };
@@ -124,58 +124,56 @@ export default {
     async handleLogin() {
       // 简单判断用户和密码的非空
       if (!this.login.username.trim()) {
-        alert("请输入用户信息");
-        return; //直接跳出
+        alert("请输入用户名");
+        return;
       }
       if (!this.login.password.trim()) {
         alert("请输入密码");
         return;
       }
 
-      // 验证通过
       this.loading = true;
 
-      //用axios发送请求
       try {
-        // 请求管理平台api  （没成功）
-        // const res = await axios.post("http://ruoyioffice.com/admin-api/system/auth/login", {
-        //   tenantId: '1',
-        //   username: this.login.username,
-        //   password: this.login.password,
-        //   // zIIipezOIZMoUmfOCzrceCUEbve3r6RTKg7VGUDJJ0JcFCzJbFUGSGV/gZ0xZ5sgPS844/bWPERP843MepoZBA==
-        //   captchaVerification: 'zIIipezOIZMoUmfOCzrceCUEbve3r6RTKg7VGUDJJ0JcFCzJbFUGSGV/gZ0xZ5sgPS844/bWPERP843MepoZBA=='
-        // });
-
-        // 请求黑马api
-        const res = await axios.post("https://hmajax.itheima.net/api/login", {
+        // 调用 ruoyi-office 登录接口
+        const res = await loginApi({
+          tenantId: 1,
           username: this.login.username,
           password: this.login.password,
         });
 
-        // console.log(res);
+        // 登录成功，存储 token
+        if (res) {
+          localStorage.setItem("accessToken", res.accessToken);
+          localStorage.setItem("refreshToken", res.refreshToken);
+          localStorage.setItem("username", this.login.username);
 
-        // 成功就存储本地
-        if ((res.data.code = 200)) {
-          //存储用户名信息到本地
-          localStorage.setItem("username", res.data.data.username);
+          // 记住账号
+          if (this.login.remember) {
+            localStorage.setItem("rememberUsername", this.login.username);
+          } else {
+            localStorage.removeItem("rememberUsername");
+          }
 
-          //跳转到其他页面
+          // 跳转到首页
           this.$router.push("/home");
-        } else {
-          alert("登录失败");
         }
       } catch (err) {
         console.error("登录失败", err);
-        if (err.res) {
-          // 返回登录失败码
-          console.log(err.res.data.message);
-        }
+      } finally {
+        this.loading = false;
       }
     },
   },
   mounted() {
     // 添加全局点击事件监听
     document.addEventListener("click", this.handleClickOutside);
+    // 回显记住的账号
+    const rememberUsername = localStorage.getItem("rememberUsername");
+    if (rememberUsername) {
+      this.login.username = rememberUsername;
+      this.login.remember = true;
+    }
   },
   beforeDestroy() {
     // 组件销毁前移除事件监听
