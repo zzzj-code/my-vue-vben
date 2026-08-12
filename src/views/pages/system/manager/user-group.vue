@@ -3,16 +3,16 @@
     <div class="app">
       <!-- top -->
       <div class="app-top">
-        <form action="">
+        <form @submit.prevent="handleSearch">
           <div class="top-tab">
             <div class="top-row">
               <div class="tab-a">
                 <span>组名</span>
-                <input type="text" placeholder="请输入组名" />
+                <input type="text" placeholder="请输入组名" v-model="searchForm.name" />
               </div>
               <div class="tab-a">
                 <span>状态</span>
-                <input type="text" placeholder="请输入状态" />
+                <input type="text" placeholder="请输入状态" v-model="searchForm.status" />
               </div>
               <div class="tab-a">
                 <span>创建时间</span>
@@ -21,8 +21,8 @@
             </div>
             <div class="top-row">
               <div class="tab-b">
-                <button type="button">重置</button>
-                <button type="button">搜索</button>
+                <button type="button" @click="handleReset">重置</button>
+                <button type="submit">搜索</button>
                 <span>收起^</span>
               </div>
             </div>
@@ -35,9 +35,9 @@
         <div class="main-header">
           <div class="main-title">用户分组</div>
           <div class="main-buttons">
-            <button class="btn btn-primary">+ 新增用户分组</button>
+            <button class="btn btn-primary" @click="handleAdd">+ 新增用户分组</button>
             <button class="icon-btn">🔍</button>
-            <button class="icon-btn">⟳</button>
+            <button class="icon-btn" @click="loadUserGroupList">⟳</button>
             <button class="icon-btn">⛶</button>
             <button class="icon-btn">☷</button>
           </div>
@@ -59,34 +59,34 @@
               <tr v-for="item in rows" :key="item.id">
                 <td>{{ item.id }}</td>
                 <td>
-                  <a class="link-number" href="#">{{ item.type }}</a>
+                  <a class="link-number" href="#" @click.prevent="handleEdit(item)">{{ item.name }}</a>
                 </td>
-                <td>{{ item.summary }}</td>
-                <td>{{ item.company }}</td>
-                <td>{{ item.department }}</td>
+                <td>{{ item.description }}</td>
+                <td>{{ item.memberCount }}人</td>
                 <td>
                   <span :class="['status-tag', item.statusClass]">{{
-                    item.processStatus
+                    item.statusText
                   }}</span>
                 </td>
+                <td>{{ item.createTime }}</td>
                 <td class="operation-col">
-                  <a href="#" class="op-link">详情</a>
-                  <a href="#" class="op-link op-del">删除</a>
+                  <a href="#" class="op-link" @click.prevent="handleEdit(item)">编辑</a>
+                  <a href="#" class="op-link op-del" @click.prevent="handleDelete(item)">删除</a>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="table-footer">
-          <div class="footer-left">共 {{ rows.length }} 条记录</div>
+          <div class="footer-left">共 {{ pagination.total }} 条记录</div>
           <div class="footer-right">
-            <span class="page-size">10条/页</span>
+            <span class="page-size">{{ pagination.pageSize }}条/页</span>
             <div class="pager">
-              <button>&lt;&lt;</button>
-              <button>&lt;</button>
-              <button class="active">1</button>
-              <button>&gt;</button>
-              <button>&gt;&gt;</button>
+              <button @click="handlePageChange(1)">&lt;&lt;</button>
+              <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+              <button class="active">{{ pagination.pageNo }}</button>
+              <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+              <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
             </div>
           </div>
         </div>
@@ -97,24 +97,100 @@
 </template>
 
 <script>
+// 导入用户组相关API
+import { getUserGroupPage, deleteUserGroup } from '#/api/bpm/userGroup';
+
 export default {
   data() {
     return {
-      rows: [
-        {
-          id: 1,
-          type: "用车审批",
-          number: "OA123-202607230001",
-          summary: "电脑采购申请",
-          company: "深圳分公司",
-          department: "研发部门",
-          processStatus: "审批通过",
-          statusClass: "status-green",
-          startTime: "2026-07-23 16:04:06",
-          endTime: "2026-07-23 16:04:32",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        name: "",
+        status: "",
+      },
+      // 分页
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      rows: [],
     };
+  },
+  mounted() {
+    this.loadUserGroupList();
+  },
+  methods: {
+    // 获取用户组列表
+    async loadUserGroupList() {
+      try {
+        const data = await getUserGroupPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        });
+        // 将接口返回的数据转换为页面需要的格式
+        this.rows = data.list.map((item) => ({
+          id: item.id,
+          name: item.name || "",
+          description: item.description || "",
+          memberCount: item.userIds?.length || 0,
+          statusText: item.status === 0 ? "正常" : "停用",
+          statusClass: item.status === 0 ? "status-green" : "status-red",
+          createTime: this.formatTimestamp(item.createTime),
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取用户组失败", err);
+      }
+    },
+    // 时间戳格式化
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+    // 搜索
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadUserGroupList();
+    },
+    // 重置
+    handleReset() {
+      this.searchForm = { name: "", status: "" };
+      this.pagination.pageNo = 1;
+      this.loadUserGroupList();
+    },
+    // 分页
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadUserGroupList();
+    },
+    // 新增
+    handleAdd() {
+      alert("新增用户组功能待实现");
+    },
+    // 编辑
+    handleEdit(row) {
+      alert(`编辑用户组：${row.name}`);
+    },
+    // 删除
+    async handleDelete(row) {
+      if (!confirm(`确定要删除用户组「${row.name}」吗？`)) return;
+      try {
+        await deleteUserGroup(row.id);
+        alert("删除成功");
+        this.loadUserGroupList();
+      } catch (err) {
+        console.error("删除用户组失败", err);
+      }
+    },
   },
 };
 </script>

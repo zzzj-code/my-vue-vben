@@ -22,19 +22,19 @@
         <div class="right-top">
           <div class="top-w">
             <span>所属公司</span>
-            <input type="text" />
+            <input type="text" v-model="searchForm.companyName" />
           </div>
           <div class="top-w">
             <span>印章编号</span>
-            <input type="text" />
+            <input type="text" v-model="searchForm.sealNo" />
           </div>
           <div class="top-w">
             <span>印章名称</span>
-            <input type="text" />
+            <input type="text" v-model="searchForm.sealName" />
           </div>
           <div class="top-w">
-            <button class="btn">重置</button>
-            <button class="btn1">搜索</button>
+            <button class="btn" @click="handleReset">重置</button>
+            <button class="btn1" @click="handleSearch">搜索</button>
             <span class="a">展开▽</span>
           </div>
         </div>
@@ -42,14 +42,14 @@
           <div class="right-header">
             <div class="header-title">印章信息列表</div>
             <div class="header-actions">
-              <button class="btn-add">+新增车辆信息</button>
+              <button class="btn-add" @click="handleAdd">+新增印章信息</button>
               <button class="btn-export">导出</button>
               <div class="batch-delete" aria-disabled="true">
                 <span class="del-icon">🗑</span> 批量删除
               </div>
               <div class="icon-actions">
-                <button class="icon-btn search" title="搜索">🔍</button>
-                <button class="icon-btn" title="刷新">↻</button>
+                <button class="icon-btn search" title="搜索" @click="handleSearch">🔍</button>
+                <button class="icon-btn" title="刷新" @click="loadSealList">↻</button>
                 <button class="icon-btn" title="全屏">⛶</button>
                 <button class="icon-btn" title="布局">◧</button>
               </div>
@@ -62,37 +62,45 @@
                   <th style="width: 40px"><input type="checkbox" /></th>
                   <th>公司ID</th>
                   <th>公司名称</th>
-                  <th>车牌号</th>
-                  <th>车辆名称</th>
+                  <th>印章编号</th>
+                  <th>印章名称</th>
                   <th>状态</th>
-                  <th>车辆分类</th>
+                  <th>印章分类</th>
+                  <th>保管人</th>
                   <th class="op-col">操作</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(car, idx) in filteredCars" :key="car.id">
+                <tr v-for="(seal, idx) in filteredSeals" :key="seal.id">
                   <td><input type="checkbox" /></td>
                   <td>101</td>
-                  <td>{{ car.company }}</td>
-                  <td>{{ car.plate }}</td>
-                  <td>{{ car.name }}</td>
-                  <td>{{ car.status }}</td>
-                  <td>{{ car.category }}</td>
+                  <td>{{ seal.company }}</td>
+                  <td>{{ seal.sealNo }}</td>
+                  <td>{{ seal.sealName }}</td>
+                  <td>{{ seal.status }}</td>
+                  <td>{{ seal.category }}</td>
+                  <td>{{ seal.keeperName }}</td>
                   <td class="op-col">
-                    <button @click.prevent="editCar(car)">编辑</button>
-                    <button @click.prevent="deleteCar(car)">删除</button>
+                    <button @click.prevent="editSeal(seal)">编辑</button>
+                    <button @click.prevent="deleteSeal(seal)">删除</button>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
           <div class="table-footer">
-            <div class="footer-left">共 {{ filteredCars.length }} 条记录</div>
+            <div class="footer-left">共 {{ pagination.total }} 条记录</div>
             <div class="footer-right">
               <select>
-                <option>20条/页</option>
+                <option>{{ pagination.pageSize }}条/页</option>
               </select>
-              <div class="pager">&lt;&lt; &lt; 1 &gt; &gt;&gt;</div>
+              <div class="pager">
+                <button @click="handlePageChange(1)">&lt;&lt;</button>
+                <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+                <button class="active">{{ pagination.pageNo }}</button>
+                <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+                <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+              </div>
             </div>
           </div>
         </div>
@@ -102,9 +110,18 @@
 </template>
 
 <script>
+// ========== 导入印章信息相关API ==========
+// getSealPage: 分页查询印章列表
+// getSeal: 获取单条印章详情
+// createSeal: 新增印章
+// updateSeal: 更新印章
+// deleteSeal: 删除印章
+import { getSealPage, deleteSeal } from '#/api/oa/seal/sealinfo';
+
 export default {
   data() {
     return {
+      // ========== 左侧印章分类（静态分类，用于筛选） ==========
       categories: [
         "全部",
         "行政类",
@@ -112,110 +129,167 @@ export default {
         "财务类",
         "其他",
       ],
+      // 当前选中的分类索引
       selectedCategoryIndex: 0,
-      cars: [
-        {
-          id: 1,
-          company: "深圳总公司",
-          plate: "粤A00001",
-          name: "别克GL8",
-          status: "空闲",
-          category: "商务接待用车",
-          user: "张三",
-          buyDate: "2020-01-15",
-        },
-        {
-          id: 2,
-          company: "深圳总公司",
-          plate: "粤A00002",
-          name: "大众帕萨特",
-          status: "使用中",
-          category: "行政用车",
-          user: "李四",
-          buyDate: "2019-05-20",
-        },
-        {
-          id: 3,
-          company: "深圳总公司",
-          plate: "粤A00003",
-          name: "丰田凯美瑞",
-          status: "空闲",
-          category: "生产经营用车",
-          user: "王五",
-          buyDate: "2018-07-10",
-        },
-        {
-          id: 4,
-          company: "深圳总公司",
-          plate: "粤A00004",
-          name: "奥迪A6",
-          status: "维修",
-          category: "领导专车",
-          user: "赵六",
-          buyDate: "2021-03-01",
-        },
-        {
-          id: 5,
-          company: "深圳总公司",
-          plate: "粤A00005",
-          name: "捷达",
-          status: "空闲",
-          category: "其他",
-          user: "-",
-          buyDate: "2017-11-11",
-        },
-        {
-          id: 3,
-          company: "深圳总公司",
-          plate: "粤A00003",
-          name: "丰田凯美瑞",
-          status: "空闲",
-          category: "生产经营用车",
-          user: "王五",
-          buyDate: "2018-07-10",
-        },
-        {
-          id: 4,
-          company: "深圳总公司",
-          plate: "粤A00004",
-          name: "奥迪A6",
-          status: "维修",
-          category: "领导专车",
-          user: "赵六",
-          buyDate: "2021-03-01",
-        },
-        {
-          id: 5,
-          company: "深圳总公司",
-          plate: "粤A00005",
-          name: "捷达",
-          status: "空闲",
-          category: "其他",
-          user: "-",
-          buyDate: "2017-11-11",
-        },
-      ],
+
+      // ========== 搜索表单数据 ==========
+      searchForm: {
+        companyName: "",  // 所属公司
+        sealNo: "",       // 印章编号
+        sealName: "",     // 印章名称
+      },
+
+      // ========== 分页数据 ==========
+      pagination: {
+        pageNo: 1,        // 当前页码
+        pageSize: 10,     // 每页条数
+        total: 0,         // 总记录数
+      },
+
+      // ========== 表格数据（从接口获取，初始为空） ==========
+      seals: [],
     };
   },
+
+  // ========== 计算属性：根据左侧选中的分类筛选印章 ==========
   computed: {
-    filteredCars() {
+    filteredSeals() {
+      // 获取当前选中的分类名称
       const cat = this.categories[this.selectedCategoryIndex];
-      if (cat === "全部") return this.cars;
-      return this.cars.filter((c) => c.category === cat);
+      // 如果是"全部"，返回所有印章
+      if (cat === "全部") return this.seals;
+      // 否则按分类筛选（接口返回的sealCls字段对应印章分类）
+      return this.seals.filter((s) => s.category === cat);
     },
   },
+
+  // ========== 页面挂载后自动加载印章列表 ==========
+  mounted() {
+    this.loadSealList();
+  },
+
   methods: {
+    // ========== 接口对接方法：获取印章列表 ==========
+    async loadSealList() {
+      try {
+        // 调用分页查询接口，传入页码、每页条数和搜索条件
+        const data = await getSealPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          companyName: this.searchForm.companyName,
+          sealNo: this.searchForm.sealNo,
+          sealName: this.searchForm.sealName,
+        });
+
+        // 将接口返回的数据转换为页面需要的格式
+        // 接口字段 -> 页面字段映射：
+        // id -> id（印章ID）
+        // companyName -> company（所属公司名称）
+        // sealNo -> sealNo（印章编号）
+        // sealName -> sealName（印章名称）
+        // status -> status（状态：0=正常，1=停用）
+        // sealCls -> category（印章分类：1=行政类，2=业务类，3=财务类，4=其他）
+        // keeperName -> keeperName（保管人姓名）
+        // keeperDeptName -> keeperDeptName（保管人部门）
+        // createTime -> createTime（创建时间，时间戳格式）
+        this.seals = data.list.map((item) => ({
+          id: item.id,
+          company: item.companyName || "",
+          sealNo: item.sealNo || "",
+          sealName: item.sealName || "",
+          status: item.status === 0 ? "正常" : "停用",
+          category: this.getCategoryText(item.sealCls),
+          keeperName: item.keeperName || "",
+          keeperDeptName: item.keeperDeptName || "",
+          createTime: this.formatTimestamp(item.createTime),
+        }));
+
+        // 更新总记录数
+        this.pagination.total = data.total;
+      } catch (err) {
+        // 接口调用失败时打印错误信息
+        console.error("获取印章列表失败", err);
+      }
+    },
+
+    // ========== 工具方法：印章分类编码转中文文本 ==========
+    // 接口返回的sealCls是数字编码，需要转换为中文显示
+    getCategoryText(sealCls) {
+      const map = {
+        1: "行政类",
+        2: "业务类",
+        3: "财务类",
+        4: "其他",
+      };
+      return map[sealCls] || "其他";
+    },
+
+    // ========== 工具方法：时间戳格式化 ==========
+    // 将后端返回的毫秒时间戳转换为 "YYYY-MM-DD HH:mm:ss" 格式
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+
+    // ========== 左侧分类切换 ==========
     selectCategory(index) {
       this.selectedCategoryIndex = index;
     },
-    // 示例操作：编辑、删除（只是占位）
-    editCar(car) {
-      // TODO: 打开编辑弹窗
-      console.log("edit", car);
+
+    // ========== 搜索按钮 ==========
+    handleSearch() {
+      // 搜索时重置到第一页
+      this.pagination.pageNo = 1;
+      this.loadSealList();
     },
-    deleteCar(car) {
-      // TODO: 删除逻辑
-      console.log("delete", car);
+
+    // ========== 重置按钮 ==========
+    handleReset() {
+      // 清空搜索条件
+      this.searchForm = { companyName: "", sealNo: "", sealName: "" };
+      // 重置到第一页
+      this.pagination.pageNo = 1;
+      this.loadSealList();
+    },
+
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadSealList();
+    },
+
+    // ========== 新增印章 ==========
+    handleAdd() {
+      // TODO: 打开新增印章弹窗
+      alert("新增印章功能待实现");
+    },
+
+    // ========== 编辑印章 ==========
+    editSeal(seal) {
+      // TODO: 打开编辑弹窗，传入当前印章数据
+      alert(`编辑印章：${seal.sealName}`);
+    },
+
+    // ========== 删除印章 ==========
+    async deleteSeal(seal) {
+      // 弹出确认框，防止误删
+      if (!confirm(`确定要删除印章「${seal.sealName}」吗？`)) return;
+      try {
+        // 调用删除接口
+        await deleteSeal(seal.id);
+        alert("删除成功");
+        // 删除成功后重新加载列表
+        this.loadSealList();
+      } catch (err) {
+        console.error("删除印章失败", err);
+      }
     },
   },
 };

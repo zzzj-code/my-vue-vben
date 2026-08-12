@@ -3,7 +3,7 @@
     <div class="app">
       <!-- top -->
       <div class="app-top">
-        <form action="">
+        <form @submit.prevent="handleSearch">
           <div class="top-tab">
             <div class="top-row">
               <div class="tab-a">
@@ -12,15 +12,15 @@
               </div>
               <div class="tab-a">
                 <span>单据类型</span>
-                <input type="text" placeholder="请输入单据类型" />
+                <input type="text" placeholder="请输入单据类型" v-model="searchForm.name" />
               </div>
               <div class="tab-a">
                 <span>单据编号</span>
-                <input type="text" placeholder="请输入单据编号" />
+                <input type="text" placeholder="请输入单据编号" v-model="searchForm.billCode" />
               </div>
               <div class="tab-a">
                 <span>流程状态</span>
-                <input type="text" placeholder="请选择流程状态" />
+                <input type="text" placeholder="请选择流程状态" v-model="searchForm.status" />
               </div>
             </div>
             <div class="top-row">
@@ -33,8 +33,8 @@
                 <input type="text" placeholder="请选择申请部门" />
               </div>
               <div class="tab-b">
-                <button type="button">重置</button>
-                <button type="button">搜索</button>
+                <button type="button" @click="handleReset">重置</button>
+                <button type="submit">搜索</button>
                 <span>收起^</span>
               </div>
             </div>
@@ -79,7 +79,7 @@
                 <td>{{ item.startTime }}</td>
                 <td>{{ item.endTime }}</td>
                 <td class="operation-col">
-                  <a href="#" class="op-link">详情</a>
+                  <a href="#" class="op-link" @click.prevent="handleDetail(item)">详情</a>
                   <a href="#" class="op-link op-del">删除</a>
                 </td>
               </tr>
@@ -87,15 +87,15 @@
           </table>
         </div>
         <div class="table-footer">
-          <div class="footer-left">共 {{ rows.length }} 条记录</div>
+          <div class="footer-left">共 {{ pagination.total }} 条记录</div>
           <div class="footer-right">
-            <span class="page-size">10条/页</span>
+            <span class="page-size">{{ pagination.pageSize }}条/页</span>
             <div class="pager">
-              <button>&lt;&lt;</button>
-              <button>&lt;</button>
-              <button class="active">1</button>
-              <button>&gt;</button>
-              <button>&gt;&gt;</button>
+              <button @click="handlePageChange(1)">&lt;&lt;</button>
+              <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+              <button class="active">{{ pagination.pageNo }}</button>
+              <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+              <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
             </div>
           </div>
         </div>
@@ -106,158 +106,116 @@
 </template>
 
 <script>
+// 导入我的流程相关API
+import { getProcessInstanceMyPage } from '#/api/bpm/processInstance';
+
 export default {
   data() {
     return {
-      rows: [
-        {
-          id: 1,
-          type: '设备采购',
-          number: 'OA123-202607230001',
-          summary: '电脑采购申请',
-          company: '深圳分公司',
-          department: '研发部门',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 16:04:06',
-          endTime: '2026-07-23 16:04:32',
-        },
-        {
-          id: 2,
-          type: '请假单',
-          number: 'QJ-20260723-060',
-          summary: '年假申请',
-          company: '深圳分公司',
-          department: '市场部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-23 15:54:59',
-          endTime: '',
-        },
-        {
-          id: 3,
-          type: '报销单',
-          number: 'BX-202607230011',
-          summary: '差旅费用报销',
-          company: '上海分公司',
-          department: '销售部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-23 15:40:53',
-          endTime: '',
-        },
-        {
-          id: 4,
-          type: '合同变更',
-          number: 'CT301-202607230007',
-          summary: '供应商合同条款调整',
-          company: '深圳分公司',
-          department: '采购部',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 12:43:03',
-          endTime: '2026-07-23 12:49:55',
-        },
-        {
-          id: 5,
-          type: '合同签署',
-          number: 'CT302-202607230001',
-          summary: '项目合作合同',
-          company: '北京分公司',
-          department: '战略部',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 11:43:16',
-          endTime: '2026-07-23 11:55:06',
-        },
-        {
-          id: 6,
-          type: '用车申请',
-          number: 'YC-202607230022',
-          summary: '客户拜访用车',
-          company: '广州分公司',
-          department: '销售部',
-          processStatus: '已驳回',
-          statusClass: 'status-red',
-          startTime: '2026-07-23 10:21:00',
-          endTime: '2026-07-23 10:25:40',
-        },
-        {
-          id: 7,
-          type: '采购申请',
-          number: 'CG-202607230030',
-          summary: '办公用品采购',
-          company: '深圳分公司',
-          department: '行政部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-23 09:10:52',
-          endTime: '',
-        },
-        {
-          id: 8,
-          type: '报销单',
-          number: 'BX-202607230012',
-          summary: '招待费报销',
-          company: '深圳分公司',
-          department: '财务部',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 08:45:33',
-          endTime: '2026-07-23 08:58:12',
-        },
-        {
-          id: 9,
-          type: '请假单',
-          number: 'QJ-20260723-061',
-          summary: '调休申请',
-          company: '杭州分公司',
-          department: '技术部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-23 08:12:18',
-          endTime: '',
-        },
-        {
-          id: 10,
-          type: '公文发文',
-          number: 'OA105-202607230003',
-          summary: '项目立项函',
-          company: '北京分公司',
-          department: '法务部',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 07:58:51',
-          endTime: '2026-07-23 08:03:20',
-        },
-        {
-          id: 11,
-          type: '采购申请',
-          number: 'CG-202607230031',
-          summary: '设备维护材料',
-          company: '上海分公司',
-          department: '运维部',
-          processStatus: '已驳回',
-          statusClass: 'status-red',
-          startTime: '2026-07-22 17:20:15',
-          endTime: '2026-07-22 17:25:00',
-        },
-        {
-          id: 12,
-          type: '合同签署',
-          number: 'CT302-202607230002',
-          summary: '供应链合作协议',
-          company: '深圳分公司',
-          department: '采购部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-22 16:05:42',
-          endTime: '',
-        },
-      ],
-    }
+      // 搜索表单
+      searchForm: {
+        name: "",
+        billCode: "",
+        status: "",
+      },
+      // 分页
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      rows: [],
+    };
   },
-}
+  mounted() {
+    this.loadMyProcessList();
+  },
+  methods: {
+    // 获取我的流程列表
+    async loadMyProcessList() {
+      try {
+        const data = await getProcessInstanceMyPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        });
+        // 将接口返回的数据转换为页面需要的格式
+        this.rows = data.list.map((item) => {
+          // 状态映射：1=审批中，2=已完成，3=已取消，4=已驳回
+          let statusText = "审批中";
+          let statusClass = "status-blue";
+          if (item.status === 2) {
+            statusText = "已完成";
+            statusClass = "status-green";
+          } else if (item.status === 3) {
+            statusText = "已取消";
+            statusClass = "status-red";
+          } else if (item.status === 4) {
+            statusText = "已驳回";
+            statusClass = "status-red";
+          }
+          return {
+            id: item.id,
+            type: item.name || "",
+            number: item.billCode || "",
+            summary: this.getSummaryValue(item.summary),
+            company: item.companyName || "",
+            department: item.deptName || "",
+            processStatus: statusText,
+            statusClass: statusClass,
+            startTime: this.formatTimestamp(item.startTime),
+            endTime: item.endTime ? this.formatTimestamp(item.endTime) : "",
+          };
+        });
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取我的流程失败", err);
+      }
+    },
+    // 从摘要数组中提取值
+    getSummaryValue(summary) {
+      if (!summary || !Array.isArray(summary) || summary.length === 0) return "";
+      const first = summary[0];
+      if (typeof first === "string") {
+        const match = first.match(/value=([^}]*)/);
+        return match ? match[1] : "";
+      }
+      return first.value || "";
+    },
+    // 时间戳格式化
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+    // 搜索
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadMyProcessList();
+    },
+    // 重置
+    handleReset() {
+      this.searchForm = { name: "", billCode: "", status: "" };
+      this.pagination.pageNo = 1;
+      this.loadMyProcessList();
+    },
+    // 分页
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadMyProcessList();
+    },
+    // 详情
+    handleDetail(row) {
+      alert(`查看流程详情：${row.number}`);
+    },
+  },
+};
 </script>
 
 <style scoped>

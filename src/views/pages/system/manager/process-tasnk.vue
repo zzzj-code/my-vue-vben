@@ -3,20 +3,20 @@
     <div class="app">
       <!-- top -->
       <div class="app-top">
-        <form action="">
+        <form @submit.prevent="handleSearch">
           <div class="top-tab">
             <div class="top-row">
               <div class="tab-a">
                 <span>任务名称</span>
-                <input type="text" placeholder="请输入任务名称" />
+                <input type="text" placeholder="请输入任务名称" v-model="searchForm.name" />
               </div>
               <div class="tab-a">
                 <span>创建时间</span>
                 <input type="text" placeholder=" ——>" />
               </div>
               <div class="tab-b">
-                <button type="button">重置</button>
-                <button type="button">搜索</button>
+                <button type="button" @click="handleReset">重置</button>
+                <button type="submit">搜索</button>
                 <span>收起^</span>
               </div>
             </div>
@@ -39,22 +39,24 @@
           <table class="manage-table">
             <thead>
               <tr>
-                <th>编号</th>
-                <th>组名</th>
-                <th>描述</th>
-                <th>成员</th>
-                <th>状态</th>
+                <th>任务名称</th>
+                <th>流程名称</th>
+                <th>单据编号</th>
+                <th>审批人</th>
+                <th>所属公司</th>
+                <th>所属部门</th>
+                <th>任务状态</th>
                 <th>创建时间</th>
+                <th>结束时间</th>
                 <th class="operation-col">操作</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="item in rows" :key="item.id">
-                <td>{{ item.id }}</td>
-                <td>
-                  <a class="link-number" href="#">{{ item.type }}</a>
-                </td>
-                <td>{{ item.summary }}</td>
+                <td>{{ item.taskName }}</td>
+                <td>{{ item.processName }}</td>
+                <td><a class="link-number" href="#">{{ item.billCode }}</a></td>
+                <td>{{ item.assignee }}</td>
                 <td>{{ item.company }}</td>
                 <td>{{ item.department }}</td>
                 <td>
@@ -62,8 +64,10 @@
                     item.processStatus
                   }}</span>
                 </td>
+                <td>{{ item.startTime }}</td>
+                <td>{{ item.endTime }}</td>
                 <td class="operation-col">
-                  <a href="#" class="op-link">详情</a>
+                  <a href="#" class="op-link" @click.prevent="handleDetail(item)">详情</a>
                   <a href="#" class="op-link op-del">删除</a>
                 </td>
               </tr>
@@ -71,15 +75,15 @@
           </table>
         </div>
         <div class="table-footer">
-          <div class="footer-left">共 {{ rows.length }} 条记录</div>
+          <div class="footer-left">共 {{ pagination.total }} 条记录</div>
           <div class="footer-right">
-            <span class="page-size">10条/页</span>
+            <span class="page-size">{{ pagination.pageSize }}条/页</span>
             <div class="pager">
-              <button>&lt;&lt;</button>
-              <button>&lt;</button>
-              <button class="active">1</button>
-              <button>&gt;</button>
-              <button>&gt;&gt;</button>
+              <button @click="handlePageChange(1)">&lt;&lt;</button>
+              <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+              <button class="active">{{ pagination.pageNo }}</button>
+              <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+              <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
             </div>
           </div>
         </div>
@@ -90,120 +94,100 @@
 </template>
 
 <script>
+// 导入流程任务管理相关API
+import { getTaskManagerPage } from '#/api/bpm/task';
+
 export default {
   data() {
     return {
-      rows: [
-        {
-          id: 1,
-          type: "用车审批",
-          number: "OA123-202607230001",
-          summary: "电脑采购申请",
-          company: "深圳分公司",
-          department: "研发部门",
-          processStatus: "审批通过",
-          statusClass: "status-green",
-          startTime: "2026-07-23 16:04:06",
-          endTime: "2026-07-23 16:04:32",
-        },
-        {
-          id: 2,
-          type: "用车审批",
-          number: "OA123-202607230001",
-          summary: "电脑采购申请",
-          company: "深圳分公司",
-          department: "研发部门",
-          processStatus: "审批通过",
-          statusClass: "status-green",
-          startTime: "2026-07-23 16:04:06",
-          endTime: "2026-07-23 16:04:32",
-        },
-        {
-          id: 3,
-          type: "用车审批",
-          number: "OA123-202607230001",
-          summary: "电脑采购申请",
-          company: "深圳分公司",
-          department: "研发部门",
-          processStatus: "审批通过",
-          statusClass: "status-green",
-          startTime: "2026-07-23 16:04:06",
-          endTime: "2026-07-23 16:04:32",
-        },
-        {
-          id: 4,
-          type: "用车审批",
-          number: "OA123-202607230001",
-          summary: "电脑采购申请",
-          company: "深圳分公司",
-          department: "研发部门",
-          processStatus: "审批通过",
-          statusClass: "status-green",
-          startTime: "2026-07-23 16:04:06",
-          endTime: "2026-07-23 16:04:32",
-        },
-        {
-          id: 5,
-          type: "用车审批",
-          number: "OA123-202607230001",
-          summary: "电脑采购申请",
-          company: "深圳分公司",
-          department: "研发部门",
-          processStatus: "审批通过",
-          statusClass: "status-green",
-          startTime: "2026-07-23 16:04:06",
-          endTime: "2026-07-23 16:04:32",
-        },
-        {
-          id: 6,
-          type: "用车审批",
-          number: "OA123-202607230001",
-          summary: "电脑采购申请",
-          company: "深圳分公司",
-          department: "研发部门",
-          processStatus: "审批通过",
-          statusClass: "status-green",
-          startTime: "2026-07-23 16:04:06",
-          endTime: "2026-07-23 16:04:32",
-        },
-        {
-          id: 4,
-          type: "用车审批",
-          number: "OA123-202607230001",
-          summary: "电脑采购申请",
-          company: "深圳分公司",
-          department: "研发部门",
-          processStatus: "审批通过",
-          statusClass: "status-green",
-          startTime: "2026-07-23 16:04:06",
-          endTime: "2026-07-23 16:04:32",
-        },
-        {
-          id: 5,
-          type: "用车审批",
-          number: "OA123-202607230001",
-          summary: "电脑采购申请",
-          company: "深圳分公司",
-          department: "研发部门",
-          processStatus: "审批通过",
-          statusClass: "status-green",
-          startTime: "2026-07-23 16:04:06",
-          endTime: "2026-07-23 16:04:32",
-        },
-        {
-          id: 6,
-          type: "用车审批",
-          number: "OA123-202607230001",
-          summary: "电脑采购申请",
-          company: "深圳分公司",
-          department: "研发部门",
-          processStatus: "审批通过",
-          statusClass: "status-green",
-          startTime: "2026-07-23 16:04:06",
-          endTime: "2026-07-23 16:04:32",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        name: "",
+      },
+      // 分页
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      rows: [],
     };
+  },
+  mounted() {
+    this.loadTaskList();
+  },
+  methods: {
+    // 获取流程任务列表
+    async loadTaskList() {
+      try {
+        const data = await getTaskManagerPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        });
+        // 将接口返回的数据转换为页面需要的格式
+        this.rows = data.list.map((item) => {
+          // 状态映射：1=待处理，2=已完成，10=已撤回
+          let statusText = "待处理";
+          let statusClass = "status-blue";
+          if (item.status === 2) {
+            statusText = "已完成";
+            statusClass = "status-green";
+          } else if (item.status === 10) {
+            statusText = "已撤回";
+            statusClass = "status-red";
+          }
+          return {
+            id: item.id,
+            taskName: item.name || "",
+            processName: item.processInstance?.name || "",
+            billCode: item.processInstance?.billCode || "",
+            assignee: item.assigneeUser?.nickname || "",
+            company: item.processInstance?.companyName || "",
+            department: item.processInstance?.deptName || "",
+            processStatus: statusText,
+            statusClass: statusClass,
+            startTime: this.formatTimestamp(item.createTime),
+            endTime: item.endTime ? this.formatTimestamp(item.endTime) : "",
+          };
+        });
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取流程任务失败", err);
+      }
+    },
+    // 时间戳格式化
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+    // 搜索
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadTaskList();
+    },
+    // 重置
+    handleReset() {
+      this.searchForm = { name: "" };
+      this.pagination.pageNo = 1;
+      this.loadTaskList();
+    },
+    // 分页
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadTaskList();
+    },
+    // 详情
+    handleDetail(row) {
+      alert(`查看任务详情：${row.taskName}`);
+    },
   },
 };
 </script>

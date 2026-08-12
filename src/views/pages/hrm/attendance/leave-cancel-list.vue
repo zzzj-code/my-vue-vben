@@ -4,19 +4,19 @@
       <div class="app-top">
         <div>
           <span>单据编号</span>
-          <input type="text" placeholder="请输入单据编号" />
+          <input type="text" placeholder="请输入单据编号" v-model="searchForm.billCode" />
         </div>
         <div>
           <span>单据状态</span>
-          <input type="text" placeholder="请输入单据状态" />
+          <input type="text" placeholder="请输入单据状态" v-model="searchForm.processStatus" />
         </div>
         <div>
           <span>请假类型</span>
-          <input type="text" placeholder="请输入请假类型" />
+          <input type="text" placeholder="请输入请假类型" v-model="searchForm.leaveType" />
         </div>
         <div>
-          <button class="btn1">重置</button>
-          <button class="btn2">搜索</button>
+          <button class="btn1" @click="handleReset">重置</button>
+          <button class="btn2" @click="handleSearch">搜索</button>
           展开▽
         </div>
       </div>
@@ -24,13 +24,13 @@
         <div class="main-title">
           <div>请假销假申请单列表</div>
           <div>
-            <button>+新增</button>
+            <button @click="handleAdd">+新增</button>
             <button>导出</button>
             <button>批量删除</button>
-            <button>🔍</button>
+            <button @click="handleSearch">🔍</button>
           </div>
           <div>
-            <button>⟳</button>
+            <button @click="loadLeaveCancelList">⟳</button>
             <button>⛶</button>
             <button>⊞</button>
           </div>
@@ -60,32 +60,41 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(item, index) in tabValue" :key="item.id">
+              <tr v-for="(item, index) in rows" :key="item.id">
                 <td class="col-check">
                   <input type="checkbox" name="" id="" />
                 </td>
-                <td class="col-id">{{ item.id }}</td>
-                <td class="col-name">{{ item.name }}</td>
-                <td>{{ item.gender }}</td>
-                <td>{{ item.department }}</td>
-                <td>{{ item.position }}</td>
-                <td>{{ item.pos }}</td>
-                <td>{{ item.status }}</td>
-                <td>{{ item.time }}</td>
-                <td>{{ item.times }}</td>
-                <td>{{ item.unit }}</td>
-                <td>{{ item.phone }}</td>
-                <td>{{ item.emit }}</td>
-                <td>{{ item.statuss }}</td>
-                <td>{{ item.datetime }}</td>
-                <td class="oc-col">删除</td>
+                <td class="col-id">{{ item.billCode }}</td>
+                <td class="col-name">{{ item.processStatusText }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.mobile }}</td>
+                <td>{{ item.email }}</td>
+                <td>{{ item.empDeptName }}</td>
+                <td>{{ item.jobPost }}</td>
+                <td>{{ item.jobPosition }}</td>
+                <td>{{ item.employeeStatusText }}</td>
+                <td>{{ item.entryDate }}</td>
+                <td>{{ item.expectedFormalDate }}</td>
+                <td>{{ item.creatorName }}</td>
+                <td>{{ item.empCompanyName }}</td>
+                <td>{{ item.createTimeText }}</td>
+                <td class="oc-col">
+                  <a href="#" @click.prevent="handleDetail(item)">详情</a>
+                  <a href="#" @click.prevent="handleDelete(item)" style="color: red;">删除</a>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
-          <div>共11条记录<span>20条/页</span></div>
-          <div></div>
+          <div>共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span></div>
+          <div>
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
         </div>
       </div>
     </div>
@@ -93,124 +102,142 @@
 </template>
 
 <script>
+// ========== 导入请假销假申请相关API ==========
+// getLeaveCancelBillPage: 分页查询请假销假申请列表
+// getLeaveCancelBill: 获取单条请假销假申请详情
+// saveLeaveCancelBill: 保存请假销假申请（草稿）
+// submitLeaveCancelBill: 提交请假销假申请
+// deleteLeaveCancelBill: 删除请假销假申请
+import { getLeaveCancelBillPage, deleteLeaveCancelBill } from '#/api/hrm/leave-cancel';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: "EMP-2026-001",
-          name: "待审核",
-          gender: "张三",
-          department: "技术部",
-          position: "前端开发工程师",
-          pos: "高级工程师",
-          status: "在职",
-          time: "2026-07-01",
-          times: "2026-10-01",
-          unit: "北京分公司",
-          phone: "138****1234",
-          emit: "李四",
-          statuss: "北京科技有限公司",
-          datetime: "2026-06-25 09:30:00",
-        },
-        {
-          id: "EMP-2026-002",
-          name: "已通过",
-          gender: "李娜",
-          department: "产品部",
-          position: "产品经理",
-          pos: "中级经理",
-          status: "在职",
-          time: "2026-07-05",
-          times: "2026-10-05",
-          unit: "上海分公司",
-          phone: "139****5678",
-          emit: "王五",
-          statuss: "上海科技有限公司",
-          datetime: "2026-06-28 14:20:00",
-        },
-        {
-          id: "EMP-2026-003",
-          name: "待审核",
-          gender: "王强",
-          department: "设计部",
-          position: "UI设计师",
-          pos: "中级设计师",
-          status: "试用期",
-          time: "2026-07-10",
-          times: "2026-10-10",
-          unit: "深圳分公司",
-          phone: "136****9012",
-          emit: "赵六",
-          statuss: "深圳科技有限公司",
-          datetime: "2026-07-01 10:15:00",
-        },
-        {
-          id: "EMP-2026-004",
-          name: "已驳回",
-          gender: "刘洋",
-          department: "市场部",
-          position: "市场专员",
-          pos: "初级专员",
-          status: "离职",
-          time: "2026-06-20",
-          times: "2026-09-20",
-          unit: "广州分公司",
-          phone: "137****3456",
-          emit: "孙七",
-          statuss: "广州科技有限公司",
-          datetime: "2026-06-18 16:45:00",
-        },
-        {
-          id: "EMP-2026-002",
-          name: "已通过",
-          gender: "李娜",
-          department: "产品部",
-          position: "产品经理",
-          pos: "中级经理",
-          status: "在职",
-          time: "2026-07-05",
-          times: "2026-10-05",
-          unit: "上海分公司",
-          phone: "139****5678",
-          emit: "王五",
-          statuss: "上海科技有限公司",
-          datetime: "2026-06-28 14:20:00",
-        },
-        {
-          id: "EMP-2026-003",
-          name: "待审核",
-          gender: "王强",
-          department: "设计部",
-          position: "UI设计师",
-          pos: "中级设计师",
-          status: "试用期",
-          time: "2026-07-10",
-          times: "2026-10-10",
-          unit: "深圳分公司",
-          phone: "136****9012",
-          emit: "赵六",
-          statuss: "深圳科技有限公司",
-          datetime: "2026-07-01 10:15:00",
-        },
-        {
-          id: "EMP-2026-004",
-          name: "已驳回",
-          gender: "刘洋",
-          department: "市场部",
-          position: "市场专员",
-          pos: "初级专员",
-          status: "离职",
-          time: "2026-06-20",
-          times: "2026-09-20",
-          unit: "广州分公司",
-          phone: "137****3456",
-          emit: "孙七",
-          statuss: "广州科技有限公司",
-          datetime: "2026-06-18 16:45:00",
-        },
-      ],
-    }
+      // ========== 搜索表单数据 ==========
+      searchForm: {
+        billCode: "",        // 单据编号
+        processStatus: "",   // 单据状态
+        leaveType: "",       // 请假类型
+      },
+
+      // ========== 分页数据 ==========
+      pagination: {
+        pageNo: 1,        // 当前页码
+        pageSize: 10,     // 每页条数
+        total: 0,         // 总记录数
+      },
+
+      // ========== 表格数据（从接口获取，初始为空） ==========
+      rows: [],
+    };
+  },
+
+  // ========== 页面挂载后自动加载列表 ==========
+  mounted() {
+    this.loadLeaveCancelList();
+  },
+
+  methods: {
+    // ========== 接口对接方法：获取请假销假申请列表 ==========
+    async loadLeaveCancelList() {
+      try {
+        const data = await getLeaveCancelBillPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          billCode: this.searchForm.billCode,
+          processStatus: this.searchForm.processStatus,
+          leaveType: this.searchForm.leaveType,
+        });
+
+        this.rows = data.list.map((item) => ({
+          id: item.id,
+          billCode: item.billCode || "",
+          processStatusText: this.getProcessStatusText(item.processStatus),
+          name: item.name || "",
+          mobile: item.mobile || "",
+          email: item.email || "",
+          empDeptName: item.empDeptName || item.deptName || "",
+          jobPost: item.jobPost || "",
+          jobPosition: item.jobPosition || "",
+          employeeStatusText: this.getEmployeeStatusText(item.employeeStatus),
+          entryDate: item.entryDate || "",
+          expectedFormalDate: item.expectedFormalDate || "",
+          creatorName: item.creatorName || "",
+          empCompanyName: item.empCompanyName || item.companyName || "",
+          createTimeText: this.formatTimestamp(item.createTime),
+        }));
+
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取请假销假申请列表失败", err);
+      }
+    },
+
+    // ========== 工具方法：流程状态编码转中文文本 ==========
+    getProcessStatusText(status) {
+      const map = { 1: "草稿", 10: "审批中", 20: "已通过", 30: "已驳回", 40: "已取消" };
+      return map[status] || "未知";
+    },
+
+    // ========== 工具方法：员工状态编码转中文文本 ==========
+    getEmployeeStatusText(status) {
+      const map = { 1: "在职", 2: "离职", 3: "试用期", 4: "待入职", 5: "待离职", 6: "其他" };
+      return map[status] || "未知";
+    },
+
+    // ========== 工具方法：时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+
+    // ========== 搜索按钮 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadLeaveCancelList();
+    },
+
+    // ========== 重置按钮 ==========
+    handleReset() {
+      this.searchForm = { billCode: "", processStatus: "", leaveType: "" };
+      this.pagination.pageNo = 1;
+      this.loadLeaveCancelList();
+    },
+
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadLeaveCancelList();
+    },
+
+    // ========== 新增请假销假申请 ==========
+    handleAdd() {
+      alert("新增请假销假申请功能待实现");
+    },
+
+    // ========== 查看详情 ==========
+    handleDetail(row) {
+      alert(`请假销假申请详情：${row.billCode}`);
+    },
+
+    // ========== 删除请假销假申请 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除请假销假申请「${row.billCode}」吗？`)) return;
+      try {
+        await deleteLeaveCancelBill(row.id);
+        alert("删除成功");
+        this.loadLeaveCancelList();
+      } catch (err) {
+        console.error("删除请假销假申请失败", err);
+      }
+    },
   },
 };
 </script>

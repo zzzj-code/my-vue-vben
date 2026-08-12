@@ -5,8 +5,8 @@
             <div class="main-top">
                 <div>全部流程</div>
                 <div>
-                    <input type="text" placeholder="请输入流程名称检索">
-                    <button>🔍</button>
+                    <input type="text" placeholder="请输入流程名称检索" v-model="searchKeyword" @keyup.enter="handleSearch">
+                    <button @click="handleSearch">🔍</button>
                 </div>
             </div>
             <div class="main-tab">
@@ -41,74 +41,71 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+// 导入流程分类和流程定义相关API
+import { getCategorySimpleList } from '#/api/bpm/category';
+import { getSimpleProcessDefinitionList } from '#/api/bpm/definition';
 
-const tabs = [
-  'OA协同办公',
-  '仓储管理',
-  '人力资源管理',
-  '仓库管理',
-  '合同管理',
-  '项目管理',
-  'CRM客户关系',
-  '财务管理'
-]
-
-const tabContents = [
-  [
-    { tag: '物料', title: '物料领用申请' },
-    { tag: '物料', title: '物料领用申请' },
-    { tag: '物料', title: '物料领用申请' },
-    { tag: '流程', title: '流程图标 HK-米修' },
-    { tag: '物料', title: '物料领用申请' },
-    { tag: '流程', title: '流程图标 HK-米修' },
-    { tag: '物料', title: '物料领用申请' },
-    { tag: '流程', title: '流程图标 HK-米修' },
-    { tag: '物料', title: '物料领用申请' },
-    { tag: '流程', title: '流程图标 HK-米修' },
-    { tag: '物料', title: '物料领用申请' },
-    { tag: '流程', title: '流程图标 HK-米修' },
-  ],
-  [
-    { tag: '设备', title: '设备销售' }
-  ],
-  [
-    { tag: '录用', title: '录用审批单' },
-    { tag: '薪资', title: '薪资确认审批' },
-    { tag: '发薪', title: '发薪登记单' },
-    { tag: '绩效', title: '绩效评价任务' }
-  ],
-  [
-    { tag: '仓库', title: '仓库管理-采购' }
-  ],
-  [
-    { tag: '合同', title: '合同发起审批' },
-    { tag: '合同', title: '合同签署' },
-    { tag: '合同', title: '合同变更' }
-  ],
-  [
-    { tag: '项目', title: '项目立项申请' },
-    { tag: '项目', title: '项目变更申请' },
-    { tag: '项目', title: '项目工时周报' },
-    { tag: '感觉', title: '感觉可以啊' }
-  ],
-  [
-    { tag: 'CR', title: 'CRM合同审批' },
-    { tag: 'CR', title: 'CRM回款审批' }
-  ],
-  [
-    { tag: '开票', title: '开票申请' },
-    { tag: 'te', title: 'test' },
-    { tag: '办公', title: '办公品申领' }
-  ]
-]
+// 分类列表（从接口获取）
+const tabs = ref([])
+// 所有流程定义（从接口获取）
+const allProcessList = ref([])
+// 搜索关键词
+const searchKeyword = ref('')
 
 const activeIndex = ref(0)
 const setActive = index => {
   activeIndex.value = index
 }
 
-const currentItems = computed(() => tabContents[activeIndex.value] || [])
+// 获取分类列表
+const loadCategoryList = async () => {
+  try {
+    const data = await getCategorySimpleList();
+    tabs.value = data.map(item => item.name);
+  } catch (err) {
+    console.error("获取流程分类失败", err);
+  }
+}
+
+// 获取所有流程定义
+const loadProcessList = async () => {
+  try {
+    const data = await getSimpleProcessDefinitionList();
+    // 将接口返回的数据转换为页面需要的格式
+    allProcessList.value = data.map(item => ({
+      id: item.id,
+      name: item.name,
+      key: item.key,
+      // 图标字段为null，用流程名称的第一个字作为图标
+      tag: item.name ? item.name.charAt(0) : '流',
+      title: item.name,
+    }));
+  } catch (err) {
+    console.error("获取流程定义失败", err);
+  }
+}
+
+// 当前显示的流程列表（根据搜索关键词过滤）
+const currentItems = computed(() => {
+  if (!searchKeyword.value) {
+    return allProcessList.value;
+  }
+  return allProcessList.value.filter(item =>
+    item.title.includes(searchKeyword.value)
+  );
+})
+
+// 搜索
+const handleSearch = () => {
+  // computed 会自动响应 searchKeyword 的变化
+}
+
+// 页面加载时获取数据
+onMounted(() => {
+  loadCategoryList();
+  loadProcessList();
+})
 </script>
 
 <style scoped>

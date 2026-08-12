@@ -5,9 +5,9 @@
         <div class="top1">
           <div class="top-left">流程模型</div>
           <div class="top-right">
-            <input type="text" placeholder="搜索流程" />
-            <button class="right1">+新建模型</button>
-            <button class="right2">导入模型</button>
+            <input type="text" placeholder="搜索流程" v-model="searchKeyword" @keyup.enter="handleSearch" />
+            <button class="right1" @click="handleCreate">+新建模型</button>
+            <button class="right2" @click="handleImport">导入模型</button>
             <button class="right3">⚙️</button>
           </div>
         </div>
@@ -62,164 +62,84 @@
 </template>
 
 <script>
+// 导入流程模型相关API
+import { getModelList } from '#/api/bpm/model';
+
 export default {
   data() {
     return {
-      groups: [
-        {
-          title: 'OA协同办公',
-          count: 22,
-          expanded: true,
-          items: [
-            {
-              tag: 'OA',
-              name: '公文传阅申请',
-              code: 'oa_car_return_bill',
-              visible: '全部可见',
-              type: 'SIMPLE设计器',
-              category: '业务表单',
-              link: '/oa/car/car-return-info',
-              linkText: '/oa/car/car-return-info',
-              updated: '2026-07-23 16:27:50',
-            },
-            {
-              tag: 'OA',
-              name: 'OA用印申请单',
-              code: 'oa_seal_apply_bill',
-              visible: '全部可见',
-              type: 'SIMPLE设计器',
-              category: '流程表单',
-              link: '/oa/meetingroom/booking-info',
-              linkText: '/oa/meetingroom/booking-info',
-              updated: '2026-07-22 15:26:24',
-            },
-            {
-              tag: '会议',
-              name: '会议室预定申请',
-              code: 'oa_meeting_room_booking',
-              visible: '全部可见',
-              type: 'SIMPLE设计器',
-              category: '流程表单',
-              link: '/bpm/oa/leave/create',
-              linkText: 'leave-form',
-              updated: '2026-07-23 15:54:39',
-            },
-          ],
-        },
-        {
-          title: '仓储管理',
-          count: 6,
-          expanded: false,
-          items: [
-            {
-              tag: '仓储',
-              name: '物料出库申请',
-              code: 'wh_stock_out',
-              visible: '部门可见',
-              type: 'SIMPLE设计器',
-              category: '业务表单',
-              link: '/wh/stock/out-info',
-              linkText: '/wh/stock/out-info',
-              updated: '2026-07-21 11:04:41',
-            },
-          ],
-        },
-        {
-          title: '人力资源管理',
-          count: 13,
-          expanded: false,
-          items: [
-            {
-              tag: '人事',
-              name: '请假申请',
-              code: 'oa_leave',
-              visible: '全部可见',
-              type: 'SIMPLE设计器',
-              category: '业务表单',
-              link: '/oa/office/doc/send-info',
-              linkText: '/oa/office/doc/send-info',
-              updated: '2026-07-20 16:22:42',
-            },
-          ],
-        },
-        {
-          title: '合同管理',
-          count: 3,
-          expanded: false,
-          items: [
-            {
-              tag: '合同',
-              name: '合同审批流程',
-              code: 'oa_contract_approve',
-              visible: '全部可见',
-              type: 'SIMPLE设计器',
-              category: '流程表单',
-              link: '/oa/contract/approval-info',
-              linkText: '/oa/contract/approval-info',
-              updated: '2026-07-19 14:10:47',
-            },
-          ],
-        },
-        {
-          title: '项目管理',
-          count: 4,
-          expanded: false,
-          items: [
-            {
-              tag: '项目',
-              name: '项目立项申请',
-              code: 'project_initiation',
-              visible: '全部可见',
-              type: 'SIMPLE设计器',
-              category: '业务表单',
-              link: '/project/initiate/info',
-              linkText: '/project/initiate/info',
-              updated: '2026-07-18 12:34:21',
-            },
-          ],
-        },
-        {
-          title: 'CRM客户关系',
-          count: 2,
-          expanded: false,
-          items: [
-            {
-              tag: 'CRM',
-              name: '客户拜访记录',
-              code: 'crm_visit_record',
-              visible: '全部可见',
-              type: 'SIMPLE设计器',
-              category: '业务表单',
-              link: '/crm/visit/record-info',
-              linkText: '/crm/visit/record-info',
-              updated: '2026-07-16 09:21:56',
-            },
-          ],
-        },
-        {
-          title: '财务管理',
-          count: 3,
-          expanded: false,
-          items: [
-            {
-              tag: '财务',
-              name: '费用报销单',
-              code: 'finance_reimburse',
-              visible: '全部可见',
-              type: 'SIMPLE设计器',
-              category: '业务表单',
-              link: '/finance/reimburse/info',
-              linkText: '/finance/reimburse/info',
-              updated: '2026-07-15 17:45:09',
-            },
-          ],
-        },
-      ],
+      // 搜索关键词
+      searchKeyword: "",
+      // 分组数据
+      groups: [],
     };
   },
+  mounted() {
+    this.loadModelList();
+  },
   methods: {
+    // 获取流程模型列表并按分类分组
+    async loadModelList() {
+      try {
+        const data = await getModelList(this.searchKeyword);
+        // 按 category 分组
+        const groupMap = {};
+        data.forEach((item) => {
+          const category = item.categoryName || item.category || "其他";
+          if (!groupMap[category]) {
+            groupMap[category] = {
+              title: category,
+              count: 0,
+              expanded: category === "OA协同办公", // 默认展开OA分类
+              items: [],
+            };
+          }
+          groupMap[category].items.push({
+            tag: item.category || "",
+            name: item.name || "",
+            code: item.key || "",
+            visible: item.visible ? "全部可见" : "不可见",
+            type: item.type === 20 ? "SIMPLE设计器" : "BPMN设计器",
+            category: item.formType === 20 ? "流程表单" : "业务表单",
+            link: item.formCustomCreatePath || "",
+            linkText: item.formCustomCreatePath || "未设置",
+            updated: this.formatTimestamp(item.createTime),
+          });
+          groupMap[category].count++;
+        });
+        // 转换为数组
+        this.groups = Object.values(groupMap);
+      } catch (err) {
+        console.error("获取流程模型失败", err);
+      }
+    },
+    // 时间戳格式化
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+    // 切换分组展开/收起
     toggleGroup(index) {
       this.groups[index].expanded = !this.groups[index].expanded;
+    },
+    // 搜索
+    handleSearch() {
+      this.loadModelList();
+    },
+    // 新建模型
+    handleCreate() {
+      alert("新建模型功能待实现");
+    },
+    // 导入模型
+    handleImport() {
+      alert("导入模型功能待实现");
     },
   },
 };

@@ -3,27 +3,27 @@
     <div class="app">
       <!-- top -->
       <div class="app-top">
-        <form action="">
+        <form @submit.prevent="handleSearch">
           <div class="top-tab">
             <div class="tab-a">
               <span>首页名称</span>
-              <input type="text" placeholder="请输入首页名称" />
+              <input type="text" placeholder="请输入首页名称" v-model="searchForm.name" />
             </div>
             <div class="tab-a">
               <span>首页编码</span>
-              <input type="text" placeholder="请输入首页编码" />
+              <input type="text" placeholder="请输入首页编码" v-model="searchForm.code" />
             </div>
             <div class="tab-a">
               <span>首页状态</span>
-              <input type="text" placeholder="请选择首页状态" />
+              <input type="text" placeholder="请选择首页状态" v-model="searchForm.status" />
             </div>
             <div class="tab-a tab-c">
                 <span>组件状态</span>
-                <input type="text" placeholder="请选择组件状态" />
+                <input type="text" placeholder="请选择组件状态" v-model="searchForm.componentStatus" />
             </div>
             <div class="tab-b">
-              <button>重置</button>
-              <button>搜索</button>
+              <button type="button" @click="handleReset">重置</button>
+              <button type="submit">搜索</button>
               <span>收起^</span>
             </div>
           </div>
@@ -74,23 +74,23 @@
                 <td>{{ item.order }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="operation-cell">
-                  <a href="#" class="op-link">编辑</a>
-                  <a href="#" class="op-link">预览</a>
-                  <a href="#" class="op-link op-del">删除</a>
+                  <a href="#" class="op-link" @click.prevent="handleEdit(item)">编辑</a>
+                  <a href="#" class="op-link" @click.prevent="handlePreview(item)">预览</a>
+                  <a href="#" class="op-link op-del" @click.prevent="handleDelete(item)">删除</a>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="table-footer">
-          <div class="footer-left">共 {{ rows.length }} 条记录</div>
+          <div class="footer-left">共 {{ pagination.total }} 条记录</div>
           <div class="footer-right">
-            <span class="page-size">10条/页</span>
+            <span class="page-size">{{ pagination.pageSize }}条/页</span>
             <div class="pager">
-              <button>&lt;&lt;</button>
-              <button>&lt;</button>
-              <button class="active">1</button>
-              <button>&gt;</button>
+              <button @click="handlePageChange(1)">&lt;&lt;</button>
+              <button @click="handlePageChange(pagination.pageNo - 1)" :disabled="pagination.pageNo <= 1">&lt;</button>
+              <button class="active">{{ pagination.pageNo }}</button>
+              <button @click="handlePageChange(pagination.pageNo + 1)">></button>
               <button>&gt;&gt;</button>
             </div>
           </div>
@@ -102,134 +102,115 @@
 </template>
 
 <script>
+// 导入组件管理相关API
+import { getComponentPage, deleteComponent } from '#/api/system/home/component';
+
 export default {
   data() {
     return {
-      rows: [
-        {
-          id: 4,
-          name: '快捷导航',
-          code: 'workbench_quick_nav',
-          category: 4,
-          desc: '展示快捷导航入口',
-          defaultWidth: 12,
-          defaultHeight: 3,
-          status: '开启',
-          order: 1,
-          createTime: '2026-01-02 08:01:53',
-        },
-        {
-          id: 3,
-          name: '项目列表',
-          code: 'workbench_project',
-          category: 3,
-          desc: '展示项目卡片列表',
-          defaultWidth: 12,
-          defaultHeight: 6,
-          status: '开启',
-          order: 1,
-          createTime: '2026-01-02 08:01:53',
-        },
-        {
-          id: 2,
-          name: '访问来源图表',
-          code: 'analytics_visits_source',
-          category: 2,
-          desc: '展示访问来源的饼图分析',
-          defaultWidth: 12,
-          defaultHeight: 4,
-          status: '开启',
-          order: 1,
-          createTime: '2026-01-02 08:01:53',
-        },
-        {
-          id: 1,
-          name: '访问统计',
-          code: 'analytics_visits',
-          category: 1,
-          desc: '展示网站访问数据统计卡片',
-          defaultWidth: 6,
-          defaultHeight: 2,
-          status: '开启',
-          order: 1,
-          createTime: '2026-01-02 08:01:52',
-        },
-        {
-          id: 5,
-          name: '动态列表',
-          code: 'workbench_trends',
-          category: 3,
-          desc: '展示最新动态列表',
-          defaultWidth: 12,
-          defaultHeight: 6,
-          status: '开启',
-          order: 2,
-          createTime: '2026-01-02 08:01:53',
-        },
-        {
-          id: 20,
-          name: '欢迎组件',
-          code: 'workbench_welcome',
-          category: 2,
-          desc: '展示欢迎信息、用户信息和天气...',
-          defaultWidth: 24,
-          defaultHeight: 4,
-          status: '开启',
-          order: 5,
-          createTime: '2026-01-09 16:00:00',
-        },
-        {
-          id: 21,
-          name: '通知公告',
-          code: 'workbench_notice',
-          category: 2,
-          desc: '展示系统通知公告列表，支持徽标提醒',
-          defaultWidth: 12,
-          defaultHeight: 8,
-          status: '开启',
-          order: 6,
-          createTime: '2026-01-09 16:00:00',
-        },
-        {
-          id: 30,
-          name: '我的日程',
-          code: 'workbench_schedule',
-          category: 3,
-          desc: '展示日程日历和待办事项，支持拖曳',
-          defaultWidth: 12,
-          defaultHeight: 10,
-          status: '开启',
-          order: 7,
-          createTime: '2026-01-14 05:51:56',
-        },
-        {
-          id: 22,
-          name: '应用中心',
-          code: 'workbench_app_center',
-          category: 2,
-          desc: '展示常用应用，支持拖拽排序和自定义',
-          defaultWidth: 12,
-          defaultHeight: 8,
-          status: '开启',
-          order: 7,
-          createTime: '2026-01-09 16:00:00',
-        },
-        {
-          id: 10,
-          name: '任务列表',
-          code: 'workbench_task_list',
-          category: 1,
-          desc: '展示我的单据、待办任务、已办任务',
-          defaultWidth: 24,
-          defaultHeight: 8,
-          status: '开启',
-          order: 10,
-          createTime: '2026-01-08 10:00:00',
-        },
-      ],
-    }
+      // 搜索表单数据
+      searchForm: {
+        name: "",
+        code: "",
+        status: "",
+        componentStatus: "",
+      },
+      // 分页数据
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      rows: [],
+    };
   },
-}
+  mounted() {
+    // 页面加载时获取组件列表
+    this.loadComponentList();
+  },
+  methods: {
+    // 获取组件列表（对接接口）
+    async loadComponentList() {
+      try {
+        const data = await getComponentPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          name: this.searchForm.name,
+          code: this.searchForm.code,
+          status: this.searchForm.status,
+        });
+        // 将接口返回的数据转换为页面需要的格式
+        this.rows = data.list.map((item) => ({
+          id: item.id,
+          name: item.name,
+          code: item.code,
+          category: item.category,
+          desc: item.description,
+          defaultWidth: item.defaultWidth,
+          defaultHeight: item.defaultHeight,
+          status: item.status === 0 ? "开启" : "关闭",
+          order: item.sort,
+          createTime: this.formatTimestamp(item.createTime),
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取组件列表失败", err);
+      }
+    },
+    // 时间戳格式化
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+    // 搜索
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadComponentList();
+    },
+    // 重置
+    handleReset() {
+      this.searchForm = { name: "", code: "", status: "", componentStatus: "" };
+      this.pagination.pageNo = 1;
+      this.loadComponentList();
+    },
+    // 新增
+    handleAdd() {
+      alert("新增组件功能待实现");
+    },
+    // 编辑
+    handleEdit(row) {
+      alert(`编辑组件：${row.name}`);
+    },
+    // 预览
+    handlePreview(row) {
+      alert(`预览组件：${row.name}`);
+    },
+    // 删除（对接接口）
+    async handleDelete(row) {
+      if (!confirm(`确定要删除组件「${row.name}」吗？`)) return;
+      try {
+        await deleteComponent(row.id);
+        alert("删除成功");
+        this.loadComponentList();
+      } catch (err) {
+        console.error("删除组件失败", err);
+      }
+    },
+    // 分页
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadComponentList();
+    },
+  },
+};
 </script>
 
 <style scoped>

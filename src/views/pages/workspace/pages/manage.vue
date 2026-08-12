@@ -3,23 +3,23 @@
     <div class="app">
       <!-- top -->
       <div class="app-top">
-        <form action="">
+        <form @submit.prevent="handleSearch">
           <div class="top-tab">
             <div class="tab-a">
               <span>首页名称</span>
-              <input type="text" placeholder="请输入首页名称" />
+              <input type="text" placeholder="请输入首页名称" v-model="searchForm.name" />
             </div>
             <div class="tab-a">
               <span>首页编码</span>
-              <input type="text" placeholder="请输入首页编码" />
+              <input type="text" placeholder="请输入首页编码" v-model="searchForm.code" />
             </div>
             <div class="tab-a">
               <span>首页状态</span>
-              <input type="text" placeholder="请选择首页状态" />
+              <input type="text" placeholder="请选择首页状态" v-model="searchForm.status" />
             </div>
             <div class="tab-b">
-              <button>重置</button>
-              <button>搜索</button>
+              <button type="button" @click="handleReset">重置</button>
+              <button type="submit">搜索</button>
               <span>收起^</span>
             </div>
           </div>
@@ -31,9 +31,9 @@
         <div class="main-header">
           <div class="main-title">首页管理</div>
           <div class="main-buttons">
-            <button class="btn btn-primary">+ 新增</button>
-            <button class="icon-btn">🔍</button>
-            <button class="icon-btn">⟳</button>
+            <button class="btn btn-primary" @click="handleAdd">+ 新增</button>
+            <button class="icon-btn" @click="handleSearch">🔍</button>
+            <button class="icon-btn" @click="loadHomePageList">⟳</button>
             <button class="icon-btn">⛶</button>
             <button class="icon-btn">☷</button>
           </div>
@@ -70,22 +70,22 @@
                 <td>{{ item.order }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="operation-cell">
-                  <a href="#" class="op-link">编辑</a>
-                  <a href="#" class="op-link op-del">删除</a>
+                  <a href="#" class="op-link" @click.prevent="handleEdit(item)">编辑</a>
+                  <a href="#" class="op-link op-del" @click.prevent="handleDelete(item)">删除</a>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="table-footer">
-          <div class="footer-left">共 {{ rows.length }} 条记录</div>
+          <div class="footer-left">共 {{ pagination.total }} 条记录</div>
           <div class="footer-right">
-            <span class="page-size">10条/页</span>
+            <span class="page-size">{{ pagination.pageSize }}条/页</span>
             <div class="pager">
-              <button>&lt;&lt;</button>
-              <button>&lt;</button>
-              <button class="active">1</button>
-              <button>&gt;</button>
+              <button @click="handlePageChange(1)">&lt;&lt;</button>
+              <button @click="handlePageChange(pagination.pageNo - 1)" :disabled="pagination.pageNo <= 1">&lt;</button>
+              <button class="active">{{ pagination.pageNo }}</button>
+              <button @click="handlePageChange(pagination.pageNo + 1)">></button>
               <button>&gt;&gt;</button>
             </div>
           </div>
@@ -97,24 +97,108 @@
 </template>
 
 <script>
+// 导入首页管理相关API
+import { getHomePagePage, deleteHomePage } from '#/api/system/home';
+
 export default {
   data() {
     return {
-      rows: [
-        {
-          id: 1,
-          name: '默认工作台',
-          code: 'default_workspace',
-          desc: '系统默认首页',
-          useStatus: '使用中',
-          enableStatus: '开启',
-          order: 0,
-          createTime: '2026-01-02 07:49:34',
-        },
-      ],
-    }
+      // 搜索表单数据
+      searchForm: {
+        name: "",
+        code: "",
+        status: "",
+      },
+      // 分页数据
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      rows: [],
+    };
   },
-}
+  mounted() {
+    // 页面加载时获取首页列表
+    this.loadHomePageList();
+  },
+  methods: {
+    // 获取首页列表（对接接口）
+    async loadHomePageList() {
+      try {
+        const data = await getHomePagePage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          name: this.searchForm.name,
+          code: this.searchForm.code,
+          status: this.searchForm.status,
+        });
+        // 将接口返回的数据转换为页面需要的格式
+        this.rows = data.list.map((item) => ({
+          id: item.id,
+          name: item.name,
+          code: item.code,
+          desc: item.description,
+          useStatus: item.useStatus || (item.status === 0 ? "使用中" : "已停用"),
+          enableStatus: item.status === 0 ? "开启" : "关闭",
+          order: item.sort,
+          createTime: this.formatTimestamp(item.createTime),
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取首页列表失败", err);
+      }
+    },
+    // 时间戳格式化
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+    // 搜索
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadHomePageList();
+    },
+    // 重置
+    handleReset() {
+      this.searchForm = { name: "", code: "", status: "" };
+      this.pagination.pageNo = 1;
+      this.loadHomePageList();
+    },
+    // 新增
+    handleAdd() {
+      alert("新增首页功能待实现");
+    },
+    // 编辑
+    handleEdit(row) {
+      alert(`编辑首页：${row.name}`);
+    },
+    // 删除（对接接口）
+    async handleDelete(row) {
+      if (!confirm(`确定要删除首页「${row.name}」吗？`)) return;
+      try {
+        await deleteHomePage(row.id);
+        alert("删除成功");
+        this.loadHomePageList();
+      } catch (err) {
+        console.error("删除首页失败", err);
+      }
+    },
+    // 分页
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadHomePageList();
+    },
+  },
+};
 </script>
 
 <style scoped>

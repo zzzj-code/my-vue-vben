@@ -22,19 +22,19 @@
         <div class="right-top">
           <div class="top-w">
             <span>所属公司</span>
-            <input type="text" />
+            <input type="text" v-model="searchForm.companyName" />
           </div>
           <div class="top-w">
             <span>车牌号</span>
-            <input type="text" />
+            <input type="text" v-model="searchForm.carNo" />
           </div>
           <div class="top-w">
             <span>车辆名称</span>
-            <input type="text" />
+            <input type="text" v-model="searchForm.carName" />
           </div>
           <div class="top-w">
-            <button class="btn">重置</button>
-            <button class="btn1">搜索</button>
+            <button class="btn" @click="handleReset">重置</button>
+            <button class="btn1" @click="handleSearch">搜索</button>
             <span class="a">展开▽</span>
           </div>
         </div>
@@ -42,14 +42,14 @@
           <div class="right-header">
             <div class="header-title">车辆信息列表</div>
             <div class="header-actions">
-              <button class="btn-add">+新增车辆信息</button>
+              <button class="btn-add" @click="handleAdd">+新增车辆信息</button>
               <button class="btn-export">导出</button>
               <div class="batch-delete" aria-disabled="true">
                 <span class="del-icon">🗑</span> 批量删除
               </div>
               <div class="icon-actions">
-                <button class="icon-btn search" title="搜索">🔍</button>
-                <button class="icon-btn" title="刷新">↻</button>
+                <button class="icon-btn search" title="搜索" @click="handleSearch">🔍</button>
+                <button class="icon-btn" title="刷新" @click="loadCarList">↻</button>
                 <button class="icon-btn" title="全屏">⛶</button>
                 <button class="icon-btn" title="布局">◧</button>
               </div>
@@ -87,12 +87,18 @@
             </table>
           </div>
           <div class="table-footer">
-            <div class="footer-left">共 {{ filteredCars.length }} 条记录</div>
+            <div class="footer-left">共 {{ pagination.total }} 条记录</div>
             <div class="footer-right">
               <select>
-                <option>20条/页</option>
+                <option>{{ pagination.pageSize }}条/页</option>
               </select>
-              <div class="pager">&lt;&lt; &lt; 1 &gt; &gt;&gt;</div>
+              <div class="pager">
+                <button @click="handlePageChange(1)">&lt;&lt;</button>
+                <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+                <button class="active">{{ pagination.pageNo }}</button>
+                <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+                <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+              </div>
             </div>
           </div>
         </div>
@@ -102,9 +108,18 @@
 </template>
 
 <script>
+// ========== 导入车辆信息相关API ==========
+// getCarPage: 分页查询车辆列表
+// getCar: 获取单条车辆详情
+// createCar: 新增车辆
+// updateCar: 更新车辆
+// deleteCar: 删除车辆
+import { getCarPage, deleteCar } from '#/api/oa/car/carinfo';
+
 export default {
   data() {
     return {
+      // ========== 左侧车辆分类（静态分类，用于筛选） ==========
       categories: [
         "全部",
         "商务接待用车",
@@ -113,110 +128,168 @@ export default {
         "领导专车",
         "其他",
       ],
+      // 当前选中的分类索引
       selectedCategoryIndex: 0,
-      cars: [
-        {
-          id: 1,
-          company: "深圳总公司",
-          plate: "粤A00001",
-          name: "别克GL8",
-          status: "空闲",
-          category: "商务接待用车",
-          user: "张三",
-          buyDate: "2020-01-15",
-        },
-        {
-          id: 2,
-          company: "深圳总公司",
-          plate: "粤A00002",
-          name: "大众帕萨特",
-          status: "使用中",
-          category: "行政用车",
-          user: "李四",
-          buyDate: "2019-05-20",
-        },
-        {
-          id: 3,
-          company: "深圳总公司",
-          plate: "粤A00003",
-          name: "丰田凯美瑞",
-          status: "空闲",
-          category: "生产经营用车",
-          user: "王五",
-          buyDate: "2018-07-10",
-        },
-        {
-          id: 4,
-          company: "深圳总公司",
-          plate: "粤A00004",
-          name: "奥迪A6",
-          status: "维修",
-          category: "领导专车",
-          user: "赵六",
-          buyDate: "2021-03-01",
-        },
-        {
-          id: 5,
-          company: "深圳总公司",
-          plate: "粤A00005",
-          name: "捷达",
-          status: "空闲",
-          category: "其他",
-          user: "-",
-          buyDate: "2017-11-11",
-        },
-        {
-          id: 3,
-          company: "深圳总公司",
-          plate: "粤A00003",
-          name: "丰田凯美瑞",
-          status: "空闲",
-          category: "生产经营用车",
-          user: "王五",
-          buyDate: "2018-07-10",
-        },
-        {
-          id: 4,
-          company: "深圳总公司",
-          plate: "粤A00004",
-          name: "奥迪A6",
-          status: "维修",
-          category: "领导专车",
-          user: "赵六",
-          buyDate: "2021-03-01",
-        },
-        {
-          id: 5,
-          company: "深圳总公司",
-          plate: "粤A00005",
-          name: "捷达",
-          status: "空闲",
-          category: "其他",
-          user: "-",
-          buyDate: "2017-11-11",
-        },
-      ],
+
+      // ========== 搜索表单数据 ==========
+      searchForm: {
+        companyName: "",  // 所属公司
+        carNo: "",        // 车牌号
+        carName: "",      // 车辆名称
+      },
+
+      // ========== 分页数据 ==========
+      pagination: {
+        pageNo: 1,        // 当前页码
+        pageSize: 10,     // 每页条数
+        total: 0,         // 总记录数
+      },
+
+      // ========== 表格数据（从接口获取，初始为空） ==========
+      cars: [],
     };
   },
+
+  // ========== 计算属性：根据左侧选中的分类筛选车辆 ==========
   computed: {
     filteredCars() {
+      // 获取当前选中的分类名称
       const cat = this.categories[this.selectedCategoryIndex];
+      // 如果是"全部"，返回所有车辆
       if (cat === "全部") return this.cars;
+      // 否则按分类筛选（接口返回的carCls字段对应车辆分类）
       return this.cars.filter((c) => c.category === cat);
     },
   },
+
+  // ========== 页面挂载后自动加载车辆列表 ==========
+  mounted() {
+    this.loadCarList();
+  },
+
   methods: {
+    // ========== 接口对接方法：获取车辆列表 ==========
+    async loadCarList() {
+      try {
+        // 调用分页查询接口，传入页码、每页条数和搜索条件
+        const data = await getCarPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          companyName: this.searchForm.companyName,
+          carNo: this.searchForm.carNo,
+          carName: this.searchForm.carName,
+        });
+
+        // 将接口返回的数据转换为页面需要的格式
+        // 接口字段 -> 页面字段映射：
+        // id -> id（车辆ID）
+        // companyName -> company（所属公司名称）
+        // carNo -> plate（车牌号）
+        // carName -> name（车辆名称）
+        // status -> status（状态：0=正常，1=停用）
+        // carCls -> category（车辆分类：1=商务接待，2=行政，3=生产经营，4=领导专车，5=其他）
+        // brand -> brand（品牌）
+        // seatNum -> seatNum（座位数）
+        // createTime -> createTime（创建时间，时间戳格式）
+        this.cars = data.list.map((item) => ({
+          id: item.id,
+          company: item.companyName || "",
+          plate: item.carNo || "",
+          name: item.carName || "",
+          status: item.status === 0 ? "正常" : "停用",
+          category: this.getCategoryText(item.carCls),
+          brand: item.brand || "",
+          seatNum: item.seatNum || "",
+          createTime: this.formatTimestamp(item.createTime),
+        }));
+
+        // 更新总记录数
+        this.pagination.total = data.total;
+      } catch (err) {
+        // 接口调用失败时打印错误信息
+        console.error("获取车辆列表失败", err);
+      }
+    },
+
+    // ========== 工具方法：车辆分类编码转中文文本 ==========
+    // 接口返回的carCls是数字编码，需要转换为中文显示
+    getCategoryText(carCls) {
+      const map = {
+        1: "商务接待用车",
+        2: "行政用车",
+        3: "生产经营用车",
+        4: "领导专车",
+        5: "其他",
+      };
+      return map[carCls] || "其他";
+    },
+
+    // ========== 工具方法：时间戳格式化 ==========
+    // 将后端返回的毫秒时间戳转换为 "YYYY-MM-DD HH:mm:ss" 格式
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+
+    // ========== 左侧分类切换 ==========
     selectCategory(index) {
       this.selectedCategoryIndex = index;
     },
-    // 示例操作：编辑、删除（只是占位）
-    editCar(car) {
-      // TODO: 打开编辑弹窗
-      console.log("edit", car);
+
+    // ========== 搜索按钮 ==========
+    handleSearch() {
+      // 搜索时重置到第一页
+      this.pagination.pageNo = 1;
+      this.loadCarList();
     },
-    deleteCar(car) {
-      // TODO: 删除逻辑
-      console.log("delete", car);
+
+    // ========== 重置按钮 ==========
+    handleReset() {
+      // 清空搜索条件
+      this.searchForm = { companyName: "", carNo: "", carName: "" };
+      // 重置到第一页
+      this.pagination.pageNo = 1;
+      this.loadCarList();
+    },
+
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadCarList();
+    },
+
+    // ========== 新增车辆 ==========
+    handleAdd() {
+      // TODO: 打开新增车辆弹窗
+      alert("新增车辆功能待实现");
+    },
+
+    // ========== 编辑车辆 ==========
+    editCar(car) {
+      // TODO: 打开编辑弹窗，传入当前车辆数据
+      alert(`编辑车辆：${car.name}`);
+    },
+
+    // ========== 删除车辆 ==========
+    async deleteCar(car) {
+      // 弹出确认框，防止误删
+      if (!confirm(`确定要删除车辆「${car.name}」吗？`)) return;
+      try {
+        // 调用删除接口
+        await deleteCar(car.id);
+        alert("删除成功");
+        // 删除成功后重新加载列表
+        this.loadCarList();
+      } catch (err) {
+        console.error("删除车辆失败", err);
+      }
     },
   },
 };

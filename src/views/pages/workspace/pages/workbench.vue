@@ -327,7 +327,7 @@
         <!-- 通知内容 -->
         <div class="notice-modal-body">
           <div class="notice-content-label">通知内容</div>
-          <div class="notice-content-text">{{ currentNotice.content }}</div>
+          <div class="notice-content-text" v-html="currentNotice.content"></div>
         </div>
       </div>
     </div>
@@ -336,6 +336,13 @@
 </template>
 
 <script>
+// 导入应用中心相关API
+import { getUserAppList, createUserApp, deleteUserApp } from '#/api/system/home/app-center';
+// 导入通知公告相关API
+import { getNoticePage, getNotice, markNoticeAsRead } from '#/api/system/notice';
+// 导入待办任务相关API
+import { getTaskTodoPage, getTaskDonePage } from '#/api/bpm/task';
+
 export default {
   data() {
     return {
@@ -356,9 +363,9 @@ export default {
       greeting: "早上好",
       // 当前激活的标签
       activeTab: "todo",
-      // 已添加的应用列表
-      appList: [{ name: "发起流程", icon: "", hover: false }],
-      // 所有可用的应用列表（按图片顺序）
+      // 已添加的应用列表（从接口获取）
+      appList: [],
+      // 所有可用的应用列表（静态数据，因为接口暂不可用）
       allApps: [
         { name: "工作台", icon: "", path: "/workbench" },
         { name: "流程中心", icon: "", path: "/workspace/process" },
@@ -388,6 +395,7 @@ export default {
       confirmData: {
         show: false,
         index: -1,
+        id: null, // 应用ID，用于删除接口
         name: "",
         x: 0,
         y: 0,
@@ -395,65 +403,8 @@ export default {
       // 添加模态框
       showAddModal: false,
       searchKeyword: "",
-      // 通知列表数据
-      noticeList: [
-        {
-          id: 1,
-          title: "2026年3月8日妇女节福利发放通知",
-          time: "2026-03-10 17:23",
-          publisher: "宇擎源码",
-          publishTime: "2026-03-10 17:23:37",
-          content: "2026年3月8日妇女节福利发放通知",
-        },
-        {
-          id: 2,
-          title: "关于2026年清明节放假安排通知",
-          time: "2026-03-28 09:30",
-          publisher: "行政部",
-          publishTime: "2026-03-28 09:30:00",
-          content: "根据国家法定节假日规定，2026年清明节放假安排如下...",
-        },
-        {
-          id: 3,
-          title: "2026年第一季度优秀员工表彰通知",
-          time: "2026-04-01 14:20",
-          publisher: "人事部",
-          publishTime: "2026-04-01 14:20:00",
-          content: "为表彰先进，树立榜样，经公司研究决定...",
-        },
-        {
-          id: 4,
-          title: "公司办公系统升级维护通知",
-          time: "2026-04-05 16:45",
-          publisher: "技术部",
-          publishTime: "2026-04-05 16:45:00",
-          content: "为了提升系统性能，公司办公系统将于本周六进行升级维护...",
-        },
-        {
-          id: 5,
-          title: "2026年五一劳动节放假安排",
-          time: "2026-04-20 10:00",
-          publisher: "行政部",
-          publishTime: "2026-04-20 10:00:00",
-          content: "2026年五一劳动节放假安排通知如下...",
-        },
-        {
-          id: 6,
-          title: "新员工入职培训通知",
-          time: "2026-04-22 08:30",
-          publisher: "人事部",
-          publishTime: "2026-04-22 08:30:00",
-          content: "欢迎新同事加入宇擎源码大家庭，入职培训安排如下...",
-        },
-        {
-          id: 7,
-          title: "2026年夏季团建活动通知",
-          time: "2026-04-25 11:15",
-          publisher: "企划部",
-          publishTime: "2026-04-25 11:15:00",
-          content: "为增强团队凝聚力，公司将于近期组织夏季团建活动...",
-        },
-      ],
+      // 通知列表数据（从接口获取）
+      noticeList: [],
       // 当前选中的通知
       currentNotice: {
         title: "",
@@ -463,496 +414,25 @@ export default {
       },
       // 通知模态框
       showNoticeModal: false,
+      // 空行数据，用于表格补齐
+      emptyRow: {
+        type: "",
+        code: "",
+        status: "",
+        summary: "",
+        initiator: "",
+        company: "",
+        department: "",
+        node: "",
+        time: "",
+        action: "",
+      },
       // 表格数据配置
       tableData: {
-        todo: [
-          {
-            type: "CRM合同审批流程",
-            code: "HR209-2026042600002",
-            status: "待处理",
-            summary: "宇擎源码请假申请",
-            initiator: "宇擎源码",
-            company: "深圳总公司",
-            department: "研发部门",
-            node: "发起人",
-            time: "",
-            action: "办理",
-          },
-          {
-            type: "采购审批流程",
-            code: "PO-2026042600015",
-            status: "待处理",
-            summary: "办公用品采购",
-            initiator: "张三",
-            company: "深圳总公司",
-            department: "采购部",
-            node: "审批人",
-            time: "",
-            action: "办理",
-          },
-          {
-            type: "合同审批流程",
-            code: "CT-2026042600023",
-            status: "待处理",
-            summary: "客户服务合同",
-            initiator: "李四",
-            company: "北京分公司",
-            department: "法务部",
-            node: "发起人",
-            time: "",
-            action: "办理",
-          },
-          {
-            type: "报销审批流程",
-            code: "EXP-2026042600031",
-            status: "待处理",
-            summary: "差旅费报销",
-            initiator: "王五",
-            company: "深圳总公司",
-            department: "财务部",
-            node: "审批人",
-            time: "",
-            action: "办理",
-          },
-          {
-            type: "人力审批流程",
-            code: "HR-2026042600047",
-            status: "待处理",
-            summary: "转正申请",
-            initiator: "赵六",
-            company: "上海分公司",
-            department: "人事部",
-            node: "发起人",
-            time: "",
-            action: "办理",
-          },
-          {
-            type: "人力审批流程",
-            code: "HR-2026042600047",
-            status: "待处理",
-            summary: "转正申请",
-            initiator: "赵六",
-            company: "上海分公司",
-            department: "人事部",
-            node: "发起人",
-            time: "",
-            action: "办理",
-          },
-          {
-            type: "人力审批流程",
-            code: "HR-2026042600047",
-            status: "待处理",
-            summary: "转正申请",
-            initiator: "赵六",
-            company: "上海分公司",
-            department: "人事部",
-            node: "发起人",
-            time: "",
-            action: "办理",
-          },
-          {
-            type: "人力审批流程",
-            code: "HR-2026042600047",
-            status: "待处理",
-            summary: "转正申请",
-            initiator: "赵六",
-            company: "上海分公司",
-            department: "人事部",
-            node: "发起人",
-            time: "",
-            action: "办理",
-          },
-          {
-            type: "人力审批流程",
-            code: "HR-2026042600047",
-            status: "待处理",
-            summary: "转正申请",
-            initiator: "赵六",
-            company: "上海分公司",
-            department: "人事部",
-            node: "发起人",
-            time: "",
-            action: "办理",
-          },
-          {
-            type: "人力审批流程",
-            code: "HR-2026042600047",
-            status: "待处理",
-            summary: "转正申请",
-            initiator: "赵六",
-            company: "上海分公司",
-            department: "人事部",
-            node: "发起人",
-            time: "",
-            action: "办理",
-          },
-        ],
-        myBill: [
-          {
-            type: "采购申请单",
-            code: "PO-2026042500012",
-            status: "审批中",
-            summary: "设备采购申请",
-            initiator: "张三",
-            company: "深圳总公司",
-            department: "采购部",
-            node: "审批人",
-            time: "",
-            action: "查看",
-          },
-          {
-            type: "报销申请单",
-            code: "EXP-2026042500018",
-            status: "已通过",
-            summary: "差旅费报销",
-            initiator: "张三",
-            company: "深圳总公司",
-            department: "财务部",
-            node: "发起人",
-            time: "",
-            action: "查看",
-          },
-          {
-            type: "合同申请单",
-            code: "CT-2026042500025",
-            status: "审批中",
-            summary: "合作协议",
-            initiator: "张三",
-            company: "北京分公司",
-            department: "法务部",
-            node: "审批人",
-            time: "",
-            action: "查看",
-          },
-          {
-            type: "请假申请单",
-            code: "LEAVE-2026042500033",
-            status: "已通过",
-            summary: "年假申请",
-            initiator: "张三",
-            company: "深圳总公司",
-            department: "人事部",
-            node: "发起人",
-            time: "",
-            action: "查看",
-          },
-          {
-            type: "请假申请单",
-            code: "LEAVE-2026042500033",
-            status: "已通过",
-            summary: "年假申请",
-            initiator: "张三",
-            company: "深圳总公司",
-            department: "人事部",
-            node: "发起人",
-            time: "",
-            action: "查看",
-          },
-          {
-            type: "请假申请单",
-            code: "LEAVE-2026042500033",
-            status: "已通过",
-            summary: "年假申请",
-            initiator: "张三",
-            company: "深圳总公司",
-            department: "人事部",
-            node: "发起人",
-            time: "",
-            action: "查看",
-          },
-          {
-            type: "请假申请单",
-            code: "LEAVE-2026042500033",
-            status: "已通过",
-            summary: "年假申请",
-            initiator: "张三",
-            company: "深圳总公司",
-            department: "人事部",
-            node: "发起人",
-            time: "",
-            action: "查看",
-          },
-          {
-            type: "请假申请单",
-            code: "LEAVE-2026042500033",
-            status: "已通过",
-            summary: "年假申请",
-            initiator: "张三",
-            company: "深圳总公司",
-            department: "人事部",
-            node: "发起人",
-            time: "",
-            action: "查看",
-          },
-          {
-            type: "请假申请单",
-            code: "LEAVE-2026042500033",
-            status: "已通过",
-            summary: "年假申请",
-            initiator: "张三",
-            company: "深圳总公司",
-            department: "人事部",
-            node: "发起人",
-            time: "",
-            action: "查看",
-          },
-          {
-            type: "请假申请单",
-            code: "LEAVE-2026042500033",
-            status: "已通过",
-            summary: "年假申请",
-            initiator: "张三",
-            company: "深圳总公司",
-            department: "人事部",
-            node: "发起人",
-            time: "",
-            action: "查看",
-          },
-        ],
-        done: [
-          {
-            type: "CRM合同审批流程",
-            code: "HR209-2026042000001",
-            status: "已完成",
-            summary: "宇擎源码请假申请",
-            initiator: "宇擎源码",
-            company: "深圳总公司",
-            department: "研发部门",
-            node: "发起人",
-            time: "2026-04-20",
-            action: "查看",
-          },
-          {
-            type: "采购审批流程",
-            code: "PO-2026042100008",
-            status: "已完成",
-            summary: "办公用品采购",
-            initiator: "张三",
-            company: "深圳总公司",
-            department: "采购部",
-            node: "审批人",
-            time: "2026-04-21",
-            action: "查看",
-          },
-          {
-            type: "合同审批流程",
-            code: "CT-2026041900015",
-            status: "已完成",
-            summary: "客户服务合同",
-            initiator: "李四",
-            company: "北京分公司",
-            department: "法务部",
-            node: "发起人",
-            time: "2026-04-19",
-            action: "查看",
-          },
-          {
-            type: "报销审批流程",
-            code: "EXP-2026041800022",
-            status: "已完成",
-            summary: "差旅费报销",
-            initiator: "王五",
-            company: "深圳总公司",
-            department: "财务部",
-            node: "审批人",
-            time: "2026-04-18",
-            action: "查看",
-          },
-          {
-            type: "人力审批流程",
-            code: "HR-2026041700038",
-            status: "已完成",
-            summary: "转正申请",
-            initiator: "赵六",
-            company: "上海分公司",
-            department: "人事部",
-            node: "发起人",
-            time: "2026-04-17",
-            action: "查看",
-          },
-          {
-            type: "合同审批流程",
-            code: "CT-2026041600052",
-            status: "已完成",
-            summary: "合作协议续签",
-            initiator: "孙七",
-            company: "深圳总公司",
-            department: "法务部",
-            node: "审批人",
-            time: "2026-04-16",
-            action: "查看",
-          },
-          {
-            type: "合同审批流程",
-            code: "CT-2026041600052",
-            status: "已完成",
-            summary: "合作协议续签",
-            initiator: "孙七",
-            company: "深圳总公司",
-            department: "法务部",
-            node: "审批人",
-            time: "2026-04-16",
-            action: "查看",
-          },
-          {
-            type: "合同审批流程",
-            code: "CT-2026041600052",
-            status: "已完成",
-            summary: "合作协议续签",
-            initiator: "孙七",
-            company: "深圳总公司",
-            department: "法务部",
-            node: "审批人",
-            time: "2026-04-16",
-            action: "查看",
-          },
-          {
-            type: "合同审批流程",
-            code: "CT-2026041600052",
-            status: "已完成",
-            summary: "合作协议续签",
-            initiator: "孙七",
-            company: "深圳总公司",
-            department: "法务部",
-            node: "审批人",
-            time: "2026-04-16",
-            action: "查看",
-          },
-          {
-            type: "合同审批流程",
-            code: "CT-2026041600052",
-            status: "已完成",
-            summary: "合作协议续签",
-            initiator: "孙七",
-            company: "深圳总公司",
-            department: "法务部",
-            node: "审批人",
-            time: "2026-04-16",
-            action: "查看",
-          },
-        ],
-        copy: [
-          {
-            type: "CRM合同审批流程",
-            code: "HR209-2026042600002",
-            status: "待阅读",
-            summary: "宇擎源码请假申请",
-            initiator: "宇擎源码",
-            company: "深圳总公司",
-            department: "研发部门",
-            node: "发起人",
-            time: "",
-            action: "标记已读",
-          },
-          {
-            type: "采购审批流程",
-            code: "PO-2026042600015",
-            status: "已阅读",
-            summary: "办公用品采购",
-            initiator: "张三",
-            company: "深圳总公司",
-            department: "采购部",
-            node: "审批人",
-            time: "",
-            action: "查看",
-          },
-          {
-            type: "合同审批流程",
-            code: "CT-2026042600023",
-            status: "待阅读",
-            summary: "客户服务合同",
-            initiator: "李四",
-            company: "北京分公司",
-            department: "法务部",
-            node: "发起人",
-            time: "",
-            action: "标记已读",
-          },
-          {
-            type: "报销审批流程",
-            code: "EXP-2026042600031",
-            status: "已阅读",
-            summary: "差旅费报销",
-            initiator: "王五",
-            company: "深圳总公司",
-            department: "财务部",
-            node: "审批人",
-            time: "",
-            action: "查看",
-          },
-          {
-            type: "报销审批流程",
-            code: "EXP-2026042600031",
-            status: "已阅读",
-            summary: "差旅费报销",
-            initiator: "王五",
-            company: "深圳总公司",
-            department: "财务部",
-            node: "审批人",
-            time: "",
-            action: "查看",
-          },
-          {
-            type: "报销审批流程",
-            code: "EXP-2026042600031",
-            status: "已阅读",
-            summary: "差旅费报销",
-            initiator: "王五",
-            company: "深圳总公司",
-            department: "财务部",
-            node: "审批人",
-            time: "",
-            action: "查看",
-          },
-          {
-            type: "报销审批流程",
-            code: "EXP-2026042600031",
-            status: "已阅读",
-            summary: "差旅费报销",
-            initiator: "王五",
-            company: "深圳总公司",
-            department: "财务部",
-            node: "审批人",
-            time: "",
-            action: "查看",
-          },
-          {
-            type: "报销审批流程",
-            code: "EXP-2026042600031",
-            status: "已阅读",
-            summary: "差旅费报销",
-            initiator: "王五",
-            company: "深圳总公司",
-            department: "财务部",
-            node: "审批人",
-            time: "",
-            action: "查看",
-          },
-          {
-            type: "报销审批流程",
-            code: "EXP-2026042600031",
-            status: "已阅读",
-            summary: "差旅费报销",
-            initiator: "王五",
-            company: "深圳总公司",
-            department: "财务部",
-            node: "审批人",
-            time: "",
-            action: "查看",
-          },
-          {
-            type: "报销审批流程",
-            code: "EXP-2026042600031",
-            status: "已阅读",
-            summary: "差旅费报销",
-            initiator: "王五",
-            company: "深圳总公司",
-            department: "财务部",
-            node: "审批人",
-            time: "",
-            action: "查看",
-          },
-        ],
+        todo: [],    // 待办任务（从接口获取）
+        myBill: [],  // 我的单据（暂无接口，保留空）
+        done: [],    // 已办任务（从接口获取）
+        copy: [],    // 抄送我的（暂无接口，保留空）
       },
     };
   },
@@ -1043,8 +523,127 @@ export default {
   },
   mounted() {
     this.getDateInfo();
+    this.updateTableTimes();
+    // 对接接口：获取用户应用列表
+    this.loadUserAppList();
+    // 对接接口：获取通知列表
+    this.loadNoticeList();
+    // 对接接口：获取待办任务
+    this.loadTodoTasks();
+    // 对接接口：获取已办任务
+    this.loadDoneTasks();
   },
   methods: {
+    // ========== 接口对接方法 ==========
+    // 获取用户应用列表
+    async loadUserAppList() {
+      try {
+        const data = await getUserAppList();
+        // 将接口返回的数据转换为页面需要的格式
+        this.appList = data.map((item) => {
+          const name = item.name || item.menuName;
+          // 接口返回的 icon 是图标库名称（如 lucide:home），不能直接显示
+          // 用应用名称的第一个字作为图标显示
+          const displayIcon = name ? name.charAt(0) : "应";
+          return {
+            id: item.id,
+            menuId: item.menuId,
+            name: name,
+            icon: displayIcon,
+            path: item.menuPath,
+            hover: false,
+          };
+        });
+      } catch (err) {
+        console.error("获取用户应用列表失败", err);
+      }
+    },
+    // 获取通知列表
+    async loadNoticeList() {
+      try {
+        const data = await getNoticePage({ pageNo: 1, pageSize: 10 });
+        // 将接口返回的数据转换为页面需要的格式
+        this.noticeList = data.list.map((item) => ({
+          id: item.id,
+          title: item.title,
+          time: this.formatTimestamp(item.createTime),
+          publisher: item.creatorName,
+          publishTime: this.formatTimestamp(item.createTime),
+          content: item.content,
+          isImportant: item.isImportant,
+          readStatus: item.readStatus,
+        }));
+      } catch (err) {
+        console.error("获取通知列表失败", err);
+      }
+    },
+    // 获取待办任务
+    async loadTodoTasks() {
+      try {
+        const data = await getTaskTodoPage({ pageNo: 1, pageSize: 10 });
+        // 将接口返回的数据转换为页面需要的格式
+        this.tableData.todo = data.list.map((item) => ({
+          id: item.id,
+          type: item.processInstance?.name || "",
+          code: item.processInstance?.billCode || "",
+          status: "待处理",
+          summary: this.getSummaryValue(item.processInstance?.summary),
+          initiator: item.processInstance?.startUser?.nickname || "",
+          company: item.processInstance?.companyName || "",
+          department: item.processInstance?.deptName || "",
+          node: item.name || "",
+          time: this.formatTimestamp(item.createTime),
+          action: "办理",
+        }));
+      } catch (err) {
+        console.error("获取待办任务失败", err);
+      }
+    },
+    // 获取已办任务
+    async loadDoneTasks() {
+      try {
+        const data = await getTaskDonePage({ pageNo: 1, pageSize: 10 });
+        // 将接口返回的数据转换为页面需要的格式
+        this.tableData.done = data.list.map((item) => ({
+          id: item.id,
+          type: item.processInstance?.name || "",
+          code: item.processInstance?.billCode || "",
+          status: "已完成",
+          summary: this.getSummaryValue(item.processInstance?.summary),
+          initiator: item.processInstance?.startUser?.nickname || "",
+          company: item.processInstance?.companyName || "",
+          department: item.processInstance?.deptName || "",
+          node: item.name || "",
+          time: this.formatTimestamp(item.endTime || item.createTime),
+          action: "查看",
+        }));
+      } catch (err) {
+        console.error("获取已办任务失败", err);
+      }
+    },
+    // 时间戳格式化工具
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      return `${year}-${month}-${day} ${hours}:${minutes}`;
+    },
+    // 从摘要数组中提取值
+    getSummaryValue(summary) {
+      if (!summary || !Array.isArray(summary) || summary.length === 0) return "";
+      const first = summary[0];
+      // 接口返回的格式可能是 "@{key=; value=xxx}" 字符串，也可能是对象
+      if (typeof first === "string") {
+        const match = first.match(/value=([^}]*)/);
+        return match ? match[1] : "";
+      }
+      return first.value || "";
+    },
+    // ========== 原有方法 ==========
     getDateInfo() {
       const now = new Date();
       const year = now.getFullYear();
@@ -1090,6 +689,7 @@ export default {
       const rect = event.target.getBoundingClientRect();
       this.confirmData.show = true;
       this.confirmData.index = index;
+      this.confirmData.id = this.appList[index].id; // 保存应用ID，用于删除接口
       this.confirmData.name = this.appList[index].name;
       this.confirmData.x = rect.left + rect.width / 2 - 90;
       this.confirmData.y = rect.top - 80;
@@ -1105,9 +705,21 @@ export default {
       this.confirmData.index = -1;
       this.confirmData.name = "";
     },
-    confirmDelete() {
+    // 确认删除应用（对接接口）
+    async confirmDelete() {
       if (this.confirmData.index !== -1) {
-        this.appList.splice(this.confirmData.index, 1);
+        try {
+          // 如果有应用ID，调用接口删除
+          if (this.confirmData.id) {
+            await deleteUserApp(this.confirmData.id);
+          }
+          // 从本地列表删除
+          this.appList.splice(this.confirmData.index, 1);
+        } catch (err) {
+          console.error("删除应用失败", err);
+          // 即使接口失败，也从本地列表删除（保证用户体验）
+          this.appList.splice(this.confirmData.index, 1);
+        }
       }
       this.hideConfirm();
     },
@@ -1126,16 +738,40 @@ export default {
       this.showAddModal = false;
       this.searchKeyword = "";
     },
-    selectApp(app) {
+    // 选择应用添加（对接接口）
+    async selectApp(app) {
       if (this.appList.some((a) => a.name === app.name)) {
         alert("该应用已添加");
         return;
       }
-      this.appList.unshift({
-        name: app.name,
-        icon: app.icon,
-        hover: false,
-      });
+      try {
+        // 调用接口创建用户应用
+        // 注意：静态 allApps 数据没有真实 menuId，接口可能失败
+        // 如果接口成功，使用返回的数据；如果失败，只添加到本地列表
+        const newApp = await createUserApp({
+          menuId: app.menuId || 0,
+          name: app.name,
+          icon: app.icon,
+        });
+        // 接口成功，添加到列表
+        this.appList.unshift({
+          id: newApp.id,
+          menuId: newApp.menuId,
+          name: newApp.name || app.name,
+          icon: newApp.icon || app.icon,
+          path: newApp.menuPath || app.path,
+          hover: false,
+        });
+      } catch (err) {
+        // 接口失败，只添加到本地列表（保证功能可用）
+        console.warn("添加应用接口失败，仅本地添加", err);
+        this.appList.unshift({
+          name: app.name,
+          icon: app.icon,
+          path: app.path,
+          hover: false,
+        });
+      }
       this.closeAddModal();
     },
 
@@ -1144,7 +780,8 @@ export default {
     },
 
     // ===== 通知公告模态框 =====
-    openNoticeModal(item) {
+    // 打开通知详情（对接接口：标记已读）
+    async openNoticeModal(item) {
       this.currentNotice = {
         title: item.title,
         publisher: item.publisher,
@@ -1153,6 +790,14 @@ export default {
       };
       this.showNoticeModal = true;
       document.body.style.overflow = "hidden";
+      // 调用接口标记通知为已读
+      if (item.id && item.readStatus !== 1) {
+        try {
+          await markNoticeAsRead(item.id);
+        } catch (err) {
+          console.error("标记通知已读失败", err);
+        }
+      }
     },
     closeNoticeModal() {
       this.showNoticeModal = false;

@@ -3,24 +3,24 @@
     <div class="app">
       <!-- top -->
       <div class="app-top">
-        <form action="">
+        <form @submit.prevent="handleSearch">
           <div class="top-tab">
             <div class="top-row">
               <div class="tab-a">
                 <span>单据编号</span>
-                <input type="text" placeholder="请输入单据编号" />
+                <input type="text" placeholder="请输入单据编号" v-model="searchForm.billCode" />
               </div>
               <div class="tab-a">
                 <span>单据状态</span>
-                <input type="text" placeholder="请输入单据状态" />
+                <input type="text" placeholder="请输入单据状态" v-model="searchForm.processStatus" />
               </div>
               <div class="tab-a">
                 <span>印章</span>
-                <input type="text" placeholder="请输入印章" />
+                <input type="text" placeholder="请输入印章" v-model="searchForm.sealName" />
               </div>
               <div class="tab-b">
-                <button type="button">重置</button>
-                <button type="button">搜索</button>
+                <button type="button" @click="handleReset">重置</button>
+                <button type="submit">搜索</button>
                 <span>收起^</span>
               </div>
             </div>
@@ -33,11 +33,11 @@
         <div class="main-header">
           <div class="main-title">用印申请单列表</div>
           <div class="main-buttons">
-            <button class="btn btn-primary">新增</button>
+            <button class="btn btn-primary" @click="handleAdd">新增</button>
             <button class="btn btn-primary">导出</button>
             <button class="btn">批量删除</button>
-            <button class="icon-btn">🔍</button>
-            <button class="icon-btn">⟳</button>
+            <button class="icon-btn" @click="handleSearch">🔍</button>
+            <button class="icon-btn" @click="loadApplyList">⟳</button>
             <button class="icon-btn">⛶</button>
             <button class="icon-btn">☷</button>
           </div>
@@ -68,23 +68,23 @@
                 <td>{{ item.startTime }}</td>
                 <td>{{ item.endTime }}</td>
                 <td class="operation-col">
-                  <a href="#" class="op-link">详情</a>
-                  <a href="#" class="op-link op-del">删除</a>
+                  <a href="#" class="op-link" @click.prevent="handleDetail(item)">详情</a>
+                  <a href="#" class="op-link op-del" @click.prevent="handleDelete(item)">删除</a>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="table-footer">
-          <div class="footer-left">共 {{ rows.length }} 条记录</div>
+          <div class="footer-left">共 {{ pagination.total }} 条记录</div>
           <div class="footer-right">
-            <span class="page-size">10条/页</span>
+            <span class="page-size">{{ pagination.pageSize }}条/页</span>
             <div class="pager">
-              <button>&lt;&lt;</button>
-              <button>&lt;</button>
-              <button class="active">1</button>
-              <button>&gt;</button>
-              <button>&gt;&gt;</button>
+              <button @click="handlePageChange(1)">&lt;&lt;</button>
+              <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+              <button class="active">{{ pagination.pageNo }}</button>
+              <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+              <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
             </div>
           </div>
         </div>
@@ -95,158 +95,163 @@
 </template>
 
 <script>
+// ========== 导入用印申请相关API ==========
+// getSealApplyBillPage: 分页查询用印申请列表
+// getSealApplyBill: 获取单条申请详情
+// saveSealApplyBill: 保存申请（草稿）
+// submitSealApplyBill: 提交申请
+// updateSealApplyBill: 更新申请
+// deleteSealApplyBill: 删除申请
+import { getSealApplyBillPage, deleteSealApplyBill } from '#/api/oa/seal/sealapply';
+
 export default {
   data() {
     return {
-      rows: [
-        {
-          id: 1,
-          type: '设备采购',
-          number: 'OA123-202607230001',
-          summary: '电脑采购申请',
-          company: '深圳分公司',
-          department: '研发部门',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 16:04:06',
-          endTime: '2026-07-23 16:04:32',
-        },
-        {
-          id: 2,
-          type: '请假单',
-          number: 'QJ-20260723-060',
-          summary: '年假申请',
-          company: '深圳分公司',
-          department: '市场部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-23 15:54:59',
-          endTime: '',
-        },
-        {
-          id: 3,
-          type: '报销单',
-          number: 'BX-202607230011',
-          summary: '差旅费用报销',
-          company: '上海分公司',
-          department: '销售部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-23 15:40:53',
-          endTime: '',
-        },
-        {
-          id: 4,
-          type: '合同变更',
-          number: 'CT301-202607230007',
-          summary: '供应商合同条款调整',
-          company: '深圳分公司',
-          department: '采购部',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 12:43:03',
-          endTime: '2026-07-23 12:49:55',
-        },
-        {
-          id: 5,
-          type: '合同签署',
-          number: 'CT302-202607230001',
-          summary: '项目合作合同',
-          company: '北京分公司',
-          department: '战略部',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 11:43:16',
-          endTime: '2026-07-23 11:55:06',
-        },
-        {
-          id: 6,
-          type: '用车申请',
-          number: 'YC-202607230022',
-          summary: '客户拜访用车',
-          company: '广州分公司',
-          department: '销售部',
-          processStatus: '已驳回',
-          statusClass: 'status-red',
-          startTime: '2026-07-23 10:21:00',
-          endTime: '2026-07-23 10:25:40',
-        },
-        {
-          id: 7,
-          type: '采购申请',
-          number: 'CG-202607230030',
-          summary: '办公用品采购',
-          company: '深圳分公司',
-          department: '行政部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-23 09:10:52',
-          endTime: '',
-        },
-        {
-          id: 8,
-          type: '报销单',
-          number: 'BX-202607230012',
-          summary: '招待费报销',
-          company: '深圳分公司',
-          department: '财务部',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 08:45:33',
-          endTime: '2026-07-23 08:58:12',
-        },
-        {
-          id: 9,
-          type: '请假单',
-          number: 'QJ-20260723-061',
-          summary: '调休申请',
-          company: '杭州分公司',
-          department: '技术部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-23 08:12:18',
-          endTime: '',
-        },
-        {
-          id: 10,
-          type: '公文发文',
-          number: 'OA105-202607230003',
-          summary: '项目立项函',
-          company: '北京分公司',
-          department: '法务部',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 07:58:51',
-          endTime: '2026-07-23 08:03:20',
-        },
-        {
-          id: 11,
-          type: '采购申请',
-          number: 'CG-202607230031',
-          summary: '设备维护材料',
-          company: '上海分公司',
-          department: '运维部',
-          processStatus: '已驳回',
-          statusClass: 'status-red',
-          startTime: '2026-07-22 17:20:15',
-          endTime: '2026-07-22 17:25:00',
-        },
-        {
-          id: 12,
-          type: '合同签署',
-          number: 'CT302-202607230002',
-          summary: '供应链合作协议',
-          company: '深圳分公司',
-          department: '采购部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-22 16:05:42',
-          endTime: '',
-        },
-      ],
-    }
+      // ========== 搜索表单数据 ==========
+      searchForm: {
+        billCode: "",        // 单据编号
+        processStatus: "",   // 单据状态
+        sealName: "",        // 印章名称
+      },
+
+      // ========== 分页数据 ==========
+      pagination: {
+        pageNo: 1,        // 当前页码
+        pageSize: 10,     // 每页条数
+        total: 0,         // 总记录数
+      },
+
+      // ========== 表格数据（从接口获取，初始为空） ==========
+      rows: [],
+    };
   },
-}
+
+  // ========== 页面挂载后自动加载列表 ==========
+  mounted() {
+    this.loadApplyList();
+  },
+
+  methods: {
+    // ========== 接口对接方法：获取用印申请列表 ==========
+    async loadApplyList() {
+      try {
+        // 调用分页查询接口，传入页码、每页条数和搜索条件
+        const data = await getSealApplyBillPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          billCode: this.searchForm.billCode,
+          processStatus: this.searchForm.processStatus,
+          sealName: this.searchForm.sealName,
+        });
+
+        // 将接口返回的数据转换为页面需要的格式
+        // 接口字段 -> 页面字段映射：
+        // id -> id（申请ID）
+        // billCode -> number（单据编号）
+        // cause -> summary（用印事由，作为摘要显示）
+        // companyName -> company（所属公司）
+        // deptName -> department（所属部门）
+        // processStatus -> processStatus（流程状态：1=审批中，2=已完成，3=已取消，4=已驳回）
+        // createTime -> startTime（创建时间，作为发起时间）
+        // actualReturnTime -> endTime（实际归还时间，作为结束时间）
+        this.rows = data.list.map((item) => ({
+          id: item.id,
+          type: "用印申请",
+          number: item.billCode || "",
+          summary: item.cause || "",
+          company: item.companyName || "",
+          department: item.deptName || "",
+          processStatus: this.getStatusText(item.processStatus),
+          statusClass: this.getStatusClass(item.processStatus),
+          startTime: this.formatTimestamp(item.createTime),
+          endTime: this.formatTimestamp(item.actualReturnTime),
+        }));
+
+        // 更新总记录数
+        this.pagination.total = data.total;
+      } catch (err) {
+        // 接口调用失败时打印错误信息
+        console.error("获取用印申请列表失败", err);
+      }
+    },
+
+    // ========== 工具方法：流程状态编码转中文文本 ==========
+    getStatusText(status) {
+      const map = { 1: "审批中", 2: "已完成", 3: "已取消", 4: "已驳回" };
+      return map[status] || "未知";
+    },
+
+    // ========== 工具方法：流程状态对应样式类名 ==========
+    // 不同状态显示不同颜色：审批中=蓝色，已完成=绿色，已取消=灰色，已驳回=红色
+    getStatusClass(status) {
+      const map = { 1: "status-blue", 2: "status-green", 3: "status-gray", 4: "status-red" };
+      return map[status] || "status-gray";
+    },
+
+    // ========== 工具方法：时间戳格式化 ==========
+    // 将后端返回的毫秒时间戳转换为 "YYYY-MM-DD HH:mm:ss" 格式
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+
+    // ========== 搜索按钮 ==========
+    handleSearch() {
+      // 搜索时重置到第一页
+      this.pagination.pageNo = 1;
+      this.loadApplyList();
+    },
+
+    // ========== 重置按钮 ==========
+    handleReset() {
+      // 清空搜索条件
+      this.searchForm = { billCode: "", processStatus: "", sealName: "" };
+      // 重置到第一页
+      this.pagination.pageNo = 1;
+      this.loadApplyList();
+    },
+
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadApplyList();
+    },
+
+    // ========== 新增申请 ==========
+    handleAdd() {
+      // TODO: 打开新增用印申请弹窗
+      alert("新增用印申请功能待实现");
+    },
+
+    // ========== 查看详情 ==========
+    handleDetail(row) {
+      // TODO: 打开申请详情弹窗
+      alert(`用印申请详情：${row.number}`);
+    },
+
+    // ========== 删除申请 ==========
+    async handleDelete(row) {
+      // 弹出确认框，防止误删
+      if (!confirm(`确定要删除用印申请「${row.number}」吗？`)) return;
+      try {
+        // 调用删除接口
+        await deleteSealApplyBill(row.id);
+        alert("删除成功");
+        // 删除成功后重新加载列表
+        this.loadApplyList();
+      } catch (err) {
+        console.error("删除用印申请失败", err);
+      }
+    },
+  },
+};
 </script>
 
 <style scoped>

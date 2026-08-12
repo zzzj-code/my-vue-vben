@@ -3,24 +3,24 @@
     <div class="app">
       <!-- top -->
       <div class="app-top">
-        <form action="">
+        <form @submit.prevent="handleSearch">
           <div class="top-tab">
             <div class="top-row">
               <div class="tab-a">
                 <span>会议室名称</span>
-                <input type="text" placeholder="请输入会议室名称" />
+                <input type="text" placeholder="请输入会议室名称" v-model="searchForm.roomName" />
               </div>
               <div class="tab-a">
                 <span>会议室位置</span>
-                <input type="text" placeholder="请输入会议室位置" />
+                <input type="text" placeholder="请输入会议室位置" v-model="searchForm.roomLocation" />
               </div>
               <div class="tab-a">
                 <span>会议室类型</span>
-                <input type="text" placeholder="请输入会议室类型" />
+                <input type="text" placeholder="请输入会议室类型" v-model="searchForm.roomType" />
               </div>
               <div class="tab-b">
-                <button type="button">重置</button>
-                <button type="button">搜索</button>
+                <button type="button" @click="handleReset">重置</button>
+                <button type="submit">搜索</button>
                 <span>收起^</span>
               </div>
             </div>
@@ -33,11 +33,11 @@
         <div class="main-header">
           <div class="main-title">会议室信息列表</div>
           <div class="main-buttons">
-            <button class="btn btn-primary">+新增会议室信息</button>
+            <button class="btn btn-primary" @click="handleAdd">+新增会议室信息</button>
             <button class="btn btn-primary">导出</button>
             <button class="btn">批量删除</button>
-            <button class="icon-btn">🔍</button>
-            <button class="icon-btn">⟳</button>
+            <button class="icon-btn" @click="handleSearch">🔍</button>
+            <button class="icon-btn" @click="loadRoomList">⟳</button>
             <button class="icon-btn">⛶</button>
             <button class="icon-btn">☷</button>
           </div>
@@ -46,45 +46,48 @@
           <table class="manage-table">
             <thead>
               <tr>
-                <th class="sticky-col first-col">单据类型</th>
-                <th class="sticky-col second-col">单据编号</th>
-                <th>摘要</th>
-                <th>所属公司</th>
-                <th>所属部门</th>
-                <th>流程状态</th>
-                <th>发起时间</th>
-                <th>结束时间</th>
+                <th class="sticky-col first-col">会议室名称</th>
+                <th class="sticky-col second-col">会议室位置</th>
+                <th>会议室类型</th>
+                <th>管理员</th>
+                <th>管理员电话</th>
+                <th>可用状态</th>
+                <th>座位数</th>
+                <th>设备</th>
+                <th>创建时间</th>
                 <th class="operation-col">操作</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="item in rows" :key="item.id">
-                <td class="sticky-col first-col">{{ item.type }}</td>
-                <td class="sticky-col second-col"><a class="link-number" href="#">{{ item.number }}</a></td>
-                <td>{{ item.summary }}</td>
-                <td>{{ item.company }}</td>
-                <td>{{ item.department }}</td>
-                <td><span :class="['status-tag', item.statusClass]">{{ item.processStatus }}</span></td>
-                <td>{{ item.startTime }}</td>
-                <td>{{ item.endTime }}</td>
+                <td class="sticky-col first-col">{{ item.roomName }}</td>
+                <td class="sticky-col second-col">{{ item.roomLocation }}</td>
+                <td>{{ item.roomTypeText }}</td>
+                <td>{{ item.managerName }}</td>
+                <td>{{ item.managerPhone }}</td>
+                <td><span :class="['status-tag', item.statusClass]">{{ item.status }}</span></td>
+                <td>{{ item.seatCount }}</td>
+                <td>{{ item.equipmentText }}</td>
+                <td>{{ item.createTime }}</td>
                 <td class="operation-col">
-                  <a href="#" class="op-link">详情</a>
-                  <a href="#" class="op-link op-del">删除</a>
+                  <a href="#" class="op-link" @click.prevent="handleDetail(item)">详情</a>
+                  <a href="#" class="op-link" @click.prevent="handleEdit(item)">编辑</a>
+                  <a href="#" class="op-link op-del" @click.prevent="handleDelete(item)">删除</a>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="table-footer">
-          <div class="footer-left">共 {{ rows.length }} 条记录</div>
+          <div class="footer-left">共 {{ pagination.total }} 条记录</div>
           <div class="footer-right">
-            <span class="page-size">10条/页</span>
+            <span class="page-size">{{ pagination.pageSize }}条/页</span>
             <div class="pager">
-              <button>&lt;&lt;</button>
-              <button>&lt;</button>
-              <button class="active">1</button>
-              <button>&gt;</button>
-              <button>&gt;&gt;</button>
+              <button @click="handlePageChange(1)">&lt;&lt;</button>
+              <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+              <button class="active">{{ pagination.pageNo }}</button>
+              <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+              <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
             </div>
           </div>
         </div>
@@ -95,158 +98,181 @@
 </template>
 
 <script>
+// ========== 导入会议室信息相关API ==========
+// getMeetingRoomPage: 分页查询会议室列表
+// getMeetingRoom: 获取单条会议室详情
+// createMeetingRoom: 新增会议室
+// updateMeetingRoom: 更新会议室
+// deleteMeetingRoom: 删除会议室
+import { getMeetingRoomPage, deleteMeetingRoom } from '#/api/oa/meetingroom/roominfo';
+
 export default {
   data() {
     return {
-      rows: [
-        {
-          id: 1,
-          type: '设备采购',
-          number: 'OA123-202607230001',
-          summary: '电脑采购申请',
-          company: '深圳分公司',
-          department: '研发部门',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 16:04:06',
-          endTime: '2026-07-23 16:04:32',
-        },
-        {
-          id: 2,
-          type: '请假单',
-          number: 'QJ-20260723-060',
-          summary: '年假申请',
-          company: '深圳分公司',
-          department: '市场部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-23 15:54:59',
-          endTime: '',
-        },
-        {
-          id: 3,
-          type: '报销单',
-          number: 'BX-202607230011',
-          summary: '差旅费用报销',
-          company: '上海分公司',
-          department: '销售部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-23 15:40:53',
-          endTime: '',
-        },
-        {
-          id: 4,
-          type: '合同变更',
-          number: 'CT301-202607230007',
-          summary: '供应商合同条款调整',
-          company: '深圳分公司',
-          department: '采购部',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 12:43:03',
-          endTime: '2026-07-23 12:49:55',
-        },
-        {
-          id: 5,
-          type: '合同签署',
-          number: 'CT302-202607230001',
-          summary: '项目合作合同',
-          company: '北京分公司',
-          department: '战略部',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 11:43:16',
-          endTime: '2026-07-23 11:55:06',
-        },
-        {
-          id: 6,
-          type: '用车申请',
-          number: 'YC-202607230022',
-          summary: '客户拜访用车',
-          company: '广州分公司',
-          department: '销售部',
-          processStatus: '已驳回',
-          statusClass: 'status-red',
-          startTime: '2026-07-23 10:21:00',
-          endTime: '2026-07-23 10:25:40',
-        },
-        {
-          id: 7,
-          type: '采购申请',
-          number: 'CG-202607230030',
-          summary: '办公用品采购',
-          company: '深圳分公司',
-          department: '行政部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-23 09:10:52',
-          endTime: '',
-        },
-        {
-          id: 8,
-          type: '报销单',
-          number: 'BX-202607230012',
-          summary: '招待费报销',
-          company: '深圳分公司',
-          department: '财务部',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 08:45:33',
-          endTime: '2026-07-23 08:58:12',
-        },
-        {
-          id: 9,
-          type: '请假单',
-          number: 'QJ-20260723-061',
-          summary: '调休申请',
-          company: '杭州分公司',
-          department: '技术部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-23 08:12:18',
-          endTime: '',
-        },
-        {
-          id: 10,
-          type: '公文发文',
-          number: 'OA105-202607230003',
-          summary: '项目立项函',
-          company: '北京分公司',
-          department: '法务部',
-          processStatus: '审批通过',
-          statusClass: 'status-green',
-          startTime: '2026-07-23 07:58:51',
-          endTime: '2026-07-23 08:03:20',
-        },
-        {
-          id: 11,
-          type: '采购申请',
-          number: 'CG-202607230031',
-          summary: '设备维护材料',
-          company: '上海分公司',
-          department: '运维部',
-          processStatus: '已驳回',
-          statusClass: 'status-red',
-          startTime: '2026-07-22 17:20:15',
-          endTime: '2026-07-22 17:25:00',
-        },
-        {
-          id: 12,
-          type: '合同签署',
-          number: 'CT302-202607230002',
-          summary: '供应链合作协议',
-          company: '深圳分公司',
-          department: '采购部',
-          processStatus: '审批中',
-          statusClass: 'status-blue',
-          startTime: '2026-07-22 16:05:42',
-          endTime: '',
-        },
-      ],
-    }
+      // ========== 搜索表单数据 ==========
+      searchForm: {
+        roomName: "",      // 会议室名称
+        roomLocation: "",  // 会议室位置
+        roomType: "",      // 会议室类型
+      },
+
+      // ========== 分页数据 ==========
+      pagination: {
+        pageNo: 1,        // 当前页码
+        pageSize: 10,     // 每页条数
+        total: 0,         // 总记录数
+      },
+
+      // ========== 表格数据（从接口获取，初始为空） ==========
+      rows: [],
+    };
   },
-}
+
+  // ========== 页面挂载后自动加载列表 ==========
+  mounted() {
+    this.loadRoomList();
+  },
+
+  methods: {
+    // ========== 接口对接方法：获取会议室列表 ==========
+    async loadRoomList() {
+      try {
+        // 调用分页查询接口，传入页码、每页条数和搜索条件
+        const data = await getMeetingRoomPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          roomName: this.searchForm.roomName,
+          roomLocation: this.searchForm.roomLocation,
+          roomType: this.searchForm.roomType,
+        });
+
+        // 将接口返回的数据转换为页面需要的格式
+        // 接口字段 -> 页面字段映射：
+        // id -> id（会议室ID）
+        // roomName -> roomName（会议室名称）
+        // roomLocation -> roomLocation（会议室位置）
+        // roomType -> roomTypeText（会议室类型：1=小会议室，2=中会议室，3=大会议室，4=多功能厅）
+        // managerName -> managerName（管理员姓名）
+        // managerPhone -> managerPhone（管理员电话）
+        // availableStatus -> status（可用状态：0=可用，1=不可用）
+        // seatCount -> seatCount（座位数）
+        // equipment -> equipmentText（设备列表，数组转字符串）
+        // allowBooking -> allowBookingText（是否允许预订）
+        // createTime -> createTime（创建时间）
+        this.rows = data.list.map((item) => ({
+          id: item.id,
+          roomName: item.roomName || "",
+          roomLocation: item.roomLocation || "",
+          roomTypeText: this.getRoomTypeText(item.roomType),
+          managerName: item.managerName || "",
+          managerPhone: item.managerPhone || "",
+          status: item.availableStatus === 0 ? "可用" : "不可用",
+          statusClass: item.availableStatus === 0 ? "status-green" : "status-red",
+          seatCount: item.seatCount || 0,
+          equipmentText: this.getEquipmentText(item.equipment),
+          allowBookingText: item.allowBooking ? "允许" : "不允许",
+          createTime: this.formatTimestamp(item.createTime),
+        }));
+
+        // 更新总记录数
+        this.pagination.total = data.total;
+      } catch (err) {
+        // 接口调用失败时打印错误信息
+        console.error("获取会议室列表失败", err);
+      }
+    },
+
+    // ========== 工具方法：会议室类型编码转中文文本 ==========
+    getRoomTypeText(roomType) {
+      const map = { 1: "小会议室", 2: "中会议室", 3: "大会议室", 4: "多功能厅" };
+      return map[roomType] || "其他";
+    },
+
+    // ========== 工具方法：设备列表转中文文本 ==========
+    // 接口返回的equipment是英文标识数组，需要转换为中文显示
+    getEquipmentText(equipment) {
+      if (!equipment || !Array.isArray(equipment)) return "";
+      const map = {
+        tv: "电视",
+        computer: "电脑",
+        remote: "遥控器",
+        projector: "投影仪",
+        water_dispenser: "饮水机",
+        locker: "储物柜",
+      };
+      return equipment.map((e) => map[e] || e).join("、");
+    },
+
+    // ========== 工具方法：时间戳格式化 ==========
+    // 将后端返回的毫秒时间戳转换为 "YYYY-MM-DD HH:mm:ss" 格式
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+
+    // ========== 搜索按钮 ==========
+    handleSearch() {
+      // 搜索时重置到第一页
+      this.pagination.pageNo = 1;
+      this.loadRoomList();
+    },
+
+    // ========== 重置按钮 ==========
+    handleReset() {
+      // 清空搜索条件
+      this.searchForm = { roomName: "", roomLocation: "", roomType: "" };
+      // 重置到第一页
+      this.pagination.pageNo = 1;
+      this.loadRoomList();
+    },
+
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadRoomList();
+    },
+
+    // ========== 新增会议室 ==========
+    handleAdd() {
+      // TODO: 打开新增会议室弹窗
+      alert("新增会议室功能待实现");
+    },
+
+    // ========== 查看详情 ==========
+    handleDetail(row) {
+      // TODO: 打开会议室详情弹窗
+      alert(`会议室详情：${row.roomName}`);
+    },
+
+    // ========== 编辑会议室 ==========
+    handleEdit(row) {
+      // TODO: 打开编辑会议室弹窗
+      alert(`编辑会议室：${row.roomName}`);
+    },
+
+    // ========== 删除会议室 ==========
+    async handleDelete(row) {
+      // 弹出确认框，防止误删
+      if (!confirm(`确定要删除会议室「${row.roomName}」吗？`)) return;
+      try {
+        // 调用删除接口
+        await deleteMeetingRoom(row.id);
+        alert("删除成功");
+        // 删除成功后重新加载列表
+        this.loadRoomList();
+      } catch (err) {
+        console.error("删除会议室失败", err);
+      }
+    },
+  },
+};
 </script>
 
 <style scoped>

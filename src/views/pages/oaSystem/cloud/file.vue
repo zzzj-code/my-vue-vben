@@ -63,19 +63,19 @@
         <div class="right-top">
           <div class="top-w">
             <span>文件名称</span>
-            <input type="text" />
+            <input type="text" v-model="searchForm.fileName" />
           </div>
           <div class="top-w">
             <span>文件类型</span>
-            <input type="text" />
+            <input type="text" v-model="searchForm.fileType" />
           </div>
           <div class="top-w">
             <span>所有者</span>
-            <input type="text" />
+            <input type="text" v-model="searchForm.ownerName" />
           </div>
           <div class="top-w">
-            <button class="btn">重置</button>
-            <button class="btn1">搜索</button>
+            <button class="btn" @click="handleReset">重置</button>
+            <button class="btn1" @click="handleSearch">搜索</button>
             <span class="a">展开▽</span>
           </div>
         </div>
@@ -83,14 +83,14 @@
           <div class="right-header">
             <div class="header-title">我都文件</div>
             <div class="header-actions">
-              <button class="btn-add">新建文件夹</button>
-              <button class="btn-add">上传文件</button>
+              <button class="btn-add" @click="handleCreateFolder">新建文件夹</button>
+              <button class="btn-add" @click="handleUpload">上传文件</button>
               <div class="batch-delete" aria-disabled="true">
                 <span class="del-icon">🗑</span> 批量删除
               </div>
               <button class="btn-export">导出</button>
               <div class="icon-actions">
-                <button class="icon-btn" title="刷新">↻</button>
+                <button class="icon-btn" title="刷新" @click="loadFileList">↻</button>
                 <button class="icon-btn" title="全屏">⛶</button>
                 <button class="icon-btn" title="布局">◧</button>
               </div>
@@ -109,30 +109,36 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(car, idx) in filteredCars" :key="car.id">
+                <tr v-for="(file, idx) in filteredFiles" :key="file.id">
                   <td><input type="checkbox" /></td>
-                  <td>101</td>
-                  <td>{{ car.company }}</td>
-                  <td>{{ car.plate }}</td>
-                  <td>{{ car.name }}</td>
+                  <td>{{ file.fileName }}</td>
+                  <td>{{ file.fileSizeText }}</td>
+                  <td>{{ file.ownerName }}</td>
+                  <td>{{ file.updateTime }}</td>
                   <td class="op-col">
-                    <button>打开</button>
-                    <button>重命名</button>
-                    <button>收藏</button>
-                    <button @click.prevent="editCar(car)">分享</button>
-                    <button @click.prevent="deleteCar(car)" style="color: red;">删除</button>
+                    <button @click.prevent="handleOpen(file)">打开</button>
+                    <button @click.prevent="handleRename(file)">重命名</button>
+                    <button @click.prevent="handleFavorite(file)">{{ file.isFavorite ? "取消收藏" : "收藏" }}</button>
+                    <button @click.prevent="handleShare(file)">分享</button>
+                    <button @click.prevent="handleDelete(file)" style="color: red;">删除</button>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
           <div class="table-footer">
-            <div class="footer-left">共 {{ filteredCars.length }} 条记录</div>
+            <div class="footer-left">共 {{ pagination.total }} 条记录</div>
             <div class="footer-right">
               <select>
-                <option>20条/页</option>
+                <option>{{ pagination.pageSize }}条/页</option>
               </select>
-              <div class="pager">&lt;&lt; &lt; 1 &gt; &gt;&gt;</div>
+              <div class="pager">
+                <button @click="handlePageChange(1)">&lt;&lt;</button>
+                <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+                <button class="active">{{ pagination.pageNo }}</button>
+                <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+                <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+              </div>
             </div>
           </div>
         </div>
@@ -142,127 +148,228 @@
 </template>
 
 <script>
+// ========== 导入云盘文件相关API ==========
+// getFileInfoPage: 分页查询文件列表
+// getFileInfo: 获取单条文件详情
+// createFileInfo: 新建文件夹
+// updateFileInfo: 更新文件信息
+// deleteFileInfo: 删除文件
+// renameFileInfo: 重命名文件
+// favoriteFile: 收藏文件
+// unfavoriteFile: 取消收藏
+import { getFileInfoPage, deleteFileInfo, renameFileInfo, favoriteFile, unfavoriteFile } from '#/api/oa/file';
+
 export default {
   data() {
     return {
+      // ========== 左侧文件筛选分类 ==========
       categories: [
         "我的文件",
         "共享文件",
-        "我的收藏",
+        "收藏文件",
+        "最近文件",
       ],
+      // 文件类型分类
       categories1: [
         "全部",
-        "图片",
         "文档",
+        "图片",
         "视频",
         "音频",
-        "压缩包",
-        "其他"
+        "其他",
       ],
+      // 当前选中的分类索引
       selectedCategoryIndex: 0,
-      cars: [
-        {
-          id: 1,
-          company: "深圳总公司",
-          plate: "粤A00001",
-          name: "别克GL8",
-          status: "空闲",
-          category: "商务接待用车",
-          user: "张三",
-          buyDate: "2020-01-15",
-        },
-        {
-          id: 2,
-          company: "深圳总公司",
-          plate: "粤A00002",
-          name: "大众帕萨特",
-          status: "使用中",
-          category: "行政用车",
-          user: "李四",
-          buyDate: "2019-05-20",
-        },
-        {
-          id: 3,
-          company: "深圳总公司",
-          plate: "粤A00003",
-          name: "丰田凯美瑞",
-          status: "空闲",
-          category: "生产经营用车",
-          user: "王五",
-          buyDate: "2018-07-10",
-        },
-        {
-          id: 4,
-          company: "深圳总公司",
-          plate: "粤A00004",
-          name: "奥迪A6",
-          status: "维修",
-          category: "领导专车",
-          user: "赵六",
-          buyDate: "2021-03-01",
-        },
-        {
-          id: 5,
-          company: "深圳总公司",
-          plate: "粤A00005",
-          name: "捷达",
-          status: "空闲",
-          category: "其他",
-          user: "-",
-          buyDate: "2017-11-11",
-        },
-        {
-          id: 3,
-          company: "深圳总公司",
-          plate: "粤A00003",
-          name: "丰田凯美瑞",
-          status: "空闲",
-          category: "生产经营用车",
-          user: "王五",
-          buyDate: "2018-07-10",
-        },
-        {
-          id: 4,
-          company: "深圳总公司",
-          plate: "粤A00004",
-          name: "奥迪A6",
-          status: "维修",
-          category: "领导专车",
-          user: "赵六",
-          buyDate: "2021-03-01",
-        },
-        {
-          id: 5,
-          company: "深圳总公司",
-          plate: "粤A00005",
-          name: "捷达",
-          status: "空闲",
-          category: "其他",
-          user: "-",
-          buyDate: "2017-11-11",
-        },
-      ],
+
+      // ========== 搜索表单数据 ==========
+      searchForm: {
+        fileName: "",    // 文件名称
+        fileType: "",    // 文件类型
+        ownerName: "",   // 所有者
+      },
+
+      // ========== 分页数据 ==========
+      pagination: {
+        pageNo: 1,        // 当前页码
+        pageSize: 10,     // 每页条数
+        total: 0,         // 总记录数
+      },
+
+      // ========== 表格数据（从接口获取，初始为空） ==========
+      files: [],
     };
   },
+
+  // ========== 计算属性：根据左侧选中的分类筛选文件 ==========
   computed: {
-    filteredCars() {
+    filteredFiles() {
+      // 获取当前选中的分类名称
       const cat = this.categories[this.selectedCategoryIndex];
-      if (cat === "我的文件") return this.cars;
-      return this.cars.filter((c) => c.category === cat);
+      // 根据不同分类筛选文件
+      if (cat === "共享文件") return this.files.filter((f) => f.isShared);
+      if (cat === "收藏文件") return this.files.filter((f) => f.isFavorite);
+      // "我的文件"和"最近文件"返回所有
+      return this.files;
     },
   },
+
+  // ========== 页面挂载后自动加载文件列表 ==========
+  mounted() {
+    this.loadFileList();
+  },
+
   methods: {
+    // ========== 接口对接方法：获取文件列表 ==========
+    async loadFileList() {
+      try {
+        // 调用分页查询接口，传入页码、每页条数和搜索条件
+        const data = await getFileInfoPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          fileName: this.searchForm.fileName,
+          fileType: this.searchForm.fileType,
+          ownerName: this.searchForm.ownerName,
+        });
+
+        // 将接口返回的数据转换为页面需要的格式
+        // 接口字段 -> 页面字段映射：
+        // id -> id（文件ID）
+        // fileName -> fileName（文件名称）
+        // fileType -> fileTypeText（文件类型：0=文件夹，1=文件）
+        // fileSize -> fileSizeText（文件大小，字节转可读格式）
+        // ownerName -> ownerName（所有者姓名）
+        // updateTime -> updateTime（修改时间，接口返回字符串格式）
+        // isShared -> isShared（是否共享）
+        // isFavorite -> isFavorite（是否收藏）
+        this.files = data.list.map((item) => ({
+          id: item.id,
+          fileName: item.fileName || "",
+          fileTypeText: item.fileType === 0 ? "文件夹" : "文件",
+          fileSizeText: this.formatFileSize(item.fileSize),
+          ownerName: item.ownerName || "",
+          updateTime: item.updateTime || item.createTime || "",
+          isShared: item.isShared || false,
+          isFavorite: item.isFavorite || false,
+        }));
+
+        // 更新总记录数
+        this.pagination.total = data.total;
+      } catch (err) {
+        // 接口调用失败时打印错误信息
+        console.error("获取文件列表失败", err);
+      }
+    },
+
+    // ========== 工具方法：文件大小格式化 ==========
+    // 将字节数转换为可读格式（B/KB/MB/GB）
+    formatFileSize(bytes) {
+      if (!bytes || bytes === 0) return "-";
+      if (bytes < 1024) return bytes + " B";
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
+      if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+      return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+    },
+
+    // ========== 左侧分类切换 ==========
     selectCategory(index) {
       this.selectedCategoryIndex = index;
     },
-    // 示例操作：编辑、删除（只是占位）
-    editCar(car) {
-      // TODO: 打开编辑弹窗
-      console.log("edit", car);
+
+    // ========== 搜索按钮 ==========
+    handleSearch() {
+      // 搜索时重置到第一页
+      this.pagination.pageNo = 1;
+      this.loadFileList();
     },
-    deleteCar(car) {
-      // TODO: 删除逻辑
-      console.log("delete", car);
+
+    // ========== 重置按钮 ==========
+    handleReset() {
+      // 清空搜索条件
+      this.searchForm = { fileName: "", fileType: "", ownerName: "" };
+      // 重置到第一页
+      this.pagination.pageNo = 1;
+      this.loadFileList();
+    },
+
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadFileList();
+    },
+
+    // ========== 新建文件夹 ==========
+    handleCreateFolder() {
+      // TODO: 弹出输入框，输入文件夹名称后调用createFileInfo
+      const name = prompt("请输入文件夹名称");
+      if (!name) return;
+      alert("新建文件夹功能待实现：" + name);
+    },
+
+    // ========== 上传文件 ==========
+    handleUpload() {
+      // TODO: 打开文件选择器，调用uploadFile接口
+      alert("上传文件功能待实现");
+    },
+
+    // ========== 打开文件/文件夹 ==========
+    handleOpen(file) {
+      if (file.fileTypeText === "文件夹") {
+        // TODO: 进入文件夹，调用getFileInfoListByParentId
+        alert(`打开文件夹：${file.fileName}`);
+      } else {
+        // TODO: 下载或预览文件
+        alert(`打开文件：${file.fileName}`);
+      }
+    },
+
+    // ========== 重命名文件 ==========
+    async handleRename(file) {
+      const newName = prompt("请输入新名称", file.fileName);
+      if (!newName || newName === file.fileName) return;
+      try {
+        await renameFileInfo(file.id, newName);
+        alert("重命名成功");
+        this.loadFileList();
+      } catch (err) {
+        console.error("重命名失败", err);
+      }
+    },
+
+    // ========== 收藏/取消收藏 ==========
+    async handleFavorite(file) {
+      try {
+        if (file.isFavorite) {
+          await unfavoriteFile(file.id);
+          alert("已取消收藏");
+        } else {
+          await favoriteFile(file.id);
+          alert("已收藏");
+        }
+        this.loadFileList();
+      } catch (err) {
+        console.error("收藏操作失败", err);
+      }
+    },
+
+    // ========== 分享文件 ==========
+    handleShare(file) {
+      // TODO: 打开分享弹窗，调用shareFile接口
+      alert(`分享文件：${file.fileName}`);
+    },
+
+    // ========== 删除文件 ==========
+    async handleDelete(file) {
+      // 弹出确认框，防止误删
+      if (!confirm(`确定要删除文件「${file.fileName}」吗？`)) return;
+      try {
+        // 调用删除接口
+        await deleteFileInfo(file.id);
+        alert("删除成功");
+        // 删除成功后重新加载列表
+        this.loadFileList();
+      } catch (err) {
+        console.error("删除文件失败", err);
+      }
     },
   },
 };
