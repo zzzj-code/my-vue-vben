@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>规则编码</span>
-            <input type="text" placeholder="请输入规则编码" />
+            <input type="text" placeholder="请输入规则编码" v-model="searchForm.field1" />
           </div>
           <div>
             <span>规则名称</span>
-            <input type="text" placeholder="请输入规则名称" />
+            <input type="text" placeholder="请输入规则名称" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>编码规则列表</div>
           <div>
-            <button>+新增编码规则</button>
+            <button @click="handleAdd">+新增编码规则</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -78,262 +78,133 @@
                 <td>{{ item.remark }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </div></div>
 </template>
 
 <script>
+// ========== 导入自动编码相关API ==========
+import { getAutoCodePage, deleteAutoCode } from '#/api/mes/md/auto-code';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "CR-2024-001",
-          name: "物料编码规则",
-          description: "M-YYYY-XXX",
-          maxLength: 12,
-          isPadding: "是",
-          status: "启用",
-          remark: "物料主数据编码",
-          createTime: "2024-01-15 10:30",
-        },
-        {
-          id: 2,
-          code: "CR-2024-002",
-          name: "客户编码规则",
-          description: "CUST-YYYY-XXX",
-          maxLength: 14,
-          isPadding: "是",
-          status: "启用",
-          remark: "客户主数据编码",
-          createTime: "2024-01-20 14:20",
-        },
-        {
-          id: 3,
-          code: "CR-2024-003",
-          name: "供应商编码规则",
-          description: "SUP-YYYY-XXX",
-          maxLength: 14,
-          isPadding: "是",
-          status: "启用",
-          remark: "供应商主数据编码",
-          createTime: "2024-02-01 09:15",
-        },
-        {
-          id: 4,
-          code: "CR-2024-004",
-          name: "生产工单编码规则",
-          description: "MO-YYYYMMDD-XXX",
-          maxLength: 18,
-          isPadding: "否",
-          status: "启用",
-          remark: "生产工单流水号",
-          createTime: "2024-02-10 16:40",
-        },
-        {
-          id: 5,
-          code: "CR-2024-005",
-          name: "采购订单编码规则",
-          description: "PO-YYYYMM-XXX",
-          maxLength: 15,
-          isPadding: "是",
-          status: "启用",
-          remark: "采购订单编码",
-          createTime: "2024-03-01 11:00",
-        },
-        {
-          id: 6,
-          code: "CR-2024-006",
-          name: "销售订单编码规则",
-          description: "SO-YYYYMM-XXX",
-          maxLength: 15,
-          isPadding: "是",
-          status: "启用",
-          remark: "销售订单编码",
-          createTime: "2024-03-15 13:30",
-        },
-        {
-          id: 7,
-          code: "CR-2024-007",
-          name: "仓库编码规则",
-          description: "WH-XXX",
-          maxLength: 8,
-          isPadding: "否",
-          status: "启用",
-          remark: "仓库主数据编码",
-          createTime: "2024-04-01 08:50",
-        },
-        {
-          id: 8,
-          code: "CR-2024-008",
-          name: "车间编码规则",
-          description: "WS-XXX",
-          maxLength: 8,
-          isPadding: "是",
-          status: "停用",
-          remark: "车间主数据编码，已弃用",
-          createTime: "2024-04-10 10:20",
-        },
-        {
-          id: 9,
-          code: "CR-2024-009",
-          name: "设备编码规则",
-          description: "EQ-YYYY-XXX",
-          maxLength: 13,
-          isPadding: "是",
-          status: "启用",
-          remark: "设备资产管理编码",
-          createTime: "2024-05-01 15:00",
-        },
-        {
-          id: 10,
-          code: "CR-2024-010",
-          name: "员工编码规则",
-          description: "EMP-YYYY-XXX",
-          maxLength: 14,
-          isPadding: "是",
-          status: "启用",
-          remark: "员工工号编码",
-          createTime: "2024-05-15 09:30",
-        },
-        {
-          id: 11,
-          code: "CR-2024-011",
-          name: "BOM编码规则",
-          description: "BOM-YYYYMMDD-XXX",
-          maxLength: 20,
-          isPadding: "否",
-          status: "启用",
-          remark: "物料清单编码",
-          createTime: "2024-06-01 14:10",
-        },
-        {
-          id: 12,
-          code: "CR-2024-012",
-          name: "工艺路线编码规则",
-          description: "ROUTE-XXX",
-          maxLength: 10,
-          isPadding: "否",
-          status: "启用",
-          remark: "工艺路线编码",
-          createTime: "2024-06-20 11:45",
-        },
-        {
-          id: 13,
-          code: "CR-2024-013",
-          name: "质量批次编码规则",
-          description: "QC-YYYYMMDD-XXX",
-          maxLength: 19,
-          isPadding: "是",
-          status: "启用",
-          remark: "质量检验批次编码",
-          createTime: "2024-07-01 08:00",
-        },
-        {
-          id: 14,
-          code: "CR-2024-014",
-          name: "发货单编码规则",
-          description: "DN-YYYYMMDD-XXX",
-          maxLength: 19,
-          isPadding: "是",
-          status: "启用",
-          remark: "发货单流水号",
-          createTime: "2024-07-10 16:20",
-        },
-        {
-          id: 15,
-          code: "CR-2024-015",
-          name: "收货单编码规则",
-          description: "RN-YYYYMMDD-XXX",
-          maxLength: 19,
-          isPadding: "是",
-          status: "启用",
-          remark: "收货单流水号",
-          createTime: "2024-07-20 13:00",
-        },
-        {
-          id: 16,
-          code: "CR-2024-016",
-          name: "盘点单编码规则",
-          description: "INV-YYYYMM-XXX",
-          maxLength: 17,
-          isPadding: "否",
-          status: "停用",
-          remark: "盘点单编码，待优化",
-          createTime: "2024-08-01 09:10",
-        },
-        {
-          id: 17,
-          code: "CR-2024-017",
-          name: "退货单编码规则",
-          description: "RET-YYYYMMDD-XXX",
-          maxLength: 20,
-          isPadding: "是",
-          status: "启用",
-          remark: "退货单编码",
-          createTime: "2024-08-10 10:30",
-        },
-        {
-          id: 18,
-          code: "CR-2024-018",
-          name: "调拨单编码规则",
-          description: "TR-YYYYMMDD-XXX",
-          maxLength: 19,
-          isPadding: "是",
-          status: "启用",
-          remark: "库存调拨单编码",
-          createTime: "2024-08-20 15:50",
-        },
-        {
-          id: 19,
-          code: "CR-2024-019",
-          name: "检验报告编码规则",
-          description: "IR-YYYYMMDD-XXX",
-          maxLength: 20,
-          isPadding: "否",
-          status: "启用",
-          remark: "质量检验报告编码",
-          createTime: "2024-09-01 14:20",
-        },
-        {
-          id: 20,
-          code: "CR-2024-020",
-          name: "计件工资编码规则",
-          description: "PW-YYYYMM-XXX",
-          maxLength: 17,
-          isPadding: "是",
-          status: "启用",
-          remark: "计件工资单编码",
-          createTime: "2024-09-10 11:00",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
+    // ========== 获取状态文字颜色 ==========
     getStatusColor(status) {
-      const map = {
-        '启用': '#52c41a',
-        '停用': '#8c8c8c'
+      const colorMap = {
+        0: '#006be6',
+        1: '#52c41a',
+        2: '#faad14',
+        3: '#ff4d4f',
+        '0': '#006be6',
+        '1': '#52c41a',
+        '2': '#faad14',
+        '3': '#ff4d4f',
       };
-      return map[status] || '#333';
+      return colorMap[status] || '#006be6';
     },
+    // ========== 获取状态背景颜色 ==========
     getStatusBg(status) {
-      const map = {
-        '启用': '#f6ffed',
-        '停用': '#f5f5f5'
+      const bgMap = {
+        0: '#e6f6ff',
+        1: '#f6ffed',
+        2: '#fffbe6',
+        3: '#fff2f0',
+        '0': '#e6f6ff',
+        '1': '#f6ffed',
+        '2': '#fffbe6',
+        '3': '#fff2f0',
       };
-      return map[status] || '#fff';
-    }
+      return bgMap[status] || '#e6f6ff';
+    },
+    // ========== 获取自动编码列表 ==========
+    async loadList() {
+      try {
+        const data = await getAutoCodePage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取自动编码列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增自动编码功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑自动编码功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteAutoCode(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   }
 };
 </script>

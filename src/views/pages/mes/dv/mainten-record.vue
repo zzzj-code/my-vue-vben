@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>设备名称</span>
-            <input type="text" placeholder="请输入设备名称" />
+            <input type="text" placeholder="请输入设备名称" v-model="searchForm.field1" />
           </div>
           <div>
             <span>保养时间</span>
-            <input type="text" placeholder="" />
+            <input type="text" placeholder="" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>保养记录列表</div>
           <div>
-            <button>+新增保养记录</button>
+            <button @click="handleAdd">+新增保养记录</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -70,122 +70,133 @@
                 </td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </div></div>
 </template>
 
 <script>
+// ========== 导入保养记录相关API ==========
+import { getMaintenRecordPage, deleteMaintenRecord } from '#/api/mes/dv/mainten-record';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          equipmentCode: "EQ-2024-001",
-          equipmentName: "冲压机A",
-          planName: "冲压设备点检保养方案",
-          checkTime: "2024-07-15 10:30",
-          checker: "张伟",
-          status: "合格",
-          createTime: "2024-07-15 10:35",
-        },
-        {
-          id: 2,
-          equipmentCode: "EQ-2024-002",
-          equipmentName: "注塑机A",
-          planName: "注塑机月度保养方案",
-          checkTime: "2024-07-15 09:00",
-          checker: "李明",
-          status: "合格",
-          createTime: "2024-07-15 09:05",
-        },
-        {
-          id: 3,
-          equipmentCode: "EQ-2024-003",
-          equipmentName: "CNC加工中心A",
-          planName: "CNC设备周点检方案",
-          checkTime: "2024-07-14 14:20",
-          checker: "王芳",
-          status: "异常",
-          createTime: "2024-07-14 14:25",
-        },
-        {
-          id: 4,
-          equipmentCode: "EQ-2024-004",
-          equipmentName: "三坐标测量仪",
-          planName: "测量设备校准方案",
-          checkTime: "2024-07-14 11:00",
-          checker: "刘洋",
-          status: "合格",
-          createTime: "2024-07-14 11:05",
-        },
-        {
-          id: 5,
-          equipmentCode: "EQ-2024-005",
-          equipmentName: "叉车A",
-          planName: "叉车季度保养方案",
-          checkTime: "2024-07-13 08:30",
-          checker: "陈静",
-          status: "合格",
-          createTime: "2024-07-13 08:35",
-        },
-        {
-          id: 6,
-          equipmentCode: "EQ-2024-006",
-          equipmentName: "AGV小车A",
-          planName: "AGV小车日常点检方案",
-          checkTime: "2024-07-13 09:30",
-          checker: "赵刚",
-          status: "异常",
-          createTime: "2024-07-13 09:35",
-        },
-        {
-          id: 7,
-          equipmentCode: "EQ-2024-007",
-          equipmentName: "空压机A",
-          planName: "空压机半年保养方案",
-          checkTime: "2024-07-12 08:00",
-          checker: "孙丽",
-          status: "合格",
-          createTime: "2024-07-12 08:05",
-        },
-        {
-          id: 8,
-          equipmentCode: "EQ-2024-008",
-          equipmentName: "货架系统A",
-          planName: "货架系统定期检查方案",
-          checkTime: "2024-07-12 10:00",
-          checker: "周明",
-          status: "合格",
-          createTime: "2024-07-12 10:05",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
+    // ========== 获取状态文字颜色 ==========
     getStatusColor(status) {
-      const map = {
-        '合格': '#52c41a',
-        '异常': '#ff4d4f'
+      const colorMap = {
+        0: '#006be6',
+        1: '#52c41a',
+        2: '#faad14',
+        3: '#ff4d4f',
+        '0': '#006be6',
+        '1': '#52c41a',
+        '2': '#faad14',
+        '3': '#ff4d4f',
       };
-      return map[status] || '#333';
+      return colorMap[status] || '#006be6';
     },
+    // ========== 获取状态背景颜色 ==========
     getStatusBg(status) {
-      const map = {
-        '合格': '#f6ffed',
-        '异常': '#fff2f0'
+      const bgMap = {
+        0: '#e6f6ff',
+        1: '#f6ffed',
+        2: '#fffbe6',
+        3: '#fff2f0',
+        '0': '#e6f6ff',
+        '1': '#f6ffed',
+        '2': '#fffbe6',
+        '3': '#fff2f0',
       };
-      return map[status] || '#fff';
-    }
+      return bgMap[status] || '#e6f6ff';
+    },
+    // ========== 获取保养记录列表 ==========
+    async loadList() {
+      try {
+        const data = await getMaintenRecordPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取保养记录列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增保养记录功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑保养记录功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteMaintenRecord(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   }
 };
 </script>

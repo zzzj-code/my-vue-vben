@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>方案编号</span>
-            <input type="text" placeholder="请输入方案编号" />
+            <input type="text" placeholder="请输入方案编号" v-model="searchForm.field1" />
           </div>
           <div>
             <span>方案名称</span>
-            <input type="text" placeholder="请输入方案名称" />
+            <input type="text" placeholder="请输入方案名称" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>质检方案列表</div>
           <div>
-            <button>+新增质检方案</button>
+            <button @click="handleAdd">+新增质检方案</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -82,105 +82,133 @@
                 <td>{{ item.remark }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </div></div>
 </template>
 
 <script>
+// ========== 导入检验模板相关API ==========
+import { getTemplatePage, deleteTemplate } from '#/api/mes/qc/template';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "QP-2024-001",
-          name: "智能网关来料检验方案",
-          type: "来料检验",
-          status: "启用",
-          remark: "适用于智能网关产品所有来料检验",
-          createTime: "2024-01-15 10:30",
-        },
-        {
-          id: 2,
-          code: "QP-2024-002",
-          name: "智能灯泡出厂检验方案",
-          type: "出厂检验",
-          status: "启用",
-          remark: "适用于RGB系列智能灯泡出厂检验",
-          createTime: "2024-01-20 14:20",
-        },
-        {
-          id: 3,
-          code: "QP-2024-003",
-          name: "电源适配器过程检验方案",
-          type: "过程检验",
-          status: "启用",
-          remark: "适用于电源适配器生产过程中的巡检",
-          createTime: "2024-02-01 09:15",
-        },
-        {
-          id: 4,
-          code: "QP-2024-004",
-          name: "主板半成品首件检验方案",
-          type: "首件检验",
-          status: "启用",
-          remark: "适用于主板半成品首件确认",
-          createTime: "2024-02-10 16:40",
-        },
-        {
-          id: 5,
-          code: "QP-2024-005",
-          name: "智能插座入库检验方案",
-          type: "入库检验",
-          status: "启用",
-          remark: "适用于智能插座成品入库检验",
-          createTime: "2024-03-01 11:00",
-        },
-        {
-          id: 6,
-          code: "QP-2024-006",
-          name: "传感器半成品出货检验方案",
-          type: "出货检验",
-          status: "停用",
-          remark: "已合并到通用出货检验方案",
-          createTime: "2024-03-15 13:30",
-        },
-        {
-          id: 7,
-          code: "QP-2024-007",
-          name: "碳钢螺丝来料检验方案",
-          type: "来料检验",
-          status: "启用",
-          remark: "适用于M系列碳钢螺丝来料检验",
-          createTime: "2024-04-01 08:50",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
+    // ========== 获取状态文字颜色 ==========
     getStatusColor(status) {
-      const map = {
-        '启用': '#52c41a',
-        '停用': '#8c8c8c'
+      const colorMap = {
+        0: '#006be6',
+        1: '#52c41a',
+        2: '#faad14',
+        3: '#ff4d4f',
+        '0': '#006be6',
+        '1': '#52c41a',
+        '2': '#faad14',
+        '3': '#ff4d4f',
       };
-      return map[status] || '#333';
+      return colorMap[status] || '#006be6';
     },
+    // ========== 获取状态背景颜色 ==========
     getStatusBg(status) {
-      const map = {
-        '启用': '#f6ffed',
-        '停用': '#f5f5f5'
+      const bgMap = {
+        0: '#e6f6ff',
+        1: '#f6ffed',
+        2: '#fffbe6',
+        3: '#fff2f0',
+        '0': '#e6f6ff',
+        '1': '#f6ffed',
+        '2': '#fffbe6',
+        '3': '#fff2f0',
       };
-      return map[status] || '#fff';
-    }
+      return bgMap[status] || '#e6f6ff';
+    },
+    // ========== 获取检验模板列表 ==========
+    async loadList() {
+      try {
+        const data = await getTemplatePage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取检验模板列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增检验模板功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑检验模板功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteTemplate(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   }
 };
 </script>

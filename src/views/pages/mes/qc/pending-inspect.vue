@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>方案编号</span>
-            <input type="text" placeholder="请输入方案编号" />
+            <input type="text" placeholder="请输入方案编号" v-model="searchForm.field1" />
           </div>
           <div>
             <span>方案名称</span>
-            <input type="text" placeholder="请输入方案名称" />
+            <input type="text" placeholder="请输入方案名称" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>质检方案列表</div>
           <div>
-            <button>+新增质检方案</button>
+            <button @click="handleAdd">+新增质检方案</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -92,178 +92,98 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </div></div>
 </template>
 
 <script>
+// ========== 导入待检列表相关API ==========
+import { getPendingInspectPage, deletePendingInspect } from '#/api/mes/qc/pending-inspect';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          sourceType: "采购入库单",
-          sourceCode: "RN-2024-001",
-          checkType: "来料检验",
-          materialCode: "M-2024-001",
-          materialName: "碳钢螺丝",
-          spec: "M4×20 镀锌",
-          qty: 5000,
-          unit: "个",
-        },
-        {
-          id: 2,
-          sourceType: "采购入库单",
-          sourceCode: "RN-2024-003",
-          checkType: "来料检验",
-          materialCode: "M-2024-003",
-          materialName: "瓦楞纸箱",
-          spec: "400×300×200mm 五层",
-          qty: 3000,
-          unit: "个",
-        },
-        {
-          id: 3,
-          sourceType: "生产工单",
-          sourceCode: "MO-2024-002",
-          checkType: "过程检验",
-          materialCode: "P-2024-012",
-          materialName: "智能灯泡",
-          spec: "RGB 9W E27螺口",
-          qty: 200,
-          unit: "个",
-        },
-        {
-          id: 4,
-          sourceType: "生产工单",
-          sourceCode: "MO-2024-004",
-          checkType: "首件检验",
-          materialCode: "P-2024-011",
-          materialName: "主板半成品",
-          spec: "PCB 四层板 带元件",
-          qty: 300,
-          unit: "片",
-        },
-        {
-          id: 5,
-          sourceType: "采购入库单",
-          sourceCode: "RN-2024-005",
-          checkType: "来料检验",
-          materialCode: "M-2024-007",
-          materialName: "不锈钢弹簧",
-          spec: "线径0.8mm 外径10mm",
-          qty: 8000,
-          unit: "个",
-        },
-        {
-          id: 6,
-          sourceType: "生产工单",
-          sourceCode: "MO-2024-005",
-          checkType: "过程检验",
-          materialCode: "P-2024-018",
-          materialName: "智能插座",
-          spec: "10A 250V WiFi版",
-          qty: 120,
-          unit: "个",
-        },
-        {
-          id: 7,
-          sourceType: "采购入库单",
-          sourceCode: "RN-2024-008",
-          checkType: "来料检验",
-          materialCode: "M-2024-013",
-          materialName: "铜接线端子",
-          spec: "DT-10 镀锡",
-          qty: 10000,
-          unit: "个",
-        },
-        {
-          id: 8,
-          sourceType: "生产工单",
-          sourceCode: "MO-2024-003",
-          checkType: "首件检验",
-          materialCode: "P-2024-005",
-          materialName: "电源适配器",
-          spec: "12V/2A 裸板",
-          qty: 150,
-          unit: "个",
-        },
-        {
-          id: 9,
-          sourceType: "采购入库单",
-          sourceCode: "RN-2024-010",
-          checkType: "来料检验",
-          materialCode: "M-2024-010",
-          materialName: "散热硅脂",
-          spec: "1g/支 导热系数6W/mK",
-          qty: 300,
-          unit: "支",
-        },
-        {
-          id: 10,
-          sourceType: "生产工单",
-          sourceCode: "MO-2024-006",
-          checkType: "过程检验",
-          materialCode: "P-2024-017",
-          materialName: "传感器半成品",
-          spec: "温湿度 SHT30",
-          qty: 200,
-          unit: "个",
-        },
-        {
-          id: 11,
-          sourceType: "采购入库单",
-          sourceCode: "RN-2024-012",
-          checkType: "来料检验",
-          materialCode: "M-2024-014",
-          materialName: "橡胶密封圈",
-          spec: "内径20mm 外径26mm",
-          qty: 6000,
-          unit: "个",
-        },
-        {
-          id: 12,
-          sourceType: "生产工单",
-          sourceCode: "MO-2024-007",
-          checkType: "首件检验",
-          materialCode: "P-2024-006",
-          materialName: "智能网关",
-          spec: "ZigBee 3.0 黑色",
-          qty: 80,
-          unit: "台",
-        },
-        {
-          id: 13,
-          sourceType: "生产工单",
-          sourceCode: "MO-2024-008",
-          checkType: "过程检验",
-          materialCode: "P-2024-012",
-          materialName: "智能灯泡",
-          spec: "RGB 9W E27螺口",
-          qty: 150,
-          unit: "个",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
-    getSourceTypeColor(type) {
-      const map = {
-        '采购入库单': '#52c41a',
-        '生产工单': '#1890ff'
-      };
-      return map[type] || '#333';
+    // ========== 获取待检列表列表 ==========
+    async loadList() {
+      try {
+        const data = await getPendingInspectPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取待检列表列表失败", err);
+      }
     },
-    getSourceTypeBg(type) {
-      const map = {
-        '采购入库单': '#f6ffed',
-        '生产工单': '#e6f7ff'
-      };
-      return map[type] || '#fff';
-    }
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增待检列表功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑待检列表功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deletePendingInspect(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   }
 };
 </script>

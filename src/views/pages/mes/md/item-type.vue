@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>分类名称</span>
-            <input type="text" placeholder="请输入分类名称" />
+            <input type="text" placeholder="请输入分类名称" v-model="searchForm.field1" />
           </div>
           <div>
             <span>状态</span>
-            <input type="text" placeholder="请输入" />
+            <input type="text" placeholder="请输入" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>物料分类列表</div>
           <div>
-            <button>+新增物料分类</button>
+            <button @click="handleAdd">+新增物料分类</button>
             <button>收缩</button>
             <button>🔍</button>
           </div>
@@ -83,122 +83,134 @@
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
                   <button>新增子分类</button>
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-      </div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
     </div>
   </div>
+</div>
 </template>
 
 <script>
+// ========== 导入物料分类相关API ==========
+import { getItemTypePage, deleteItemType } from '#/api/mes/md/item-type';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          name: "五金类",
-          code: "WJ-001",
-          type: "物料",
-          sort: 1,
-          status: "启用",
-          createTime: "2024-01-15 10:30",
-        },
-        {
-          id: 2,
-          name: "注塑类",
-          code: "ZS-002",
-          type: "物料",
-          sort: 2,
-          status: "启用",
-          createTime: "2024-01-20 14:20",
-        },
-        {
-          id: 3,
-          name: "包装类",
-          code: "BZ-003",
-          type: "物料",
-          sort: 3,
-          status: "启用",
-          createTime: "2024-02-01 09:15",
-        },
-        {
-          id: 4,
-          name: "辅料类",
-          code: "FL-004",
-          type: "物料",
-          sort: 4,
-          status: "停用",
-          createTime: "2024-02-10 16:40",
-        },
-        {
-          id: 5,
-          name: "半成品",
-          code: "BCP-005",
-          type: "产品",
-          sort: 5,
-          status: "启用",
-          createTime: "2024-03-01 11:00",
-        },
-        {
-          id: 6,
-          name: "产成品",
-          code: "CCP-006",
-          type: "产品",
-          sort: 6,
-          status: "启用",
-          createTime: "2024-03-15 13:30",
-        },
-        {
-          id: 7,
-          name: "电子元器件",
-          code: "DZ-007",
-          type: "物料",
-          sort: 7,
-          status: "启用",
-          createTime: "2024-04-01 08:50",
-        },
-        {
-          id: 8,
-          name: "标准件",
-          code: "BZJ-008",
-          type: "物料",
-          sort: 8,
-          status: "启用",
-          createTime: "2024-04-10 10:20",
-        },
-        {
-          id: 9,
-          name: "外协件",
-          code: "WX-009",
-          type: "物料",
-          sort: 9,
-          status: "停用",
-          createTime: "2024-05-01 15:00",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
+    // ========== 获取状态文字颜色 ==========
     getStatusColor(status) {
-      const map = {
-        '启用': '#52c41a',
-        '停用': '#8c8c8c'
+      const colorMap = {
+        0: '#006be6',
+        1: '#52c41a',
+        2: '#faad14',
+        3: '#ff4d4f',
+        '0': '#006be6',
+        '1': '#52c41a',
+        '2': '#faad14',
+        '3': '#ff4d4f',
       };
-      return map[status] || '#333';
+      return colorMap[status] || '#006be6';
     },
+    // ========== 获取状态背景颜色 ==========
     getStatusBg(status) {
-      const map = {
-        '启用': '#f6ffed',
-        '停用': '#f5f5f5'
+      const bgMap = {
+        0: '#e6f6ff',
+        1: '#f6ffed',
+        2: '#fffbe6',
+        3: '#fff2f0',
+        '0': '#e6f6ff',
+        '1': '#f6ffed',
+        '2': '#fffbe6',
+        '3': '#fff2f0',
       };
-      return map[status] || '#fff';
-    }
+      return bgMap[status] || '#e6f6ff';
+    },
+    // ========== 获取物料分类列表 ==========
+    async loadList() {
+      try {
+        const data = await getItemTypePage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取物料分类列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增物料分类功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑物料分类功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteItemType(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   }
 };
 </script>

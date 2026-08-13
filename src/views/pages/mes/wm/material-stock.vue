@@ -52,15 +52,15 @@
           <div class="top-inp">
             <div>
               <span>物料</span>
-              <input type="text" placeholder="请输入物料" />
+              <input type="text" placeholder="请输入物料" v-model="searchForm.field1" />
             </div>
             <div>
               <span>批次号</span>
-              <input type="text" placeholder="请输入批次号" />
+              <input type="text" placeholder="请输入批次号" v-model="searchForm.field2" />
             </div>
             <div>
-              <button>重置</button>
-              <button>搜索</button>
+              <button @click="handleReset">重置</button>
+              <button @click="handleSearch">搜索</button>
               展开▽
             </div>
           </div>
@@ -114,316 +114,101 @@
               </tbody>
             </table>
           </div>
-          <div class="main-floot">共18条记录<span>20条/页</span></div>
+          <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script>
+// ========== 导入物料库存相关API ==========
+import { getMaterialStockPage, deleteMaterialStock } from '#/api/mes/wm/material-stock';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          materialCode: "M-2024-001",
-          materialName: "碳钢螺丝 M4×20",
-          spec: "M4×20 镀锌",
-          quantity: 5200,
-          unit: "个",
-          batchNo: "B20240115001",
-          warehouse: "原材料仓库",
-          area: "A区",
-          location: "A-01-03",
-          storageDate: "2024-01-15",
-          isFrozen: "否",
-        },
-        {
-          id: 2,
-          materialCode: "M-2024-001",
-          materialName: "碳钢螺丝 M4×20",
-          spec: "M4×20 镀锌",
-          quantity: 3800,
-          unit: "个",
-          batchNo: "B20240201002",
-          warehouse: "原材料仓库",
-          area: "A区",
-          location: "A-01-04",
-          storageDate: "2024-02-01",
-          isFrozen: "否",
-        },
-        {
-          id: 3,
-          materialCode: "M-2024-002",
-          materialName: "ABS塑料外壳",
-          spec: "100×80×30mm 白色",
-          quantity: 2150,
-          unit: "个",
-          batchNo: "B20240120003",
-          warehouse: "原材料仓库",
-          area: "B区",
-          location: "B-02-01",
-          storageDate: "2024-01-20",
-          isFrozen: "否",
-        },
-        {
-          id: 4,
-          materialCode: "M-2024-003",
-          materialName: "瓦楞纸箱",
-          spec: "400×300×200mm 五层",
-          quantity: 3200,
-          unit: "个",
-          batchNo: "B20240215004",
-          warehouse: "辅料仓库",
-          area: "C区",
-          location: "C-01-02",
-          storageDate: "2024-02-15",
-          isFrozen: "是",
-        },
-        {
-          id: 5,
-          materialCode: "M-2024-007",
-          materialName: "不锈钢弹簧",
-          spec: "线径0.8mm 外径10mm",
-          quantity: 8500,
-          unit: "个",
-          batchNo: "B20240301005",
-          warehouse: "原材料仓库",
-          area: "A区",
-          location: "A-03-01",
-          storageDate: "2024-03-01",
-          isFrozen: "否",
-        },
-        {
-          id: 6,
-          materialCode: "P-2024-005",
-          materialName: "电源适配器半成品",
-          spec: "12V/2A 裸板",
-          quantity: 1200,
-          unit: "个",
-          batchNo: "B20240310006",
-          warehouse: "半成品仓库",
-          area: "D区",
-          location: "D-01-03",
-          storageDate: "2024-03-10",
-          isFrozen: "否",
-        },
-        {
-          id: 7,
-          materialCode: "P-2024-005",
-          materialName: "电源适配器半成品",
-          spec: "12V/2A 裸板",
-          quantity: 800,
-          unit: "个",
-          batchNo: "B20240325007",
-          warehouse: "半成品仓库",
-          area: "D区",
-          location: "D-01-04",
-          storageDate: "2024-03-25",
-          isFrozen: "否",
-        },
-        {
-          id: 8,
-          materialCode: "P-2024-006",
-          materialName: "智能网关成品",
-          spec: "ZigBee 3.0 白色",
-          quantity: 550,
-          unit: "台",
-          batchNo: "B20240401008",
-          warehouse: "成品仓库",
-          area: "E区",
-          location: "E-01-01",
-          storageDate: "2024-04-01",
-          isFrozen: "否",
-        },
-        {
-          id: 9,
-          materialCode: "M-2024-008",
-          materialName: "PC透明面板",
-          spec: "120×80×2mm 透明",
-          quantity: 1600,
-          unit: "片",
-          batchNo: "B20240415009",
-          warehouse: "原材料仓库",
-          area: "B区",
-          location: "B-03-02",
-          storageDate: "2024-04-15",
-          isFrozen: "否",
-        },
-        {
-          id: 10,
-          materialCode: "M-2024-010",
-          materialName: "散热硅脂",
-          spec: "1g/支 导热系数6W/mK",
-          quantity: 350,
-          unit: "支",
-          batchNo: "B20240501010",
-          warehouse: "辅料仓库",
-          area: "C区",
-          location: "C-02-01",
-          storageDate: "2024-05-01",
-          isFrozen: "否",
-        },
-        {
-          id: 11,
-          materialCode: "P-2024-011",
-          materialName: "主板半成品",
-          spec: "PCB 四层板 带元件",
-          quantity: 900,
-          unit: "片",
-          batchNo: "B20240520011",
-          warehouse: "半成品仓库",
-          area: "D区",
-          location: "D-02-01",
-          storageDate: "2024-05-20",
-          isFrozen: "否",
-        },
-        {
-          id: 12,
-          materialCode: "P-2024-012",
-          materialName: "智能灯泡成品",
-          spec: "RGB 9W E27螺口",
-          quantity: 2100,
-          unit: "个",
-          batchNo: "B20240601012",
-          warehouse: "成品仓库",
-          area: "E区",
-          location: "E-02-03",
-          storageDate: "2024-06-01",
-          isFrozen: "否",
-        },
-        {
-          id: 13,
-          materialCode: "M-2024-013",
-          materialName: "铜接线端子",
-          spec: "DT-10 镀锡",
-          quantity: 12000,
-          unit: "个",
-          batchNo: "B20240615013",
-          warehouse: "原材料仓库",
-          area: "A区",
-          location: "A-02-05",
-          storageDate: "2024-06-15",
-          isFrozen: "否",
-        },
-        {
-          id: 14,
-          materialCode: "M-2024-014",
-          materialName: "橡胶密封圈",
-          spec: "内径20mm 外径26mm",
-          quantity: 6500,
-          unit: "个",
-          batchNo: "B20240701014",
-          warehouse: "原材料仓库",
-          area: "B区",
-          location: "B-01-03",
-          storageDate: "2024-07-01",
-          isFrozen: "否",
-        },
-        {
-          id: 15,
-          materialCode: "P-2024-017",
-          materialName: "传感器半成品",
-          spec: "温湿度 SHT30",
-          quantity: 1300,
-          unit: "个",
-          batchNo: "B20240715015",
-          warehouse: "半成品仓库",
-          area: "D区",
-          location: "D-03-01",
-          storageDate: "2024-07-15",
-          isFrozen: "否",
-        },
-        {
-          id: 16,
-          materialCode: "P-2024-018",
-          materialName: "智能插座成品",
-          spec: "10A 250V WiFi版",
-          quantity: 1600,
-          unit: "个",
-          batchNo: "B20240801016",
-          warehouse: "成品仓库",
-          area: "E区",
-          location: "E-01-05",
-          storageDate: "2024-08-01",
-          isFrozen: "否",
-        },
-        {
-          id: 17,
-          materialCode: "M-2024-015",
-          materialName: "PE缠绕膜",
-          spec: "500mm宽 2kg/卷",
-          quantity: 550,
-          unit: "卷",
-          batchNo: "B20240815017",
-          warehouse: "辅料仓库",
-          area: "C区",
-          location: "C-03-02",
-          storageDate: "2024-08-15",
-          isFrozen: "是",
-        },
-        {
-          id: 18,
-          materialCode: "P-2024-006",
-          materialName: "智能网关成品",
-          spec: "ZigBee 3.0 白色",
-          quantity: 300,
-          unit: "台",
-          batchNo: "B20240901018",
-          warehouse: "成品仓库",
-          area: "E区",
-          location: "E-01-02",
-          storageDate: "2024-09-01",
-          isFrozen: "否",
-        },
-      ],
-
-      selectedTab: "day",
-      rangeStart: "2026-07-01",
-      rangeEnd: "2026-07-25",
-      treeData: [
-        {
-          id: "root1",
-          label: "物料产品分类",
-          open: true,
-          children: [
-            {
-              id: "shenzhen",
-              label: "原材料",
-              open: true,
-              children: [
-                { id: "rd", label: "五金类" },
-                { id: "test", label: "注塑类" },
-                { id: "test2", label: "包装类" },
-                { id: "test3", label: "辅料类" },
-              ],
-            },
-            {
-              id: "changsha",
-              label: "产品",
-              open: true,
-              children: [
-                { id: "market", label: "半成品" },
-                { id: "finance", label: "产成品" },
-              ],
-            },
-          ],
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
-    toggleNode(node) {
-      if (node.children && node.children.length) {
-        node.open = !node.open;
+    // ========== 获取物料库存列表 ==========
+    async loadList() {
+      try {
+        const data = await getMaterialStockPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取物料库存列表失败", err);
       }
     },
-    selectTab(value) {
-      this.selectedTab = value;
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
     },
-  },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增物料库存功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑物料库存功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteMaterialStock(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
+  }
 };
 </script>
 

@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>批次号</span>
-            <input type="text" placeholder="请输入批次号" />
+            <input type="text" placeholder="请输入批次号" v-model="searchForm.field1" />
           </div>
           <div>
             <span>产品物料</span>
-            <input type="text" placeholder="" />
+            <input type="text" placeholder="" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>批次追溯列表</div>
           <div>
-            <button>+新增批次追溯</button>
+            <button @click="handleAdd">+新增批次追溯</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -70,159 +70,98 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </div></div>
 </template>
 
 <script>
+// ========== 导入批次追溯相关API ==========
+import { getBatchTracePage, deleteBatchTrace } from '#/api/mes/qc/batch-trace';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          batchNo: "B20240115001",
-          materialCode: "M-2024-001",
-          materialName: "碳钢螺丝",
-          spec: "M4×20 镀锌",
-          unit: "个",
-          supplierCode: "SUP-001",
-          supplierName: "华强电子",
-          customerCode: "-",
-          customerName: "-",
-          soCode: "-",
-          poCode: "PO-2024-001",
-        },
-        {
-          id: 2,
-          batchNo: "B20240120002",
-          materialCode: "M-2024-002",
-          materialName: "ABS塑料外壳",
-          spec: "100×80×30mm 白色",
-          unit: "个",
-          supplierCode: "SUP-002",
-          supplierName: "盛源塑胶",
-          customerCode: "-",
-          customerName: "-",
-          soCode: "-",
-          poCode: "PO-2024-002",
-        },
-        {
-          id: 3,
-          batchNo: "B20240201003",
-          materialCode: "P-2024-006",
-          materialName: "智能网关",
-          spec: "ZigBee 3.0 白色",
-          unit: "台",
-          supplierCode: "-",
-          supplierName: "-",
-          customerCode: "CUST-001",
-          customerName: "深圳市华科电子有限公司",
-          soCode: "SO-2024-001",
-          poCode: "-",
-        },
-        {
-          id: 4,
-          batchNo: "B20240215004",
-          materialCode: "P-2024-012",
-          materialName: "智能灯泡",
-          spec: "RGB 9W E27螺口",
-          unit: "个",
-          supplierCode: "-",
-          supplierName: "-",
-          customerCode: "CUST-002",
-          customerName: "东莞市恒达精密制造厂",
-          soCode: "SO-2024-002",
-          poCode: "-",
-        },
-        {
-          id: 5,
-          batchNo: "B20240301005",
-          materialCode: "M-2024-007",
-          materialName: "不锈钢弹簧",
-          spec: "线径0.8mm 外径10mm",
-          unit: "个",
-          supplierCode: "SUP-005",
-          supplierName: "德力机械",
-          customerCode: "-",
-          customerName: "-",
-          soCode: "-",
-          poCode: "PO-2024-005",
-        },
-        {
-          id: 6,
-          batchNo: "B20240315006",
-          materialCode: "P-2024-018",
-          materialName: "智能插座",
-          spec: "10A 250V WiFi版",
-          unit: "个",
-          supplierCode: "-",
-          supplierName: "-",
-          customerCode: "CUST-005",
-          customerName: "佛山市德力机械制造有限公司",
-          soCode: "SO-2024-005",
-          poCode: "-",
-        },
-        {
-          id: 7,
-          batchNo: "B20240401007",
-          materialCode: "P-2024-011",
-          materialName: "主板半成品",
-          spec: "PCB 四层板 带元件",
-          unit: "片",
-          supplierCode: "-",
-          supplierName: "-",
-          customerCode: "CUST-007",
-          customerName: "惠州市金源包装材料厂",
-          soCode: "SO-2024-007",
-          poCode: "-",
-        },
-        {
-          id: 8,
-          batchNo: "B20240415008",
-          materialCode: "M-2024-013",
-          materialName: "铜接线端子",
-          spec: "DT-10 镀锡",
-          unit: "个",
-          supplierCode: "SUP-016",
-          supplierName: "安达五金",
-          customerCode: "-",
-          customerName: "-",
-          soCode: "-",
-          poCode: "PO-2024-012",
-        },
-        {
-          id: 9,
-          batchNo: "B20240501009",
-          materialCode: "P-2024-005",
-          materialName: "电源适配器",
-          spec: "12V/2A 带外壳",
-          unit: "个",
-          supplierCode: "-",
-          supplierName: "-",
-          customerCode: "CUST-008",
-          customerName: "江门市天马玻璃制品有限公司",
-          soCode: "SO-2024-008",
-          poCode: "-",
-        },
-        {
-          id: 10,
-          batchNo: "B20240515010",
-          materialCode: "M-2024-014",
-          materialName: "橡胶密封圈",
-          spec: "内径20mm 外径26mm",
-          unit: "个",
-          supplierCode: "SUP-020",
-          supplierName: "丰源塑胶",
-          customerCode: "-",
-          customerName: "-",
-          soCode: "-",
-          poCode: "PO-2024-014",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // ========== 获取批次追溯列表 ==========
+    async loadList() {
+      try {
+        const data = await getBatchTracePage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取批次追溯列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增批次追溯功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑批次追溯功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteBatchTrace(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   }
 };
 </script>

@@ -4,19 +4,19 @@
       <div class="app-top">
         <div>
           <span>单据编号</span>
-          <input type="text" placeholder="请输入单据编号" />
+          <input type="text" placeholder="请输入单据编号" v-model="searchForm.invoiceNo" />
         </div>
         <div>
           <span>购方名称</span>
-          <input type="text" placeholder="请输入购方名称" />
+          <input type="text" placeholder="请输入购方名称" v-model="searchForm.buyerName" />
         </div>
         <div>
           <span>单据状态</span>
-          <input type="text" placeholder="请输入单据状态" />
+          <input type="text" placeholder="请输入单据状态" v-model="searchForm.status" />
         </div>
         <div>
-          <button>重置</button>
-          <button>搜索</button>
+          <button @click="handleReset">重置</button>
+          <button @click="handleSearch">搜索</button>
           展开▽
         </div>
       </div>
@@ -24,7 +24,7 @@
         <div class="main-top">
           <div class="top-1">开票申请列表</div>
           <div class="top-2">
-            <button>+新增</button>
+            <button @click="handleAdd">+新增</button>
             <button disabled>批量删除</button>
             <button>🔍</button>
           </div>
@@ -53,7 +53,10 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue" :key="item.invoiceNo">
+              <tr v-if="tabValue.length === 0">
+                <td colspan="12" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
                 <td><input type="checkbox"></td>
                 <td style="color: #006be6;">{{ item.invoiceNo }}</td>
                 <td>{{ item.buyerName }}</td>
@@ -65,108 +68,126 @@
                 <td>{{ item.applicant }}</td>
                 <td>{{ item.department }}</td>
                 <td>{{ item.createTime }}</td>
-                <td class="ol-col"><button>删除</button></td>
+                <td class="ol-col">
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共7条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入开票申请相关API ==========
+import { getInvoiceApplyPage, deleteInvoiceApply } from '#/api/finance/invoice/apply';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          invoiceNo: "KP20260801001",
-          buyerName: "华为技术有限公司",
-          invoiceType: "增值税专用发票",
-          totalAmount: "¥125,800.00",
-          paidAmount: "¥125,800.00",
-          status: "已开票",
-          progress: 100,
-          applicant: "张伟",
-          department: "财务部",
-          createTime: "2026-08-01 09:30",
-        },
-        {
-          invoiceNo: "KP20260801002",
-          buyerName: "阿里巴巴集团",
-          invoiceType: "增值税普通发票",
-          totalAmount: "¥56,320.50",
-          paidAmount: "¥30,000.00",
-          status: "部分开票",
-          progress: 53,
-          applicant: "李娜",
-          department: "销售部",
-          createTime: "2026-08-01 10:15",
-        },
-        {
-          invoiceNo: "KP20260731003",
-          buyerName: "腾讯科技有限公司",
-          invoiceType: "增值税专用发票",
-          totalAmount: "¥89,760.00",
-          paidAmount: "¥0.00",
-          status: "待审核",
-          progress: 0,
-          applicant: "王强",
-          department: "采购部",
-          createTime: "2026-07-31 16:45",
-        },
-        {
-          invoiceNo: "KP20260731004",
-          buyerName: "字节跳动有限公司",
-          invoiceType: "增值税普通发票",
-          totalAmount: "¥234,500.00",
-          paidAmount: "¥234,500.00",
-          status: "已开票",
-          progress: 100,
-          applicant: "刘洋",
-          department: "市场部",
-          createTime: "2026-07-31 14:20",
-        },
-        {
-          invoiceNo: "KP20260730005",
-          buyerName: "美团科技有限公司",
-          invoiceType: "增值税专用发票",
-          totalAmount: "¥67,890.00",
-          paidAmount: "¥45,000.00",
-          status: "部分开票",
-          progress: 66,
-          applicant: "陈静",
-          department: "运营部",
-          createTime: "2026-07-30 11:00",
-        },
-        {
-          invoiceNo: "KP20260730006",
-          buyerName: "京东物流有限公司",
-          invoiceType: "增值税普通发票",
-          totalAmount: "¥43,210.00",
-          paidAmount: "¥0.00",
-          status: "已驳回",
-          progress: 0,
-          applicant: "赵敏",
-          department: "物流部",
-          createTime: "2026-07-30 09:50",
-        },
-        {
-          invoiceNo: "KP20260729007",
-          buyerName: "小米科技有限公司",
-          invoiceType: "增值税专用发票",
-          totalAmount: "¥178,900.00",
-          paidAmount: "¥178,900.00",
-          status: "已开票",
-          progress: 100,
-          applicant: "孙浩",
-          department: "技术部",
-          createTime: "2026-07-29 13:40",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        invoiceNo: '',   // 单据编号
+        buyerName: '',   // 购方名称
+        status: '',      // 单据状态
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadInvoiceApplyList();
+  },
+  methods: {
+    // ========== 获取开票申请列表 ==========
+    async loadInvoiceApplyList() {
+      try {
+        const data = await getInvoiceApplyPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          invoiceNo: this.searchForm.invoiceNo,
+          buyerName: this.searchForm.buyerName,
+          status: this.searchForm.status,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          invoiceNo: item.invoiceNo || '',        // 单据编号
+          buyerName: item.buyerName || '',        // 购方名称
+          invoiceType: item.invoiceType || '',    // 发票类型
+          totalAmount: item.totalAmount || '',    // 价税合计
+          paidAmount: item.paidAmount || '',      // 已开票金额
+          status: item.status || '',              // 单据状态
+          progress: item.progress || 0,           // 开票进度
+          applicant: item.applicant || '',        // 申请人
+          department: item.department || '',      // 申请部门
+          createTime: this.formatTimestamp(item.createTime), // 创建时间
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取开票申请列表失败', err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return '';
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadInvoiceApplyList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { invoiceNo: '', buyerName: '', status: '' };
+      this.pagination.pageNo = 1;
+      this.loadInvoiceApplyList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadInvoiceApplyList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert('新增开票申请功能待实现');
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert(`编辑开票申请：${row.invoiceNo}`);
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除开票申请「${row.invoiceNo}」吗？`)) return;
+      try {
+        await deleteInvoiceApply(row.id);
+        alert('删除成功');
+        this.loadInvoiceApplyList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>
@@ -345,6 +366,9 @@ export default {
   background-color: #fff;
   padding: 0 20px;
   border-right: 0;
+}
+.empty-row {
+  color: #666;
 }
 .ol-col {
   width: 120px;

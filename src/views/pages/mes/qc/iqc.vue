@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>检验单编号</span>
-            <input type="text" placeholder="请输入检验单编号" />
+            <input type="text" placeholder="请输入检验单编号" v-model="searchForm.field1" />
           </div>
           <div>
             <span>供应商</span>
-            <input type="text" placeholder="" />
+            <input type="text" placeholder="" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>来料检验单列表</div>
           <div>
-            <button>+新增来料检验单</button>
+            <button @click="handleAdd">+新增来料检验单</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -98,208 +98,132 @@
                   >{{ item.status }}</span>
                 </td>
                 <td class="ol-col">
-                  <button>详情</button>
+                  <button @click="handleEdit(item)">详情</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </div></div>
 </template>
 
 <script>
+// ========== 导入来料检验相关API ==========
+import { getIqcPage, deleteIqc } from '#/api/mes/qc/iqc';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "IQC-2024-001",
-          name: "碳钢螺丝来料检验",
-          supplierName: "华强电子",
-          batchNo: "B20240115001",
-          materialCode: "M-2024-001",
-          materialName: "碳钢螺丝",
-          receiveQty: 5000,
-          checkQty: 80,
-          defectQty: 2,
-          result: "合格",
-          receiveDate: "2024-01-15",
-          checkDate: "2024-01-15",
-          checker: "李明",
-          status: "已检验",
-        },
-        {
-          id: 2,
-          code: "IQC-2024-002",
-          name: "ABS塑料外壳来料检验",
-          supplierName: "盛源塑胶",
-          batchNo: "B20240120002",
-          materialCode: "M-2024-002",
-          materialName: "ABS塑料外壳",
-          receiveQty: 2000,
-          checkQty: 50,
-          defectQty: 3,
-          result: "不合格",
-          receiveDate: "2024-01-20",
-          checkDate: "2024-01-20",
-          checker: "王芳",
-          status: "已检验",
-        },
-        {
-          id: 3,
-          code: "IQC-2024-003",
-          name: "瓦楞纸箱来料检验",
-          supplierName: "恒达五金",
-          batchNo: "B20240201003",
-          materialCode: "M-2024-003",
-          materialName: "瓦楞纸箱",
-          receiveQty: 3000,
-          checkQty: 60,
-          defectQty: 0,
-          result: "合格",
-          receiveDate: "2024-02-01",
-          checkDate: "2024-02-01",
-          checker: "刘洋",
-          status: "已检验",
-        },
-        {
-          id: 4,
-          code: "IQC-2024-004",
-          name: "不锈钢弹簧来料检验",
-          supplierName: "德力机械",
-          batchNo: "B20240301004",
-          materialCode: "M-2024-007",
-          materialName: "不锈钢弹簧",
-          receiveQty: 8000,
-          checkQty: 100,
-          defectQty: 1,
-          result: "合格",
-          receiveDate: "2024-03-01",
-          checkDate: "2024-03-01",
-          checker: "陈静",
-          status: "已检验",
-        },
-        {
-          id: 5,
-          code: "IQC-2024-005",
-          name: "铜接线端子来料检验",
-          supplierName: "安达五金",
-          batchNo: "B20240615005",
-          materialCode: "M-2024-013",
-          materialName: "铜接线端子",
-          receiveQty: 10000,
-          checkQty: 120,
-          defectQty: 5,
-          result: "不合格",
-          receiveDate: "2024-06-15",
-          checkDate: "2024-06-15",
-          checker: "赵刚",
-          status: "已检验",
-        },
-        {
-          id: 6,
-          code: "IQC-2024-006",
-          name: "散热硅脂来料检验",
-          supplierName: "顺达电子",
-          batchNo: "B20240501006",
-          materialCode: "M-2024-010",
-          materialName: "散热硅脂",
-          receiveQty: 300,
-          checkQty: 20,
-          defectQty: 0,
-          result: "合格",
-          receiveDate: "2024-05-01",
-          checkDate: "2024-05-01",
-          checker: "孙丽",
-          status: "已检验",
-        },
-        {
-          id: 7,
-          code: "IQC-2024-007",
-          name: "橡胶密封圈来料检验",
-          supplierName: "丰源塑胶",
-          batchNo: "B20240701007",
-          materialCode: "M-2024-014",
-          materialName: "橡胶密封圈",
-          receiveQty: 6000,
-          checkQty: 80,
-          defectQty: 0,
-          result: "合格",
-          receiveDate: "2024-07-01",
-          checkDate: "2024-07-01",
-          checker: "周明",
-          status: "已检验",
-        },
-        {
-          id: 8,
-          code: "IQC-2024-008",
-          name: "PC透明面板来料检验",
-          supplierName: "创新包装",
-          batchNo: "B20240415008",
-          materialCode: "M-2024-008",
-          materialName: "PC透明面板",
-          receiveQty: 1500,
-          checkQty: 40,
-          defectQty: 2,
-          result: "不合格",
-          receiveDate: "2024-04-15",
-          checkDate: "2024-04-15",
-          checker: "吴凯",
-          status: "已检验",
-        },
-        {
-          id: 9,
-          code: "IQC-2024-009",
-          name: "焊接助焊剂来料检验",
-          supplierName: "金源化工",
-          batchNo: "B20240515009",
-          materialCode: "M-2024-004",
-          materialName: "焊接助焊剂",
-          receiveQty: 200,
-          checkQty: 15,
-          defectQty: 0,
-          result: "合格",
-          receiveDate: "2024-05-15",
-          checkDate: "2024-05-15",
-          checker: "郑华",
-          status: "已检验",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
-    getResultColor(result) {
-      const map = {
-        '合格': '#52c41a',
-        '不合格': '#ff4d4f'
-      };
-      return map[result] || '#333';
-    },
-    getResultBg(result) {
-      const map = {
-        '合格': '#f6ffed',
-        '不合格': '#fff2f0'
-      };
-      return map[result] || '#fff';
-    },
+    // ========== 获取状态文字颜色 ==========
     getStatusColor(status) {
-      const map = {
-        '已检验': '#52c41a',
-        '待检验': '#faad14'
+      const colorMap = {
+        0: '#006be6',
+        1: '#52c41a',
+        2: '#faad14',
+        3: '#ff4d4f',
+        '0': '#006be6',
+        '1': '#52c41a',
+        '2': '#faad14',
+        '3': '#ff4d4f',
       };
-      return map[status] || '#333';
+      return colorMap[status] || '#006be6';
     },
+    // ========== 获取状态背景颜色 ==========
     getStatusBg(status) {
-      const map = {
-        '已检验': '#f6ffed',
-        '待检验': '#fffbe6'
+      const bgMap = {
+        0: '#e6f6ff',
+        1: '#f6ffed',
+        2: '#fffbe6',
+        3: '#fff2f0',
+        '0': '#e6f6ff',
+        '1': '#f6ffed',
+        '2': '#fffbe6',
+        '3': '#fff2f0',
       };
-      return map[status] || '#fff';
-    }
+      return bgMap[status] || '#e6f6ff';
+    },
+    // ========== 获取来料检验列表 ==========
+    async loadList() {
+      try {
+        const data = await getIqcPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取来料检验列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增来料检验功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑来料检验功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteIqc(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   }
 };
 </script>

@@ -4,16 +4,16 @@
       <div class="app-top">
         <div>
           <span>方向</span>
-          <input type="text" placeholder="请输入" />
+          <input type="text" placeholder="请输入" v-model="searchForm.direction" />
         </div>
         <div>
           <span>发票号码</span>
-          <input type="text" placeholder="请输入" />
+          <input type="text" placeholder="请输入" v-model="searchForm.invoiceNumber" />
         </div>
         <div></div>
         <div>
-          <button>重置</button>
-          <button>搜索</button>
+          <button @click="handleReset">重置</button>
+          <button @click="handleSearch">搜索</button>
           展开▽
         </div>
       </div>
@@ -45,33 +45,110 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>1</td>
-                <td>销项</td>
-                <td>XXFP20260601000003</td>
-                <td>26372000002434577806</td>
-                <td>广东省博翔新材料有限公司</td>
-                <td>电子专用发票</td>
-                <td>8999.00</td>
-                <td>2026-05-25 00:00:00</td>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="8" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="(item, index) in tabValue" :key="item.id">
+                <td>{{ index + 1 }}</td>
+                <td>{{ item.direction }}</td>
+                <td>{{ item.invoiceNo }}</td>
+                <td>{{ item.invoiceNumber }}</td>
+                <td>{{ item.counterpartyName }}</td>
+                <td>{{ item.invoiceType }}</td>
+                <td>{{ item.totalAmount }}</td>
+                <td>{{ item.invoiceDate }}</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共1条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入发票台账相关API ==========
+import { getInvoicePoolPage } from '#/api/finance/invoice/pool';
+
 export default {
   data() {
     return {
-      tabValue: [
-
-      ],
+      // 搜索表单
+      searchForm: {
+        direction: '',      // 方向（进项/销项）
+        invoiceNumber: '',  // 发票号码
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadInvoicePoolList();
+  },
+  methods: {
+    // ========== 获取发票台账列表 ==========
+    async loadInvoicePoolList() {
+      try {
+        const data = await getInvoicePoolPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          direction: this.searchForm.direction,
+          invoiceNumber: this.searchForm.invoiceNumber,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          direction: item.direction || '',              // 方向
+          invoiceNo: item.invoiceNo || '',              // 单据编号
+          invoiceNumber: item.invoiceNumber || '',      // 发票号码
+          counterpartyName: item.counterpartyName || '', // 对方单位
+          invoiceType: item.invoiceType || '',          // 发票类型
+          totalAmount: item.totalAmount || '',          // 价税合计
+          invoiceDate: this.formatTimestamp(item.invoiceDate), // 开票日期
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取发票台账列表失败', err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return '';
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadInvoicePoolList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { direction: '', invoiceNumber: '' };
+      this.pagination.pageNo = 1;
+      this.loadInvoicePoolList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadInvoicePoolList();
+    },
   },
 };
 </script>
@@ -238,6 +315,9 @@ export default {
   background-color: #fff;
   padding: 0 20px;
   border-right: 0;
+}
+.empty-row {
+  color: #666;
 }
 .main-floot {
   width: 100%;

@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>设备编码</span>
-            <input type="text" placeholder="请输入设备编码" />
+            <input type="text" placeholder="请输入设备编码" v-model="searchForm.field1" />
           </div>
           <div>
             <span>设备名称</span>
-            <input type="text" placeholder="请输入设备名称" />
+            <input type="text" placeholder="请输入设备名称" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>设备台账列表</div>
           <div>
-            <button>+新增设备台账</button>
+            <button @click="handleAdd">+新增设备台账</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -90,177 +90,134 @@
                 <td>{{ item.lastMaintainTime }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
-                  <button>详情</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
+                  <button @click="handleEdit(item)">详情</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </div></div>
 </template>
 
 <script>
+// ========== 导入设备台账相关API ==========
+import { getMachineryPage, deleteMachinery } from '#/api/mes/dv/machinery';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "EQ-2024-001",
-          name: "冲压机A",
-          brand: "德国舒勒",
-          spec: "SU-2000T",
-          type: "冲压设备",
-          workshop: "冲压车间",
-          status: "运行中",
-          lastCheckTime: "2024-07-15 10:30",
-          lastMaintainTime: "2024-07-10 14:00",
-          createTime: "2024-01-15 10:35",
-        },
-        {
-          id: 2,
-          code: "EQ-2024-002",
-          name: "注塑机A",
-          brand: "日本东芝",
-          spec: "TZ-850",
-          type: "注塑设备",
-          workshop: "注塑车间",
-          status: "运行中",
-          lastCheckTime: "2024-07-14 09:00",
-          lastMaintainTime: "2024-07-08 16:30",
-          createTime: "2024-01-15 10:40",
-        },
-        {
-          id: 3,
-          code: "EQ-2024-003",
-          name: "CNC加工中心A",
-          brand: "日本马扎克",
-          spec: "MZ-5X",
-          type: "机加工设备",
-          workshop: "机加工车间",
-          status: "维修中",
-          lastCheckTime: "2024-07-12 14:20",
-          lastMaintainTime: "2024-07-12 08:00",
-          createTime: "2024-01-15 10:45",
-        },
-        {
-          id: 4,
-          code: "EQ-2024-004",
-          name: "三坐标测量仪",
-          brand: "德国蔡司",
-          spec: "ZEISS-710",
-          type: "检测设备",
-          workshop: "质检车间",
-          status: "运行中",
-          lastCheckTime: "2024-07-15 11:00",
-          lastMaintainTime: "2024-07-05 10:00",
-          createTime: "2024-02-01 09:05",
-        },
-        {
-          id: 5,
-          code: "EQ-2024-005",
-          name: "叉车A",
-          brand: "中国合力",
-          spec: "HL-3T",
-          type: "运输设备",
-          workshop: "原材料仓库",
-          status: "闲置",
-          lastCheckTime: "2024-07-10 08:30",
-          lastMaintainTime: "2024-06-20 15:00",
-          createTime: "2024-03-01 14:05",
-        },
-        {
-          id: 6,
-          code: "EQ-2024-006",
-          name: "AGV小车A",
-          brand: "中国极智嘉",
-          spec: "JZ-500",
-          type: "运输设备",
-          workshop: "成品仓库",
-          status: "运行中",
-          lastCheckTime: "2024-07-15 09:30",
-          lastMaintainTime: "2024-07-06 11:00",
-          createTime: "2024-03-01 14:10",
-        },
-        {
-          id: 7,
-          code: "EQ-2024-007",
-          name: "空压机A",
-          brand: "瑞典阿特拉斯",
-          spec: "AT-75",
-          type: "辅助设备",
-          workshop: "动力车间",
-          status: "运行中",
-          lastCheckTime: "2024-07-15 08:00",
-          lastMaintainTime: "2024-07-01 09:00",
-          createTime: "2024-05-01 16:05",
-        },
-        {
-          id: 8,
-          code: "EQ-2024-008",
-          name: "货架系统A",
-          brand: "中国精星",
-          spec: "JX-4M",
-          type: "仓储设备",
-          workshop: "半成品仓库",
-          status: "运行中",
-          lastCheckTime: "2024-07-13 10:00",
-          lastMaintainTime: "2024-06-25 14:30",
-          createTime: "2024-04-01 11:05",
-        },
-        {
-          id: 9,
-          code: "EQ-2024-009",
-          name: "焊接机器人",
-          brand: "瑞士ABB",
-          spec: "ABB-IRB",
-          type: "焊接设备",
-          workshop: "焊接车间",
-          status: "停机",
-          lastCheckTime: "2024-07-11 15:00",
-          lastMaintainTime: "2024-07-11 09:00",
-          createTime: "2024-01-20 09:00",
-        },
-        {
-          id: 10,
-          code: "EQ-2024-010",
-          name: "光谱分析仪",
-          brand: "美国热电",
-          spec: "Thermo-800",
-          type: "检测设备",
-          workshop: "质检车间",
-          status: "运行中",
-          lastCheckTime: "2024-07-15 10:00",
-          lastMaintainTime: "2024-07-03 13:30",
-          createTime: "2024-02-01 09:10",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
+    // ========== 获取状态文字颜色 ==========
     getStatusColor(status) {
-      const map = {
-        '运行中': '#52c41a',
-        '维修中': '#faad14',
-        '闲置': '#8c8c8c',
-        '停机': '#ff4d4f'
+      const colorMap = {
+        0: '#006be6',
+        1: '#52c41a',
+        2: '#faad14',
+        3: '#ff4d4f',
+        '0': '#006be6',
+        '1': '#52c41a',
+        '2': '#faad14',
+        '3': '#ff4d4f',
       };
-      return map[status] || '#333';
+      return colorMap[status] || '#006be6';
     },
+    // ========== 获取状态背景颜色 ==========
     getStatusBg(status) {
-      const map = {
-        '运行中': '#f6ffed',
-        '维修中': '#fffbe6',
-        '闲置': '#f5f5f5',
-        '停机': '#fff2f0'
+      const bgMap = {
+        0: '#e6f6ff',
+        1: '#f6ffed',
+        2: '#fffbe6',
+        3: '#fff2f0',
+        '0': '#e6f6ff',
+        '1': '#f6ffed',
+        '2': '#fffbe6',
+        '3': '#fff2f0',
       };
-      return map[status] || '#fff';
-    }
+      return bgMap[status] || '#e6f6ff';
+    },
+    // ========== 获取设备台账列表 ==========
+    async loadList() {
+      try {
+        const data = await getMachineryPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取设备台账列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增设备台账功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑设备台账功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteMachinery(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   }
 };
 </script>

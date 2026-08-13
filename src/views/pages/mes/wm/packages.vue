@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>装箱单编号</span>
-            <input type="text" placeholder="请输入装箱单编号" />
+            <input type="text" placeholder="请输入装箱单编号" v-model="searchForm.field1" />
           </div>
           <div>
             <span>销售订单编号</span>
-            <input type="text" placeholder="请输入销售订单编号" />
+            <input type="text" placeholder="请输入销售订单编号" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>装箱单列表</div>
           <div>
-            <button>+新增装箱单</button>
+            <button @click="handleAdd">+新增装箱单</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -74,160 +74,107 @@
                 <td>{{ item.checker }}</td>
                 <td>{{ item.status }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共7条记录<span>20条/页</span></div>
-      </div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
     </div>
   </div>
+</div>
 </template>
 
 <script>
+// ========== 导入包装管理相关API ==========
+import { getPackagesPage, deletePackages } from '#/api/mes/wm/packages';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "PK-2024-001",
-          packDate: "2024-01-20",
-          soCode: "SO-2024-001",
-          invoiceCode: "INV-2024-001",
-          customerCode: "CUST-001",
-          customerName: "深圳市华科电子有限公司",
-          length: "40",
-          width: "30",
-          height: "25",
-          sizeUnit: "cm",
-          netWeight: "5.2",
-          grossWeight: "6.8",
-          weightUnit: "kg",
-          inspector: "张明",
-          checker: "李芳",
-          status: "已完成",
-        },
-        {
-          id: 2,
-          code: "PK-2024-002",
-          packDate: "2024-02-01",
-          soCode: "SO-2024-002",
-          invoiceCode: "INV-2024-002",
-          customerCode: "CUST-002",
-          customerName: "东莞市恒达精密制造厂",
-          length: "50",
-          width: "40",
-          height: "35",
-          sizeUnit: "cm",
-          netWeight: "8.5",
-          grossWeight: "10.2",
-          weightUnit: "kg",
-          inspector: "李强",
-          checker: "王丽",
-          status: "待装箱",
-        },
-        {
-          id: 3,
-          code: "PK-2024-003",
-          packDate: "2024-02-15",
-          soCode: "SO-2024-003",
-          invoiceCode: "INV-2024-003",
-          customerCode: "CUST-003",
-          customerName: "广州市盛达贸易有限公司",
-          length: "60",
-          width: "45",
-          height: "40",
-          sizeUnit: "cm",
-          netWeight: "12.0",
-          grossWeight: "14.5",
-          weightUnit: "kg",
-          inspector: "王芳",
-          checker: "赵敏",
-          status: "已完成",
-        },
-        {
-          id: 4,
-          code: "PK-2024-004",
-          packDate: "2024-03-01",
-          soCode: "SO-2024-004",
-          invoiceCode: "INV-2024-004",
-          customerCode: "CUST-004",
-          customerName: "珠海市科创新材料有限公司",
-          length: "35",
-          width: "25",
-          height: "20",
-          sizeUnit: "cm",
-          netWeight: "3.8",
-          grossWeight: "4.5",
-          weightUnit: "kg",
-          inspector: "刘洋",
-          checker: "孙丽",
-          status: "待检验",
-        },
-        {
-          id: 5,
-          code: "PK-2024-005",
-          packDate: "2024-03-15",
-          soCode: "SO-2024-005",
-          invoiceCode: "INV-2024-005",
-          customerCode: "CUST-005",
-          customerName: "佛山市德力机械制造有限公司",
-          length: "80",
-          width: "60",
-          height: "50",
-          sizeUnit: "cm",
-          netWeight: "25.0",
-          grossWeight: "28.5",
-          weightUnit: "kg",
-          inspector: "陈志",
-          checker: "周婷",
-          status: "已完成",
-        },
-        {
-          id: 6,
-          code: "PK-2024-006",
-          packDate: "2024-04-01",
-          soCode: "SO-2024-006",
-          invoiceCode: "INV-2024-006",
-          customerCode: "CUST-006",
-          customerName: "中山市宏远电器有限公司",
-          length: "45",
-          width: "35",
-          height: "30",
-          sizeUnit: "cm",
-          netWeight: "6.5",
-          grossWeight: "8.0",
-          weightUnit: "kg",
-          inspector: "赵娜",
-          checker: "吴凯",
-          status: "待装箱",
-        },
-        {
-          id: 7,
-          code: "PK-2024-007",
-          packDate: "2024-04-15",
-          soCode: "SO-2024-007",
-          invoiceCode: "INV-2024-007",
-          customerCode: "CUST-007",
-          customerName: "惠州市金源包装材料厂",
-          length: "55",
-          width: "42",
-          height: "38",
-          sizeUnit: "cm",
-          netWeight: "9.8",
-          grossWeight: "11.5",
-          weightUnit: "kg",
-          inspector: "孙鹏",
-          checker: "郑丽",
-          status: "已完成",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // ========== 获取包装管理列表 ==========
+    async loadList() {
+      try {
+        const data = await getPackagesPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取包装管理列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增包装管理功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑包装管理功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deletePackages(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
+  }
 };
 </script>
 

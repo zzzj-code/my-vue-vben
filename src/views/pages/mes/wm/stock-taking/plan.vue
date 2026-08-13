@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>方案编码</span>
-            <input type="text" placeholder="请输入方案编码" />
+            <input type="text" placeholder="请输入方案编码" v-model="searchForm.field1" />
           </div>
           <div>
             <span>方案名称</span>
-            <input type="text" placeholder="请输入方案名称" />
+            <input type="text" placeholder="请输入方案名称" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>盘点方案列表</div>
           <div>
-            <button>+新增盘点方案</button>
+            <button @click="handleAdd">+新增盘点方案</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -98,101 +98,133 @@
                   >{{ item.status }}</span>
                 </td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </div></div>
 </template>
 
 <script>
+// ========== 导入盘点计划相关API ==========
+import { getPlanPage, deletePlan } from '#/api/mes/wm/stock-taking/plan';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "INV-2024-001",
-          name: "年度全面盘点方案",
-          type: "全面盘点",
-          startTime: "2024-12-01 08:00",
-          endTime: "2024-12-07 18:00",
-          isBlind: "是",
-          isFreeze: "是",
-          status: "已启用",
-        },
-        {
-          id: 2,
-          code: "INV-2024-002",
-          name: "原材料仓库月度盘点",
-          type: "循环盘点",
-          startTime: "2024-07-15 09:00",
-          endTime: "2024-07-15 17:00",
-          isBlind: "否",
-          isFreeze: "是",
-          status: "进行中",
-        },
-        {
-          id: 3,
-          code: "INV-2024-003",
-          name: "成品仓库季度盘点",
-          type: "季度盘点",
-          startTime: "2024-09-01 08:30",
-          endTime: "2024-09-03 17:30",
-          isBlind: "是",
-          isFreeze: "否",
-          status: "已启用",
-        },
-        {
-          id: 4,
-          code: "INV-2024-004",
-          name: "半成品仓库临时盘点",
-          type: "专项盘点",
-          startTime: "2024-08-10 09:00",
-          endTime: "2024-08-10 17:00",
-          isBlind: "否",
-          isFreeze: "否",
-          status: "已结束",
-        },
-        {
-          id: 5,
-          code: "INV-2024-005",
-          name: "贵重物品专项盘点",
-          type: "专项盘点",
-          startTime: "2024-10-01 08:00",
-          endTime: "2024-10-01 18:00",
-          isBlind: "是",
-          isFreeze: "是",
-          status: "待执行",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
+    // ========== 获取状态文字颜色 ==========
     getStatusColor(status) {
-      const map = {
-        '已启用': '#52c41a',
-        '进行中': '#1890ff',
-        '已结束': '#8c8c8c',
-        '待执行': '#faad14'
+      const colorMap = {
+        0: '#006be6',
+        1: '#52c41a',
+        2: '#faad14',
+        3: '#ff4d4f',
+        '0': '#006be6',
+        '1': '#52c41a',
+        '2': '#faad14',
+        '3': '#ff4d4f',
       };
-      return map[status] || '#333';
+      return colorMap[status] || '#006be6';
     },
+    // ========== 获取状态背景颜色 ==========
     getStatusBg(status) {
-      const map = {
-        '已启用': '#f6ffed',
-        '进行中': '#e6f7ff',
-        '已结束': '#f5f5f5',
-        '待执行': '#fffbe6'
+      const bgMap = {
+        0: '#e6f6ff',
+        1: '#f6ffed',
+        2: '#fffbe6',
+        3: '#fff2f0',
+        '0': '#e6f6ff',
+        '1': '#f6ffed',
+        '2': '#fffbe6',
+        '3': '#fff2f0',
       };
-      return map[status] || '#fff';
-    }
+      return bgMap[status] || '#e6f6ff';
+    },
+    // ========== 获取盘点计划列表 ==========
+    async loadList() {
+      try {
+        const data = await getPlanPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取盘点计划列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增盘点计划功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑盘点计划功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deletePlan(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   }
 };
 </script>

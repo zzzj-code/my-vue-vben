@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>工作站编码</span>
-            <input type="text" placeholder="请输入工作站编码" />
+            <input type="text" placeholder="请输入工作站编码" v-model="searchForm.field1" />
           </div>
           <div>
             <span>工作站名称</span>
-            <input type="text" placeholder="请输入工作站名称" />
+            <input type="text" placeholder="请输入工作站名称" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>工作站列表</div>
           <div>
-            <button>+新增工作站</button>
+            <button @click="handleAdd">+新增工作站</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -70,103 +70,134 @@
                 </td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                   <button>条码</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </div></div>
 </template>
 
 <script>
+// ========== 导入工位管理相关API ==========
+import { getWorkstationPage, deleteWorkstation } from '#/api/mes/md/workstation';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "WS-001-01",
-          name: "冲压机台A",
-          location: "A区-1号",
-          workshop: "冲压车间",
-          process: "冲压成型",
-          status: "启用",
-          createTime: "2024-01-15 10:30",
-        },
-        {
-          id: 2,
-          code: "WS-001-02",
-          name: "冲压机台B",
-          location: "A区-2号",
-          workshop: "冲压车间",
-          process: "冲压成型",
-          status: "启用",
-          createTime: "2024-01-20 14:20",
-        },
-        {
-          id: 3,
-          code: "WS-002-01",
-          name: "注塑机A",
-          location: "B区-1号",
-          workshop: "注塑车间",
-          process: "注塑成型",
-          status: "启用",
-          createTime: "2024-02-01 09:15",
-        },
-        {
-          id: 4,
-          code: "WS-002-02",
-          name: "注塑机B",
-          location: "B区-2号",
-          workshop: "注塑车间",
-          process: "注塑成型",
-          status: "停用",
-          createTime: "2024-02-10 16:40",
-        },
-        {
-          id: 5,
-          code: "WS-003-01",
-          name: "组装线A",
-          location: "C区-1号",
-          workshop: "组装车间",
-          process: "组装",
-          status: "启用",
-          createTime: "2024-03-01 11:00",
-        },
-        {
-          id: 6,
-          code: "WS-003-02",
-          name: "组装线B",
-          location: "C区-2号",
-          workshop: "组装车间",
-          process: "组装",
-          status: "启用",
-          createTime: "2024-03-15 13:30",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
+    // ========== 获取状态文字颜色 ==========
     getStatusColor(status) {
-      const map = {
-        '启用': '#52c41a',
-        '停用': '#8c8c8c'
+      const colorMap = {
+        0: '#006be6',
+        1: '#52c41a',
+        2: '#faad14',
+        3: '#ff4d4f',
+        '0': '#006be6',
+        '1': '#52c41a',
+        '2': '#faad14',
+        '3': '#ff4d4f',
       };
-      return map[status] || '#333';
+      return colorMap[status] || '#006be6';
     },
+    // ========== 获取状态背景颜色 ==========
     getStatusBg(status) {
-      const map = {
-        '启用': '#f6ffed',
-        '停用': '#f5f5f5'
+      const bgMap = {
+        0: '#e6f6ff',
+        1: '#f6ffed',
+        2: '#fffbe6',
+        3: '#fff2f0',
+        '0': '#e6f6ff',
+        '1': '#f6ffed',
+        '2': '#fffbe6',
+        '3': '#fff2f0',
       };
-      return map[status] || '#fff';
-    }
+      return bgMap[status] || '#e6f6ff';
+    },
+    // ========== 获取工位管理列表 ==========
+    async loadList() {
+      try {
+        const data = await getWorkstationPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取工位管理列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增工位管理功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑工位管理功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteWorkstation(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   }
 };
 </script>

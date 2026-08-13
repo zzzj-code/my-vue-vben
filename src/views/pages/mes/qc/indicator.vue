@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>检测项编码</span>
-            <input type="text" placeholder="请输入检测项编码" />
+            <input type="text" placeholder="请输入检测项编码" v-model="searchForm.field1" />
           </div>
           <div>
             <span>检测项描述</span>
-            <input type="text" placeholder="请输入检测项描述" />
+            <input type="text" placeholder="请输入检测项描述" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>质检指标列表</div>
           <div>
-            <button>+新增质检指标</button>
+            <button @click="handleAdd">+新增质检指标</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -70,106 +70,105 @@
                 <td>{{ item.remark }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </div></div>
 </template>
 
 <script>
+// ========== 导入质量指标相关API ==========
+import { getIndicatorPage, deleteIndicator } from '#/api/mes/qc/indicator';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "QC-001",
-          name: "外观检测",
-          type: "外观检测",
-          tool: "目视、放大镜",
-          valueType: "判定（合格/不合格）",
-          remark: "检查产品表面无明显缺陷",
-          createTime: "2024-01-15 10:30",
-        },
-        {
-          id: 2,
-          code: "QC-002",
-          name: "尺寸检测",
-          type: "尺寸测量",
-          tool: "游标卡尺、千分尺",
-          valueType: "数值（mm）",
-          remark: "测量产品关键尺寸是否符合图纸要求",
-          createTime: "2024-01-15 14:20",
-        },
-        {
-          id: 3,
-          code: "QC-003",
-          name: "硬度检测",
-          type: "物理性能",
-          tool: "洛氏硬度计",
-          valueType: "数值（HRC）",
-          remark: "检测产品表面硬度是否达标",
-          createTime: "2024-01-20 09:15",
-        },
-        {
-          id: 4,
-          code: "QC-004",
-          name: "电气性能检测",
-          type: "电气检测",
-          tool: "万用表、示波器",
-          valueType: "数值",
-          remark: "检测电压、电流、电阻等电气参数",
-          createTime: "2024-02-01 11:00",
-        },
-        {
-          id: 5,
-          code: "QC-005",
-          name: "盐雾试验",
-          type: "环境测试",
-          tool: "盐雾试验箱",
-          valueType: "判定（合格/不合格）",
-          remark: "检测产品的耐腐蚀性能",
-          createTime: "2024-02-10 16:40",
-        },
-        {
-          id: 6,
-          code: "QC-006",
-          name: "重量检测",
-          type: "尺寸测量",
-          tool: "电子天平",
-          valueType: "数值（g）",
-          remark: "检测产品重量是否符合标准",
-          createTime: "2024-03-01 08:50",
-        },
-        {
-          id: 7,
-          code: "QC-007",
-          name: "色差检测",
-          type: "外观检测",
-          tool: "色差仪",
-          valueType: "数值（ΔE）",
-          remark: "检测产品颜色与标准色板的偏差值",
-          createTime: "2024-03-15 13:30",
-        },
-        {
-          id: 8,
-          code: "QC-008",
-          name: "拉力检测",
-          type: "物理性能",
-          tool: "拉力试验机",
-          valueType: "数值（N）",
-          remark: "检测产品拉伸强度是否达标",
-          createTime: "2024-04-01 10:20",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // ========== 获取质量指标列表 ==========
+    async loadList() {
+      try {
+        const data = await getIndicatorPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取质量指标列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增质量指标功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑质量指标功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteIndicator(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   }
 };
 </script>

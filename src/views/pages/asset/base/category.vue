@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>分类名称</span>
-            <input type="text" placeholder="模糊搜索名称" />
+            <input type="text" placeholder="模糊搜索名称" v-model="searchForm.name" />
           </div>
           <div>
             <span>分类编码</span>
-            <input type="text" placeholder="如 A02010108" />
+            <input type="text" placeholder="如 A02010108" v-model="searchForm.code" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -21,7 +21,7 @@
       <div class="app-main">
         <div class="main-top">
           <div>资产分类（GB/T 14885-2022）</div>
-          <div><button>新增</button></div>
+          <div><button @click="handleAdd">新增</button></div>
           <div>
             <button>⟳</button>
             <button>⛶</button>
@@ -68,9 +68,9 @@
                 </td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>新增子分类</button>
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleAddChild(item)">新增子分类</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
@@ -82,164 +82,91 @@
 </template>
 
 <script>
+// ========== 导入资产分类相关API ==========
+import { getCategoryList, deleteCategory } from '#/api/asset/category';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          name: "台式计算机",
-          code: "A02010104",
-          depreciationMethod: "平均年限法",
-          usefulLife: 60,
-          residualRate: 5,
-          sort: 1,
-          status: "启用",
-          createTime: "2024-01-15 10:30:00",
-        },
-        {
-          name: "便携式计算机",
-          code: "A02010105",
-          depreciationMethod: "平均年限法",
-          usefulLife: 48,
-          residualRate: 5,
-          sort: 2,
-          status: "启用",
-          createTime: "2024-01-15 10:30:00",
-        },
-        {
-          name: "打印机",
-          code: "A02020101",
-          depreciationMethod: "平均年限法",
-          usefulLife: 36,
-          residualRate: 5,
-          sort: 3,
-          status: "启用",
-          createTime: "2024-02-20 14:20:00",
-        },
-        {
-          name: "服务器",
-          code: "A02010103",
-          depreciationMethod: "双倍余额递减法",
-          usefulLife: 60,
-          residualRate: 3,
-          sort: 4,
-          status: "启用",
-          createTime: "2024-03-10 09:15:00",
-        },
-        {
-          name: "网络设备",
-          code: "A02010201",
-          depreciationMethod: "平均年限法",
-          usefulLife: 36,
-          residualRate: 5,
-          sort: 5,
-          status: "停用",
-          createTime: "2024-04-05 16:45:00",
-        },
-        {
-          name: "办公桌",
-          code: "A02030101",
-          depreciationMethod: "平均年限法",
-          usefulLife: 120,
-          residualRate: 5,
-          sort: 6,
-          status: "启用",
-          createTime: "2024-05-12 11:00:00",
-        },
-        {
-          name: "文件柜",
-          code: "A02030102",
-          depreciationMethod: "平均年限法",
-          usefulLife: 120,
-          residualRate: 5,
-          sort: 7,
-          status: "启用",
-          createTime: "2024-06-18 08:30:00",
-        },
-        {
-          name: "空调",
-          code: "A02030201",
-          depreciationMethod: "平均年限法",
-          usefulLife: 96,
-          residualRate: 3,
-          sort: 8,
-          status: "维修中",
-          createTime: "2024-07-22 13:20:00",
-        },
-        {
-          name: "投影仪",
-          code: "A02020201",
-          depreciationMethod: "平均年限法",
-          usefulLife: 48,
-          residualRate: 5,
-          sort: 9,
-          status: "启用",
-          createTime: "2024-08-30 10:00:00",
-        },
-        {
-          name: "扫描仪",
-          code: "A02020102",
-          depreciationMethod: "平均年限法",
-          usefulLife: 36,
-          residualRate: 5,
-          sort: 10,
-          status: "停用",
-          createTime: "2024-09-14 15:10:00",
-        },
-        {
-          name: "复印机",
-          code: "A02020103",
-          depreciationMethod: "平均年限法",
-          usefulLife: 48,
-          residualRate: 5,
-          sort: 11,
-          status: "启用",
-          createTime: "2024-10-01 09:00:00",
-        },
-        {
-          name: "碎纸机",
-          code: "A02020104",
-          depreciationMethod: "平均年限法",
-          usefulLife: 24,
-          residualRate: 5,
-          sort: 12,
-          status: "启用",
-          createTime: "2024-11-20 14:30:00",
-        },
-        {
-          name: "交换机",
-          code: "A02010202",
-          depreciationMethod: "平均年限法",
-          usefulLife: 36,
-          residualRate: 5,
-          sort: 13,
-          status: "启用",
-          createTime: "2024-12-05 11:45:00",
-        },
-        {
-          name: "路由器",
-          code: "A02010203",
-          depreciationMethod: "平均年限法",
-          usefulLife: 36,
-          residualRate: 5,
-          sort: 14,
-          status: "已报废",
-          createTime: "2024-12-15 08:20:00",
-        },
-        {
-          name: "防火墙",
-          code: "A02010204",
-          depreciationMethod: "双倍余额递减法",
-          usefulLife: 48,
-          residualRate: 3,
-          sort: 15,
-          status: "启用",
-          createTime: "2025-01-10 16:00:00",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        name: "",  // 分类名称
+        code: "",  // 分类编码
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadCategoryList();
+  },
   methods: {
+    // ========== 获取资产分类列表 ==========
+    async loadCategoryList() {
+      try {
+        const data = await getCategoryList({
+          name: this.searchForm.name,
+          code: this.searchForm.code,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = (data || []).map((item) => ({
+          id: item.id,
+          name: item.name || "",                    // 分类名称
+          code: item.code || "",                    // 分类编码
+          depreciationMethod: this.getDepreciationMethodName(item.depreciationMethod), // 折旧方法
+          usefulLife: item.usefulLife || 0,         // 使用年限(月)
+          residualRate: item.residualRate || 0,     // 残值率(%)
+          sort: item.sort || 0,                     // 排序
+          status: item.status === 0 ? "启用" : "停用", // 状态
+          createTime: this.formatTimestamp(item.createTime), // 创建时间
+        }));
+      } catch (err) {
+        console.error("获取资产分类列表失败", err);
+      }
+    },
+    // ========== 折旧方法名称转换 ==========
+    getDepreciationMethodName(method) {
+      const map = { 1: "平均年限法", 2: "双倍余额递减法", 3: "年数总和法", 4: "工作量法" };
+      return map[method] || "平均年限法";
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}:${String(date.getSeconds()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.loadCategoryList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { name: "", code: "" };
+      this.loadCategoryList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增分类功能待实现");
+    },
+    // ========== 新增子分类 ==========
+    handleAddChild(row) {
+      alert(`新增子分类：${row.name}`);
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert(`编辑分类：${row.name}`);
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除「${row.name}」吗？`)) return;
+      try {
+        await deleteCategory(row.id);
+        alert("删除成功");
+        this.loadCategoryList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
     getStatusColor(status) {
       const map = {
         '启用': '#52c41a',

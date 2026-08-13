@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>车间编码</span>
-            <input type="text" placeholder="请输入车间编码" />
+            <input type="text" placeholder="请输入车间编码" v-model="searchForm.field1" />
           </div>
           <div>
             <span>车间名称</span>
-            <input type="text" placeholder="请输入车间名称" />
+            <input type="text" placeholder="请输入车间名称" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>车间列表</div>
           <div>
-            <button>+新增车间</button>
+            <button @click="handleAdd">+新增车间</button>
             <button>🔍</button>
           </div>
           <div>
@@ -67,87 +67,133 @@
                 </td>
                 <td>{{ item.remark }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </div></div>
 </template>
 
 <script>
+// ========== 导入车间管理相关API ==========
+import { getWorkshopPage, deleteWorkshop } from '#/api/mes/md/workshop';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "WS-001",
-          name: "冲压车间",
-          area: "1200",
-          director: "张伟",
-          status: "启用",
-          remark: "主要负责五金件冲压成型",
-        },
-        {
-          id: 2,
-          code: "WS-002",
-          name: "注塑车间",
-          area: "1500",
-          director: "李明",
-          status: "启用",
-          remark: "主要负责塑胶件注塑成型",
-        },
-        {
-          id: 3,
-          code: "WS-003",
-          name: "组装车间",
-          area: "1800",
-          director: "王芳",
-          status: "启用",
-          remark: "主要负责产品组装与测试",
-        },
-        {
-          id: 4,
-          code: "WS-004",
-          name: "机加工车间",
-          area: "1600",
-          director: "刘洋",
-          status: "启用",
-          remark: "主要负责CNC加工与精密制造",
-        },
-        {
-          id: 5,
-          code: "WS-005",
-          name: "焊接车间",
-          area: "1000",
-          director: "陈静",
-          status: "停用",
-          remark: "主要负责焊接工艺，已搬迁",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
+    // ========== 获取状态文字颜色 ==========
     getStatusColor(status) {
-      const map = {
-        '启用': '#52c41a',
-        '停用': '#8c8c8c'
+      const colorMap = {
+        0: '#006be6',
+        1: '#52c41a',
+        2: '#faad14',
+        3: '#ff4d4f',
+        '0': '#006be6',
+        '1': '#52c41a',
+        '2': '#faad14',
+        '3': '#ff4d4f',
       };
-      return map[status] || '#333';
+      return colorMap[status] || '#006be6';
     },
+    // ========== 获取状态背景颜色 ==========
     getStatusBg(status) {
-      const map = {
-        '启用': '#f6ffed',
-        '停用': '#f5f5f5'
+      const bgMap = {
+        0: '#e6f6ff',
+        1: '#f6ffed',
+        2: '#fffbe6',
+        3: '#fff2f0',
+        '0': '#e6f6ff',
+        '1': '#f6ffed',
+        '2': '#fffbe6',
+        '3': '#fff2f0',
       };
-      return map[status] || '#fff';
-    }
+      return bgMap[status] || '#e6f6ff';
+    },
+    // ========== 获取车间管理列表 ==========
+    async loadList() {
+      try {
+        const data = await getWorkshopPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取车间管理列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增车间管理功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑车间管理功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteWorkshop(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   }
 };
 </script>

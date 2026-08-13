@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>用户</span>
-            <input type="text" placeholder="请输入用户" />
+            <input type="text" placeholder="请输入用户" v-model="searchForm.field1" />
           </div>
           <div>
             <span>工作站</span>
-            <input type="text" placeholder="" />
+            <input type="text" placeholder="" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -70,109 +70,98 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </div></div>
 </template>
 
 <script>
+// ========== 导入生产记录相关API ==========
+import { getWorkrecordPage, deleteWorkrecord } from '#/api/mes/pro/workrecord';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          user: "张伟",
-          stationCode: "WS-001-01",
-          stationName: "冲压机台A",
-          operationType: "开始生产",
-          createTime: "2024-07-15 08:00:00",
-        },
-        {
-          id: 2,
-          user: "张伟",
-          stationCode: "WS-001-01",
-          stationName: "冲压机台A",
-          operationType: "暂停生产",
-          createTime: "2024-07-15 10:30:00",
-        },
-        {
-          id: 3,
-          user: "王芳",
-          stationCode: "WS-002-01",
-          stationName: "注塑机A",
-          operationType: "开始生产",
-          createTime: "2024-07-15 09:00:00",
-        },
-        {
-          id: 4,
-          user: "刘洋",
-          stationCode: "WS-006-01",
-          stationName: "CNC加工中心A",
-          operationType: "设备点检",
-          createTime: "2024-07-14 14:20:00",
-        },
-        {
-          id: 5,
-          user: "陈静",
-          stationCode: "WS-003-01",
-          stationName: "组装线A",
-          operationType: "报工",
-          createTime: "2024-07-14 11:00:00",
-        },
-        {
-          id: 6,
-          user: "孙丽",
-          stationCode: "WS-005-01",
-          stationName: "包装线A",
-          operationType: "结束生产",
-          createTime: "2024-07-13 17:00:00",
-        },
-        {
-          id: 7,
-          user: "周明",
-          stationCode: "WS-008-01",
-          stationName: "QC检验台A",
-          operationType: "质检完成",
-          createTime: "2024-07-13 16:30:00",
-        },
-        {
-          id: 8,
-          user: "吴凯",
-          stationCode: "WS-002-02",
-          stationName: "注塑机B",
-          operationType: "异常报告",
-          createTime: "2024-07-12 15:00:00",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
-    getOperationTypeColor(type) {
-      const map = {
-        '开始生产': '#52c41a',
-        '暂停生产': '#faad14',
-        '结束生产': '#1890ff',
-        '报工': '#006be6',
-        '设备点检': '#722ed1',
-        '质检完成': '#52c41a',
-        '异常报告': '#ff4d4f'
-      };
-      return map[type] || '#333';
+    // ========== 获取生产记录列表 ==========
+    async loadList() {
+      try {
+        const data = await getWorkrecordPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取生产记录列表失败", err);
+      }
     },
-    getOperationTypeBg(type) {
-      const map = {
-        '开始生产': '#f6ffed',
-        '暂停生产': '#fffbe6',
-        '结束生产': '#e6f7ff',
-        '报工': '#e6f6ff',
-        '设备点检': '#f9f0ff',
-        '质检完成': '#f6ffed',
-        '异常报告': '#fff2f0'
-      };
-      return map[type] || '#fff';
-    }
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增生产记录功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑生产记录功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteWorkrecord(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   }
 };
 </script>

@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>领料单编号</span>
-            <input type="text" placeholder="请输入领料单编号" />
+            <input type="text" placeholder="请输入领料单编号" v-model="searchForm.field1" />
           </div>
           <div>
             <span>领料单名称</span>
-            <input type="text" placeholder="请输入领料单名称" />
+            <input type="text" placeholder="请输入领料单名称" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>领料出库单列表</div>
           <div>
-            <button>+新增领料出库单</button>
+            <button @click="handleAdd">+新增领料出库单</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -55,89 +55,106 @@
                 <td>{{ item.status }}</td>
                 <td class="ol-col">
                   <button>完成</button>
-                  <button>删除</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共7条记录<span>20条/页</span></div>
-      </div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
     </div>
   </div>
+</div>
 </template>
 
 <script>
+// ========== 导入产品出库相关API ==========
+import { getProductIssuePage, deleteProductIssue } from '#/api/mes/wm/product-issue';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "MT-2024-001",
-          name: "冲压车间螺丝领料",
-          moCode: "MO-2024-001",
-          station: "冲压机台A",
-          demandTime: "2024-01-15 08:00",
-          status: "已完成",
-        },
-        {
-          id: 2,
-          code: "MT-2024-002",
-          name: "注塑车间塑胶领料",
-          moCode: "MO-2024-002",
-          station: "注塑机A",
-          demandTime: "2024-01-20 09:00",
-          status: "待领料",
-        },
-        {
-          id: 3,
-          code: "MT-2024-003",
-          name: "组装车间领料",
-          moCode: "MO-2024-003",
-          station: "组装线A",
-          demandTime: "2024-02-01 08:30",
-          status: "已发料",
-        },
-        {
-          id: 4,
-          code: "MT-2024-004",
-          name: "表面处理车间领料",
-          moCode: "MO-2024-004",
-          station: "喷涂线A",
-          demandTime: "2024-02-10 10:00",
-          status: "待领料",
-        },
-        {
-          id: 5,
-          code: "MT-2024-005",
-          name: "包装车间领料",
-          moCode: "MO-2024-005",
-          station: "包装线A",
-          demandTime: "2024-03-01 13:00",
-          status: "已完成",
-        },
-        {
-          id: 6,
-          code: "MT-2024-006",
-          name: "机加工车间领料",
-          moCode: "MO-2024-006",
-          station: "CNC加工中心A",
-          demandTime: "2024-03-15 14:30",
-          status: "已发料",
-        },
-        {
-          id: 7,
-          code: "MT-2024-007",
-          name: "线束车间领料",
-          moCode: "MO-2024-007",
-          station: "线束裁切线",
-          demandTime: "2024-04-01 09:00",
-          status: "已完成",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // ========== 获取产品出库列表 ==========
+    async loadList() {
+      try {
+        const data = await getProductIssuePage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取产品出库列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增产品出库功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑产品出库功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteProductIssue(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
+  }
 };
 </script>
 

@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>移库单号</span>
-            <input type="text" placeholder="请输入移库单号" />
+            <input type="text" placeholder="请输入移库单号" v-model="searchForm.orderNo" />
           </div>
           <div>
             <span>业务单号</span>
-            <input type="text" placeholder="请输入业务单号" />
+            <input type="text" placeholder="请输入业务单号" v-model="searchForm.businessNo" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>移库单列表</div>
           <div>
-            <button>+新增移库单</button>
+            <button @click="handleAdd">+新增移库单</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -105,9 +105,9 @@
                 </td>
                 <td>{{ item.remark }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
-                  <button>打印</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
+                  <button @click="handlePrint(item)">打印</button>
                 </td>
               </tr>
             </tbody>
@@ -119,144 +119,134 @@
 </template>
 
 <script>
+// ========== 导入通用操作单相关 API（src/api/wms/goodscommonoperationorder/index.js）==========
+// 说明：移库单在本项目中对应"通用操作单"（goods-common-operation-order）。
+//       出库/移库/盘库共用该接口，用 type 字段区分业务类型（移库属于调拨类操作）。
+// getGoodsCommonOperationOrderPage : 通用操作单分页查询（GET /wms/goods-common-operation-order/page）
+// deleteGoodsCommonOperationOrder  : 删除通用操作单（DELETE /wms/goods-common-operation-order/delete?id=xxx）
+import {
+  getGoodsCommonOperationOrderPage,
+  deleteGoodsCommonOperationOrder,
+} from '#/api/wms/goodscommonoperationorder';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          orderNo: "YK20260801001",
-          businessNo: "PO20260801001",
-          status: "已完成",
-          type: "调拨出库",
-          warehouse: "北京中心仓",
-          totalQty: "1,250",
-          totalAmount: "125,800.00",
-          supplier: "华为技术有限公司",
-          operator: "张伟",
-          operateTime: "2026-08-01 14:30",
-          remark: "已质检",
-        },
-        {
-          orderNo: "YK20260801002",
-          businessNo: "PO20260801002",
-          status: "待审核",
-          type: "销售出库",
-          warehouse: "上海分仓",
-          totalQty: "860",
-          totalAmount: "89,760.00",
-          supplier: "腾讯科技有限公司",
-          operator: "李娜",
-          operateTime: "2026-08-01 10:15",
-          remark: "已质检",
-        },
-        {
-          orderNo: "YK20260731003",
-          businessNo: "PO20260731003",
-          status: "进行中",
-          type: "退货出库",
-          warehouse: "深圳分仓",
-          totalQty: "320",
-          totalAmount: "32,500.00",
-          supplier: "小米科技有限公司",
-          operator: "王强",
-          operateTime: "2026-07-31 16:45",
-          remark: "质检中",
-        },
-        {
-          orderNo: "YK20260731004",
-          businessNo: "PO20260731004",
-          status: "已完成",
-          type: "调拨出库",
-          warehouse: "广州分仓",
-          totalQty: "2,100",
-          totalAmount: "234,500.00",
-          supplier: "字节跳动有限公司",
-          operator: "刘洋",
-          operateTime: "2026-07-31 09:20",
-          remark: "已质检",
-        },
-        {
-          orderNo: "YK20260730005",
-          businessNo: "PO20260730005",
-          status: "已驳回",
-          type: "销售出库",
-          warehouse: "成都分仓",
-          totalQty: "150",
-          totalAmount: "12,800.00",
-          supplier: "美团科技有限公司",
-          operator: "陈静",
-          operateTime: "2026-07-30 11:00",
-          remark: "资料不齐全",
-        },
-        {
-          orderNo: "YK20260730006",
-          businessNo: "PO20260730006",
-          status: "进行中",
-          type: "调拨出库",
-          warehouse: "武汉分仓",
-          totalQty: "680",
-          totalAmount: "67,890.00",
-          supplier: "京东物流有限公司",
-          operator: "赵敏",
-          operateTime: "2026-07-30 08:50",
-          remark: "已质检",
-        },
-        {
-          orderNo: "YK20260729007",
-          businessNo: "PO20260729007",
-          status: "已完成",
-          type: "退货出库",
-          warehouse: "杭州分仓",
-          totalQty: "45",
-          totalAmount: "5,600.00",
-          supplier: "网易科技有限公司",
-          operator: "孙浩",
-          operateTime: "2026-07-29 13:40",
-          remark: "已质检",
-        },
-        {
-          orderNo: "YK20260729008",
-          businessNo: "PO20260729008",
-          status: "待审核",
-          type: "调拨出库",
-          warehouse: "南京分仓",
-          totalQty: "920",
-          totalAmount: "98,200.00",
-          supplier: "阿里巴巴集团",
-          operator: "周婷",
-          operateTime: "2026-07-29 09:10",
-          remark: "已质检",
-        },
-        {
-          orderNo: "YK20260728009",
-          businessNo: "PO20260728009",
-          status: "已完成",
-          type: "销售出库",
-          warehouse: "北京中心仓",
-          totalQty: "560",
-          totalAmount: "56,780.00",
-          supplier: "拼多多有限公司",
-          operator: "吴刚",
-          operateTime: "2026-07-28 15:20",
-          remark: "已质检",
-        },
-        {
-          orderNo: "YK20260728010",
-          businessNo: "PO20260728010",
-          status: "待审核",
-          type: "调拨出库",
-          warehouse: "上海分仓",
-          totalQty: "730",
-          totalAmount: "78,900.00",
-          supplier: "百度科技有限公司",
-          operator: "郑丽",
-          operateTime: "2026-07-28 11:40",
-          remark: "已质检",
-        },
-      ],
+      // ========== 搜索表单 ==========
+      searchForm: {
+        orderNo: "",    // 移库单号
+        businessNo: "", // 业务单号
+      },
+      // ========== 分页信息 ==========
+      pagination: {
+        pageNo: 1,    // 当前页码
+        pageSize: 20, // 每页条数
+        total: 0,     // 总条数
+      },
+      // ========== 表格数据 ==========
+      tabValue: [],
     };
   },
+  mounted() {
+    // 页面加载后自动拉取移库单列表
+    this.loadMovementList();
+  },
   methods: {
+    // ========== 获取移库单列表 ==========
+    async loadMovementList() {
+      try {
+        // 调用通用操作单分页接口
+        const data = await getGoodsCommonOperationOrderPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          no: this.searchForm.orderNo,             // 移库单号
+          businessNo: this.searchForm.businessNo,  // 业务单号
+          // type: "移库", // 如需按业务类型过滤（出库/移库/盘库），可加该参数，值以后端枚举为准
+        });
+        const list = (data && data.list) || [];
+        // 字段映射：后端字段 → 页面模板字段
+        this.tabValue = list.map((item) => ({
+          id: item.id,                                        // 主键，删除时使用
+          orderNo: item.no || item.orderNo || "",             // 移库单号
+          businessNo: item.businessNo || item.salesOrderNo || "", // 业务单号
+          status: this.formatStatus(item.status),             // 出库状态（数字枚举 → 中文）
+          type: this.formatType(item.type),                   // 出库类型
+          warehouse: item.warehouseName || item.warehouse || "", // 仓库名称
+          totalQty: this.formatNumber(item.totalQuantity ?? item.totalQty, 0), // 总数量
+          totalAmount: this.formatNumber(item.totalAmount, 2), // 总金额
+          supplier: item.supplierName || item.supplier || "", // 供应商
+          operator: item.operator || item.creatorName || "",  // 操作人
+          operateTime: this.formatTimestamp(item.operateTime || item.updateTime || item.createTime), // 操作时间
+          remark: item.remark || "",                          // 备注
+        }));
+        // 更新总条数
+        this.pagination.total = (data && data.total) || 0;
+      } catch (err) {
+        console.error("获取移库单列表失败", err);
+      }
+    },
+    // ========== 状态格式化（数字枚举 → 中文）==========
+    formatStatus(status) {
+      const map = { 0: '待审核', 1: '进行中', 2: '已完成', 3: '已驳回' };
+      if (status === null || status === undefined || status === '') return '';
+      return map[status] !== undefined ? map[status] : String(status);
+    },
+    // ========== 类型格式化（兼容数字枚举 / 中文字符串）==========
+    formatType(type) {
+      const map = { 1: '调拨出库', 2: '销售出库', 3: '退货出库' };
+      if (type === null || type === undefined || type === '') return '';
+      return map[type] !== undefined ? map[type] : String(type);
+    },
+    // ========== 数字千分位格式化 ==========
+    formatNumber(value, decimals = 0) {
+      if (value === null || value === undefined || value === '') return '';
+      if (typeof value === 'string') return value;
+      return Number(value).toLocaleString('zh-CN', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      });
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadMovementList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { orderNo: "", businessNo: "" };
+      this.pagination.pageNo = 1;
+      this.loadMovementList();
+    },
+    // ========== 新增移库单 ==========
+    handleAdd() {
+      alert("新增移库单功能待实现");
+    },
+    // ========== 编辑移库单 ==========
+    handleEdit(row) {
+      alert(`编辑移库单：${row.orderNo}`);
+    },
+    // ========== 删除移库单 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除「${row.orderNo}」吗？`)) return;
+      try {
+        await deleteGoodsCommonOperationOrder(row.id);
+        alert("删除成功");
+        this.loadMovementList();
+      } catch (err) {
+        console.error("删除移库单失败", err);
+      }
+    },
+    // ========== 打印 ==========
+    handlePrint(row) {
+      alert(`打印移库单：${row.orderNo}`);
+    },
+    // ========== 状态颜色（模板中状态标签的配色，保留原逻辑）==========
     getStatusColor(status) {
       const map = {
         '已完成': '#52c41a',
@@ -275,7 +265,7 @@ export default {
       };
       return map[status] || '#fff';
     }
-  }
+  },
 };
 </script>
 

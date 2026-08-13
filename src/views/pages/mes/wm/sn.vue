@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>SN码</span>
-            <input type="text" placeholder="请输入SN码" />
+            <input type="text" placeholder="请输入SN码" v-model="searchForm.field1" />
           </div>
           <div>
             <span>物料</span>
-            <input type="text" placeholder="   " />
+            <input type="text" placeholder="   " v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -58,46 +58,106 @@
                 <td class="ol-col">
                   <button>查看明细</button>
                   <button>导出明细</button>
-                  <button>删除</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共2条记录<span>20条/页</span></div>
-      </div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
     </div>
   </div>
+</div>
 </template>
 
 <script>
+// ========== 导入序列号管理相关API ==========
+import { getSnPage, deleteSn } from '#/api/mes/wm/sn';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          materialCode: "M-2024-001",
-          materialName: "碳钢螺丝 M4×20",
-          spec: "M4×20 镀锌",
-          unit: "个",
-          batchNo: "B20240115001",
-          snCount: 500,
-          generateTime: "2024-01-15 10:30",
-        },
-        {
-          id: 2,
-          materialCode: "M-2024-001",
-          materialName: "碳钢螺丝 M4×20",
-          spec: "M4×20 镀锌",
-          unit: "个",
-          batchNo: "B20240201002",
-          snCount: 300,
-          generateTime: "2024-02-01 14:20",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // ========== 获取序列号管理列表 ==========
+    async loadList() {
+      try {
+        const data = await getSnPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取序列号管理列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增序列号管理功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑序列号管理功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteSn(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
+  }
 };
 </script>
 

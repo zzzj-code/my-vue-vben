@@ -5,16 +5,16 @@
         <div class="top-inp">
           <div class="inp-1">
             <span>资产编号</span>
-            <input type="text" placeholder="请输入" />
+            <input type="text" placeholder="请输入" v-model="searchForm.assetNo" />
           </div>
           <div class="inp-1">
             <span>资产名称</span>
-            <input type="text" placeholder="请输入" />
+            <input type="text" placeholder="请输入" v-model="searchForm.assetName" />
           </div>
           <div class="inp-1"></div>
           <div class="inp-1">
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -23,7 +23,7 @@
         <div class="main-top">
           <div class="top-1"></div>
           <div class="top-2">
-            <button>+新增资产</button>
+            <button @click="handleAdd">+新增资产</button>
             <button>导入</button>
             <button>导出</button>
           </div>
@@ -96,157 +96,132 @@
                 </td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>查看</button>
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">查看</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入资产信息相关API ==========
+import { getInfoPage, deleteInfo } from '#/api/asset/info';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          assetNo: "ZC-2024-001",
-          assetName: "台式计算机",
-          category: "电子设备",
-          spec: "联想 ThinkCentre M950t",
-          brand: "联想",
-          status: "正常",
-          originalValue: 5800,
-          netValue: 4350,
-          user: "张伟",
-          department: "技术研发部",
-          location: "A栋-2楼-201室",
-          labelPrinted: true,
-          createTime: "2024-01-15 09:30:00",
-        },
-        {
-          id: 2,
-          assetNo: "ZC-2024-002",
-          assetName: "便携式计算机",
-          category: "电子设备",
-          spec: "华为 MateBook X Pro",
-          brand: "华为",
-          status: "正常",
-          originalValue: 8200,
-          netValue: 6150,
-          user: "李芳",
-          department: "产品交付部",
-          location: "A栋-3楼-301室",
-          labelPrinted: true,
-          createTime: "2024-01-20 14:20:00",
-        },
-        {
-          id: 3,
-          assetNo: "ZC-2024-003",
-          assetName: "打印机",
-          category: "办公设备",
-          spec: "惠普 LaserJet Pro M405d",
-          brand: "惠普",
-          status: "维修中",
-          originalValue: 3200,
-          netValue: 2400,
-          user: "王磊",
-          department: "AI实验室",
-          location: "A栋-1楼-102室",
-          labelPrinted: true,
-          createTime: "2024-02-01 10:15:00",
-        },
-        {
-          id: 4,
-          assetNo: "ZC-2024-004",
-          assetName: "服务器",
-          category: "电子设备",
-          spec: "戴尔 PowerEdge R740",
-          brand: "戴尔",
-          status: "正常",
-          originalValue: 45000,
-          netValue: 33750,
-          user: "陈静",
-          department: "移动开发部",
-          location: "B栋-3楼-301室",
-          labelPrinted: true,
-          createTime: "2024-02-15 16:45:00",
-        },
-        {
-          id: 5,
-          assetNo: "ZC-2024-005",
-          assetName: "投影仪",
-          category: "办公设备",
-          spec: "爱普生 CB-2065",
-          brand: "爱普生",
-          status: "正常",
-          originalValue: 6800,
-          netValue: 5100,
-          user: "赵明",
-          department: "运维保障部",
-          location: "A栋-4楼-401室",
-          labelPrinted: false,
-          createTime: "2024-03-01 08:30:00",
-        },
-        {
-          id: 6,
-          assetNo: "ZC-2024-006",
-          assetName: "交换机",
-          category: "网络设备",
-          spec: "华为 S5735S-L24T4S-A",
-          brand: "华为",
-          status: "正常",
-          originalValue: 2800,
-          netValue: 2100,
-          user: "孙婷",
-          department: "区块链事业部",
-          location: "B栋-2楼-202室",
-          labelPrinted: true,
-          createTime: "2024-03-15 11:20:00",
-        },
-        {
-          id: 7,
-          assetNo: "ZC-2024-007",
-          assetName: "空调",
-          category: "机电设备",
-          spec: "格力 3匹 变频冷暖",
-          brand: "格力",
-          status: "维修中",
-          originalValue: 9200,
-          netValue: 6900,
-          user: "刘洋",
-          department: "物联网部",
-          location: "C栋-1楼-101室",
-          labelPrinted: false,
-          createTime: "2024-04-01 14:00:00",
-        },
-        {
-          id: 8,
-          assetNo: "ZC-2024-008",
-          assetName: "复印机",
-          category: "办公设备",
-          spec: "佳能 iR-ADV C5560",
-          brand: "佳能",
-          status: "已报废",
-          originalValue: 56000,
-          netValue: 2800,
-          user: "周梅",
-          department: "数据智能部",
-          location: "A栋-4楼-402室",
-          labelPrinted: true,
-          createTime: "2024-04-20 09:00:00",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        assetNo: "",    // 资产编号
+        assetName: "",  // 资产名称
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadAssetList();
+  },
   methods: {
+    // ========== 获取资产列表 ==========
+    async loadAssetList() {
+      try {
+        const data = await getInfoPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          assetNo: this.searchForm.assetNo,
+          assetName: this.searchForm.assetName,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          assetNo: item.assetNo || "",           // 资产编号
+          assetName: item.assetName || "",       // 资产名称
+          category: item.categoryName || "",     // 资产分类
+          spec: item.specification || "",        // 规格型号
+          brand: item.brand || "",               // 品牌
+          status: this.getStatusName(item.status), // 状态
+          originalValue: item.originalValue || 0, // 原值
+          netValue: item.netValue || 0,          // 净值
+          user: item.userName || "",             // 使用人
+          department: item.deptName || "",       // 使用部门
+          location: item.locationName || "",     // 存放位置
+          labelPrinted: item.labelPrinted || false, // 标签已打印
+          createTime: this.formatTimestamp(item.createTime), // 创建时间
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取资产列表失败", err);
+      }
+    },
+    // ========== 状态名称转换 ==========
+    getStatusName(status) {
+      const map = { 0: "正常", 1: "维修中", 2: "已报废" };
+      return map[status] || "正常";
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}:${String(date.getSeconds()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadAssetList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { assetNo: "", assetName: "" };
+      this.pagination.pageNo = 1;
+      this.loadAssetList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadAssetList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增资产功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert(`编辑资产：${row.assetName}`);
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除「${row.assetName}」吗？`)) return;
+      try {
+        await deleteInfo(row.id);
+        alert("删除成功");
+        this.loadAssetList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
     getStatusColor(status) {
       const map = {
         '正常': '#52c41a',

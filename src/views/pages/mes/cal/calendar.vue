@@ -159,226 +159,171 @@
 </template>
 
 <script>
+// ========== 导入日历设置相关API ==========
+import { getCalendarPage, deleteCalendar } from '#/api/mes/cal/calendar';
+
 export default {
-    data() {
-        return {
-            activeTab: 'category',
-            activeCategory: 'injection',
-            activeTeam: 'injection-a',
-            searchName: '',
-            categories: [
-                { id: 'injection', name: '注塑' },
-                { id: 'machining', name: '机加工' },
-                { id: 'assembly', name: '组装' },
-                { id: 'warehouse', name: '仓库' }
-            ],
-            teams: [
-                { id: 'injection-a', name: '注塑A组' },
-                { id: 'injection-b', name: '注塑B组' },
-                { id: 'injection-c', name: '注塑C组' },
-                { id: 'assembly-a', name: '组装A组' },
-                { id: 'assembly-b', name: '组装B组' },
-                { id: 'assembly-c', name: '组装C组' },
-                { id: 'warehouse', name: '仓库组' }
-            ],
-            year: 2026,
-            month: 8,
-            today: new Date(2026, 7, 15),
-            weekdays: ['一', '二', '三', '四', '五', '六', '日'],
-            // 农历数据
-            lunarMap: {
-                '2026-7-27': '六月十四',
-                '2026-7-28': '六月十五',
-                '2026-7-29': '六月十六',
-                '2026-7-30': '六月十七',
-                '2026-7-31': '六月十八',
-                '2026-8-1': '六月十九',
-                '2026-8-2': '六月二十',
-                '2026-8-3': '六月廿一',
-                '2026-8-4': '六月廿二',
-                '2026-8-5': '六月廿三',
-                '2026-8-6': '六月廿四',
-                '2026-8-7': '六月廿五',
-                '2026-8-8': '六月廿六',
-                '2026-8-9': '六月廿七',
-                '2026-8-10': '六月廿八',
-                '2026-8-11': '六月廿九',
-                '2026-8-12': '六月三十',
-                '2026-8-13': '七月初一',
-                '2026-8-14': '七月初二',
-                '2026-8-15': '七月初三',
-                '2026-8-16': '七月初四',
-                '2026-8-17': '七月初五',
-                '2026-8-18': '七月初六',
-                '2026-8-19': '七月初七',
-                '2026-8-20': '七月初八',
-                '2026-8-21': '七月初九',
-                '2026-8-22': '七月初十',
-                '2026-8-23': '七月十一',
-                '2026-8-24': '七月十二',
-                '2026-8-25': '七月十三',
-                '2026-8-26': '七月十四',
-                '2026-8-27': '七月十五',
-                '2026-8-28': '七月十六',
-                '2026-8-29': '七月十七',
-                '2026-8-30': '七月十八',
-                '2026-8-31': '七月十九',
-                '2026-9-1': '七月二十',
-                '2026-9-2': '七月廿一',
-                '2026-9-3': '七月廿二',
-                '2026-9-4': '七月廿三',
-                '2026-9-5': '七月廿四',
-                '2026-9-6': '七月廿五',
-            },
-            // 节日数据
-            festivalMap: {
-                '2026-8-1': '建军节',
-                '2026-8-7': '立秋',
-                '2026-8-19': '七夕节',
-                '2026-8-23': '处暑',
-                '2026-8-27': '中元节',
-            },
-            // 休息日（节假日，不显示排班）
-            restDays: ['2026-8-1', '2026-8-7'],
-            // 排班数据：day=白班, middle3=中班三班倒, middle2=中班两班倒/夜班
-            shiftMap: {
-                '2026-8-2': 'day',
-                '2026-8-3': 'day',
-                '2026-8-4': 'day',
-                '2026-8-5': 'day',
-                '2026-8-6': 'day',
-                '2026-8-8': 'day',
-                '2026-8-9': 'day',
-                '2026-8-10': 'day',
-                '2026-8-11': 'day',
-                '2026-8-12': 'day',
-                '2026-8-13': 'day',
-                '2026-8-14': 'day',
-                '2026-8-15': 'day',
-                '2026-8-16': 'day',
-                '2026-8-17': 'day',
-                '2026-8-18': 'day',
-                '2026-8-19': 'day',
-                '2026-8-20': 'day',
-                '2026-8-21': 'day',
-                '2026-8-22': 'day',
-                '2026-8-23': 'day',
-                '2026-8-24': 'day',
-                '2026-8-25': 'day',
-                '2026-8-26': 'day',
-                '2026-8-27': 'day',
-                '2026-8-28': 'day',
-                '2026-8-29': 'day',
-                '2026-8-30': 'day',
-                '2026-8-31': 'day',
-            }
-        }
+  data() {
+    return {
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
+      // ========== 日历相关数据 ==========
+      year: new Date().getFullYear(),
+      month: new Date().getMonth() + 1,
+      weekdays: ['日', '一', '二', '三', '四', '五', '六'],
+      days: [],
+    };
+  },
+  mounted() {
+    this.loadList();
+    this.generateCalendar();
+  },
+  methods: {
+    // ========== 获取日历设置列表 ==========
+    async loadList() {
+      try {
+        const data = await getCalendarPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取日历设置列表失败", err);
+      }
     },
-    computed: {
-        days() {
-            const result = []
-            const firstDay = new Date(this.year, this.month - 1, 1)
-            let firstWeekday = firstDay.getDay()
-            firstWeekday = firstWeekday === 0 ? 6 : firstWeekday - 1
+    // ========== 生成日历数据 ==========
+    generateCalendar() {
+      const firstDay = new Date(this.year, this.month - 1, 1);
+      const lastDay = new Date(this.year, this.month, 0);
+      const startWeekday = firstDay.getDay();
+      const daysInMonth = lastDay.getDate();
+      const today = new Date();
 
-            const prevMonthLastDay = new Date(this.year, this.month - 1, 0).getDate()
-            const currentMonthDays = new Date(this.year, this.month, 0).getDate()
-
-            // 上月日期
-            for (let i = firstWeekday - 1; i >= 0; i--) {
-                const date = prevMonthLastDay - i
-                result.push(this.createDayCell(
-                    this.getPrevMonthYear(),
-                    this.getPrevMonth(),
-                    date,
-                    true
-                ))
-            }
-
-            // 当月日期
-            for (let date = 1; date <= currentMonthDays; date++) {
-                result.push(this.createDayCell(this.year, this.month, date, false))
-            }
-
-            // 下月日期
-            const remaining = 42 - result.length
-            for (let date = 1; date <= remaining; date++) {
-                result.push(this.createDayCell(
-                    this.getNextMonthYear(),
-                    this.getNextMonth(),
-                    date,
-                    true
-                ))
-            }
-
-            return result
-        }
+      this.days = [];
+      // 上月填充
+      const prevMonthLastDay = new Date(this.year, this.month - 1, 0).getDate();
+      for (let i = startWeekday - 1; i >= 0; i--) {
+        this.days.push({
+          date: prevMonthLastDay - i,
+          isOtherMonth: true,
+          isWeekend: false,
+          isToday: false,
+          lunar: '',
+          festival: '',
+          shiftType: 'day',
+          isRestDay: false,
+        });
+      }
+      // 当月
+      for (let d = 1; d <= daysInMonth; d++) {
+        const date = new Date(this.year, this.month - 1, d);
+        const weekday = date.getDay();
+        this.days.push({
+          date: d,
+          isOtherMonth: false,
+          isWeekend: weekday === 0 || weekday === 6,
+          isToday: date.toDateString() === today.toDateString(),
+          lunar: '',
+          festival: '',
+          shiftType: 'day',
+          isRestDay: false,
+        });
+      }
+      // 下月填充
+      const remaining = 42 - this.days.length;
+      for (let d = 1; d <= remaining; d++) {
+        this.days.push({
+          date: d,
+          isOtherMonth: true,
+          isWeekend: false,
+          isToday: false,
+          lunar: '',
+          festival: '',
+          shiftType: 'day',
+          isRestDay: false,
+        });
+      }
     },
-    methods: {
-        createDayCell(year, month, date, isOtherMonth) {
-            const key = `${year}-${month}-${date}`
-            const d = new Date(year, month - 1, date)
-            let weekdayIndex = d.getDay()
-            weekdayIndex = weekdayIndex === 0 ? 6 : weekdayIndex - 1
-            const isWeekend = weekdayIndex === 5 || weekdayIndex === 6
-
-            const isToday = !isOtherMonth &&
-                year === this.today.getFullYear() &&
-                month === this.today.getMonth() + 1 &&
-                date === this.today.getDate()
-
-            const festival = this.festivalMap[key] || ''
-            const isRestDay = this.restDays.includes(key)
-
-            return {
-                date: date < 10 ? '0' + date : date,
-                lunar: this.lunarMap[key] || '',
-                festival: festival,
-                shiftType: this.shiftMap[key] || 'day',
-                isOtherMonth,
-                isWeekend,
-                isToday,
-                isRestDay
-            }
-        },
-        getPrevMonth() {
-            return this.month === 1 ? 12 : this.month - 1
-        },
-        getPrevMonthYear() {
-            return this.month === 1 ? this.year - 1 : this.year
-        },
-        getNextMonth() {
-            return this.month === 12 ? 1 : this.month + 1
-        },
-        getNextMonthYear() {
-            return this.month === 12 ? this.year + 1 : this.year
-        },
-        prevMonth() {
-            if (this.month === 1) {
-                this.year--
-                this.month = 12
-            } else {
-                this.month--
-            }
-        },
-        nextMonth() {
-            if (this.month === 12) {
-                this.year++
-                this.month = 1
-            } else {
-                this.month++
-            }
-        },
-        goToday() {
-            this.year = this.today.getFullYear()
-            this.month = this.today.getMonth() + 1
-        },
-        doSearch() {
-            // 搜索逻辑
-            console.log('搜索:', this.searchName)
-        }
-    }
-}
+    // ========== 上月 ==========
+    prevMonth() {
+      if (this.month === 1) {
+        this.month = 12;
+        this.year--;
+      } else {
+        this.month--;
+      }
+      this.generateCalendar();
+    },
+    // ========== 下月 ==========
+    nextMonth() {
+      if (this.month === 12) {
+        this.month = 1;
+        this.year++;
+      } else {
+        this.month++;
+      }
+      this.generateCalendar();
+    },
+    // ========== 今天 ==========
+    goToday() {
+      const today = new Date();
+      this.year = today.getFullYear();
+      this.month = today.getMonth() + 1;
+      this.generateCalendar();
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增日历设置功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑日历设置功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteCalendar(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
+  }
+};
 </script>
 
 <style scoped>

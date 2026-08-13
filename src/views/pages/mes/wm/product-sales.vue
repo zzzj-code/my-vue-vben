@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>出库单编号</span>
-            <input type="text" placeholder="请输入出库单编号" />
+            <input type="text" placeholder="请输入出库单编号" v-model="searchForm.field1" />
           </div>
           <div>
             <span>出库单名称</span>
-            <input type="text" placeholder="请输入出库单名称" />
+            <input type="text" placeholder="请输入出库单名称" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>销售出库单列表</div>
           <div>
-            <button>+新增销售出库单</button>
+            <button @click="handleAdd">+新增销售出库单</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -64,139 +64,107 @@
                 <td>{{ item.outDate }}</td>
                 <td>{{ item.status }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共8条记录<span>20条/页</span></div>
-      </div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
     </div>
   </div>
+</div>
 </template>
 
 <script>
+// ========== 导入产品销售相关API ==========
+import { getProductSalesPage, deleteProductSales } from '#/api/mes/wm/product-sales';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "SOUT-2024-001",
-          name: "智能网关出库",
-          dnCode: "DN-2024-001",
-          soCode: "SO-2024-001",
-          customerCode: "CUST-001",
-          customerName: "深圳市华科电子有限公司",
-          receiver: "张明",
-          carrier: "顺丰速运",
-          trackingNo: "SF1234567890",
-          outDate: "2024-01-20",
-          status: "已出库",
-        },
-        {
-          id: 2,
-          code: "SOUT-2024-002",
-          name: "智能灯泡出库",
-          dnCode: "DN-2024-002",
-          soCode: "SO-2024-002",
-          customerCode: "CUST-002",
-          customerName: "东莞市恒达精密制造厂",
-          receiver: "李强",
-          carrier: "德邦物流",
-          trackingNo: "DB9876543210",
-          outDate: "2024-02-01",
-          status: "待出库",
-        },
-        {
-          id: 3,
-          code: "SOUT-2024-003",
-          name: "电源适配器出库",
-          dnCode: "DN-2024-003",
-          soCode: "SO-2024-003",
-          customerCode: "CUST-003",
-          customerName: "广州市盛达贸易有限公司",
-          receiver: "王芳",
-          carrier: "圆通速递",
-          trackingNo: "YT4567890123",
-          outDate: "2024-02-15",
-          status: "已出库",
-        },
-        {
-          id: 4,
-          code: "SOUT-2024-004",
-          name: "智能插座出库",
-          dnCode: "DN-2024-004",
-          soCode: "SO-2024-004",
-          customerCode: "CUST-004",
-          customerName: "珠海市科创新材料有限公司",
-          receiver: "刘洋",
-          carrier: "中通快递",
-          trackingNo: "ZT7890123456",
-          outDate: "2024-03-01",
-          status: "待出库",
-        },
-        {
-          id: 5,
-          code: "SOUT-2024-005",
-          name: "传感器半成品出库",
-          dnCode: "DN-2024-005",
-          soCode: "SO-2024-005",
-          customerCode: "CUST-005",
-          customerName: "佛山市德力机械制造有限公司",
-          receiver: "陈志",
-          carrier: "韵达快递",
-          trackingNo: "YD2345678901",
-          outDate: "2024-03-15",
-          status: "已出库",
-        },
-        {
-          id: 6,
-          code: "SOUT-2024-006",
-          name: "智能网关第二批出库",
-          dnCode: "DN-2024-006",
-          soCode: "SO-2024-006",
-          customerCode: "CUST-006",
-          customerName: "中山市宏远电器有限公司",
-          receiver: "赵娜",
-          carrier: "京东物流",
-          trackingNo: "JD3456789012",
-          outDate: "2024-04-01",
-          status: "待出库",
-        },
-        {
-          id: 7,
-          code: "SOUT-2024-007",
-          name: "主板半成品出库",
-          dnCode: "DN-2024-007",
-          soCode: "SO-2024-007",
-          customerCode: "CUST-007",
-          customerName: "惠州市金源包装材料厂",
-          receiver: "孙鹏",
-          carrier: "申通快递",
-          trackingNo: "ST4567890123",
-          outDate: "2024-04-15",
-          status: "已出库",
-        },
-        {
-          id: 8,
-          code: "SOUT-2024-008",
-          name: "智能灯泡第二批出库",
-          dnCode: "DN-2024-008",
-          soCode: "SO-2024-008",
-          customerCode: "CUST-009",
-          customerName: "肇庆市诚信五金制品厂",
-          receiver: "吴刚",
-          carrier: "百世快递",
-          trackingNo: "BS5678901234",
-          outDate: "2024-05-01",
-          status: "待出库",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // ========== 获取产品销售列表 ==========
+    async loadList() {
+      try {
+        const data = await getProductSalesPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取产品销售列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增产品销售功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑产品销售功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteProductSales(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
+  }
 };
 </script>
 

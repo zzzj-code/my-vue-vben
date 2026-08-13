@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>流转卡编码</span>
-            <input type="text" placeholder="请输入流转卡编码" />
+            <input type="text" placeholder="请输入流转卡编码" v-model="searchForm.field1" />
           </div>
           <div>
             <span>生产工单</span>
-            <input type="text" placeholder="请输入生产工单" />
+            <input type="text" placeholder="请输入生产工单" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>生产流转卡列表</div>
           <div>
-            <button>+新增流转卡</button>
+            <button @click="handleAdd">+新增流转卡</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -82,102 +82,126 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </div></div>
 </template>
 
 <script>
+// ========== 导入生产看板相关API ==========
+import { getCardPage, deleteCard } from '#/api/mes/pro/card';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "TC-2024-001",
-          moCode: "MO-2024-001",
-          moName: "智能网关生产工单",
-          batchNo: "B20240115001",
-          productCode: "P-2024-006",
-          productName: "智能网关",
-          spec: "ZigBee 3.0 白色",
-          unit: "台",
-          qty: 100,
-          status: "进行中",
-        },
-        {
-          id: 2,
-          code: "TC-2024-002",
-          moCode: "MO-2024-002",
-          moName: "智能灯泡生产工单",
-          batchNo: "B20240201002",
-          productCode: "P-2024-012",
-          productName: "智能灯泡",
-          spec: "RGB 9W E27螺口",
-          unit: "个",
-          qty: 200,
-          status: "已完结",
-        },
-        {
-          id: 3,
-          code: "TC-2024-003",
-          moCode: "MO-2024-003",
-          moName: "电源适配器生产工单",
-          batchNo: "B20240301003",
-          productCode: "P-2024-005",
-          productName: "电源适配器",
-          spec: "12V/2A 裸板",
-          unit: "个",
-          qty: 150,
-          status: "进行中",
-        },
-        {
-          id: 4,
-          code: "TC-2024-004",
-          moCode: "MO-2024-004",
-          moName: "主板半成品生产工单",
-          batchNo: "B20240315004",
-          productCode: "P-2024-011",
-          productName: "主板半成品",
-          spec: "PCB 四层板 带元件",
-          unit: "片",
-          qty: 300,
-          status: "已完结",
-        },
-        {
-          id: 5,
-          code: "TC-2024-005",
-          moCode: "MO-2024-005",
-          moName: "智能插座生产工单",
-          batchNo: "B20240401005",
-          productCode: "P-2024-018",
-          productName: "智能插座",
-          spec: "10A 250V WiFi版",
-          unit: "个",
-          qty: 250,
-          status: "待开始",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
+    // ========== 获取状态文字颜色 ==========
     getStatusColor(status) {
-      const map = {
-        '待开始': '#8c8c8c',
-        '进行中': '#1890ff',
-        '已完结': '#52c41a'
+      const colorMap = {
+        0: '#006be6',
+        1: '#52c41a',
+        2: '#faad14',
+        3: '#ff4d4f',
+        '0': '#006be6',
+        '1': '#52c41a',
+        '2': '#faad14',
+        '3': '#ff4d4f',
       };
-      return map[status] || '#333';
+      return colorMap[status] || '#006be6';
     },
+    // ========== 获取状态背景颜色 ==========
     getStatusBg(status) {
-      const map = {
-        '待开始': '#f5f5f5',
-        '进行中': '#e6f7ff',
-        '已完结': '#f6ffed'
+      const bgMap = {
+        0: '#e6f6ff',
+        1: '#f6ffed',
+        2: '#fffbe6',
+        3: '#fff2f0',
+        '0': '#e6f6ff',
+        '1': '#f6ffed',
+        '2': '#fffbe6',
+        '3': '#fff2f0',
       };
-      return map[status] || '#fff';
-    }
+      return bgMap[status] || '#e6f6ff';
+    },
+    // ========== 获取生产看板列表 ==========
+    async loadList() {
+      try {
+        const data = await getCardPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取生产看板列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增生产看板功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑生产看板功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteCard(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   }
 };
 </script>

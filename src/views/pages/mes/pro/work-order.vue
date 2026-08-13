@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>工单编码</span>
-            <input type="text" placeholder="请输入工单编码" />
+            <input type="text" placeholder="请输入工单编码" v-model="searchForm.code" />
           </div>
           <div>
             <span>工单名称</span>
-            <input type="text" placeholder="请输入工单名称" />
+            <input type="text" placeholder="请输入工单名称" v-model="searchForm.productName" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>生产工单列表</div>
           <div>
-            <button>+新增工单</button>
+            <button @click="handleAdd">+新增工单</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -100,207 +100,132 @@
                 </td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>条码</button>
+                  <button @click="handleEdit(item)">条码</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
-      </div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
     </div>
   </div>
+</div>
 </template>
 
 <script>
+// ========== 导入生产工单相关API ==========
+import { getWorkOrderPage, deleteWorkOrder } from '#/api/mes/pro/work-order';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "MO-2024-001",
-          name: "智能网关生产工单",
-          type: "生产工单",
-          source: "销售订单",
-          sourceCode: "SO-2024-001",
-          productCode: "P-2024-006",
-          productName: "智能网关",
-          spec: "ZigBee 3.0 白色",
-          unit: "台",
-          qty: 100,
-          customerCode: "CUST-001",
-          customerName: "深圳市华科电子有限公司",
-          demandDate: "2024-01-20",
-          status: "已完成",
-          createTime: "2024-01-15 10:30",
-        },
-        {
-          id: 2,
-          code: "MO-2024-002",
-          name: "智能灯泡生产工单",
-          type: "生产工单",
-          source: "销售订单",
-          sourceCode: "SO-2024-002",
-          productCode: "P-2024-012",
-          productName: "智能灯泡",
-          spec: "RGB 9W E27螺口",
-          unit: "个",
-          qty: 200,
-          customerCode: "CUST-002",
-          customerName: "东莞市恒达精密制造厂",
-          demandDate: "2024-02-05",
-          status: "生产中",
-          createTime: "2024-01-20 14:20",
-        },
-        {
-          id: 3,
-          code: "MO-2024-003",
-          name: "电源适配器生产工单",
-          type: "生产工单",
-          source: "销售订单",
-          sourceCode: "SO-2024-003",
-          productCode: "P-2024-005",
-          productName: "电源适配器",
-          spec: "12V/2A 裸板",
-          unit: "个",
-          qty: 150,
-          customerCode: "CUST-003",
-          customerName: "广州市盛达贸易有限公司",
-          demandDate: "2024-02-20",
-          status: "待审核",
-          createTime: "2024-02-01 09:15",
-        },
-        {
-          id: 4,
-          code: "MO-2024-004",
-          name: "主板半成品生产工单",
-          type: "生产工单",
-          source: "生产计划",
-          sourceCode: "PP-2024-001",
-          productCode: "P-2024-011",
-          productName: "主板半成品",
-          spec: "PCB 四层板 带元件",
-          unit: "片",
-          qty: 300,
-          customerCode: "",
-          customerName: "内部使用",
-          demandDate: "2024-03-10",
-          status: "待排产",
-          createTime: "2024-02-10 16:40",
-        },
-        {
-          id: 5,
-          code: "MO-2024-005",
-          name: "智能插座生产工单",
-          type: "生产工单",
-          source: "销售订单",
-          sourceCode: "SO-2024-005",
-          productCode: "P-2024-018",
-          productName: "智能插座",
-          spec: "10A 250V WiFi版",
-          unit: "个",
-          qty: 120,
-          customerCode: "CUST-005",
-          customerName: "佛山市德力机械制造有限公司",
-          demandDate: "2024-03-20",
-          status: "生产中",
-          createTime: "2024-03-01 11:00",
-        },
-        {
-          id: 6,
-          code: "MO-2024-006",
-          name: "传感器半成品生产工单",
-          type: "生产工单",
-          source: "生产计划",
-          sourceCode: "PP-2024-002",
-          productCode: "P-2024-017",
-          productName: "传感器半成品",
-          spec: "温湿度 SHT30",
-          unit: "个",
-          qty: 200,
-          customerCode: "",
-          customerName: "内部使用",
-          demandDate: "2024-03-25",
-          status: "已完成",
-          createTime: "2024-03-15 13:30",
-        },
-        {
-          id: 7,
-          code: "MO-2024-007",
-          name: "智能网关第二批次生产工单",
-          type: "生产工单",
-          source: "销售订单",
-          sourceCode: "SO-2024-006",
-          productCode: "P-2024-006",
-          productName: "智能网关",
-          spec: "ZigBee 3.0 黑色",
-          unit: "台",
-          qty: 80,
-          customerCode: "CUST-006",
-          customerName: "中山市宏远电器有限公司",
-          demandDate: "2024-04-05",
-          status: "待审核",
-          createTime: "2024-04-01 08:50",
-        },
-        {
-          id: 8,
-          code: "MO-2024-008",
-          name: "智能灯泡第二批次生产工单",
-          type: "生产工单",
-          source: "销售订单",
-          sourceCode: "SO-2024-007",
-          productCode: "P-2024-012",
-          productName: "智能灯泡",
-          spec: "RGB 9W E27螺口",
-          unit: "个",
-          qty: 150,
-          customerCode: "CUST-007",
-          customerName: "惠州市金源包装材料厂",
-          demandDate: "2024-04-20",
-          status: "生产中",
-          createTime: "2024-04-10 10:20",
-        },
-        {
-          id: 9,
-          code: "MO-2024-009",
-          name: "电源适配器第二批次生产工单",
-          type: "生产工单",
-          source: "销售订单",
-          sourceCode: "SO-2024-008",
-          productCode: "P-2024-005",
-          productName: "电源适配器",
-          spec: "12V/2A 带外壳",
-          unit: "个",
-          qty: 100,
-          customerCode: "CUST-008",
-          customerName: "江门市天马玻璃制品有限公司",
-          demandDate: "2024-05-05",
-          status: "待排产",
-          createTime: "2024-05-01 15:00",
-        },
-        {
-          id: 10,
-          code: "MO-2024-010",
-          name: "智能插座第二批次生产工单",
-          type: "生产工单",
-          source: "销售订单",
-          sourceCode: "SO-2024-009",
-          productCode: "P-2024-018",
-          productName: "智能插座",
-          spec: "10A 250V WiFi版",
-          unit: "个",
-          qty: 180,
-          customerCode: "CUST-009",
-          customerName: "肇庆市诚信五金制品厂",
-          demandDate: "2024-05-20",
-          status: "已完成",
-          createTime: "2024-05-15 09:30",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        code: "",        // 工单编号
+        productName: "", // 产品名称
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadWorkOrderList();
+  },
   methods: {
+    // ========== 获取生产工单列表 ==========
+    async loadWorkOrderList() {
+      try {
+        const data = await getWorkOrderPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          code: this.searchForm.code,
+          productName: this.searchForm.productName,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          code: item.code || "",              // 工单编号
+          name: item.name || "",              // 工单名称
+          type: "生产工单",                    // 工单类型
+          source: item.sourceType ? "销售订单" : "生产计划", // 来源
+          sourceCode: item.sourceCode || "",  // 来源单号
+          productCode: item.productCode || "", // 产品编码
+          productName: item.productName || "", // 产品名称
+          spec: item.specification || "",     // 规格型号
+          unit: item.unitName || "",          // 单位
+          qty: item.quantity || 0,            // 数量
+          customerCode: item.customerCode || "", // 客户编码
+          customerName: item.customerName || "内部使用", // 客户名称
+          demandDate: item.demandDate || "",  // 需求日期
+          status: this.getStatusName(item.status), // 状态
+          createTime: this.formatTimestamp(item.createTime), // 创建时间
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取生产工单列表失败", err);
+      }
+    },
+    // ========== 状态名称转换 ==========
+    getStatusName(status) {
+      const map = { 0: "待审核", 1: "待排产", 2: "生产中", 3: "已完成" };
+      return map[status] || "待审核";
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadWorkOrderList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { code: "", productName: "" };
+      this.pagination.pageNo = 1;
+      this.loadWorkOrderList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadWorkOrderList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增工单功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert(`编辑工单：${row.name}`);
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除「${row.name}」吗？`)) return;
+      try {
+        await deleteWorkOrder(row.id);
+        alert("删除成功");
+        this.loadWorkOrderList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
     getStatusColor(status) {
       const map = {
         '待审核': '#faad14',

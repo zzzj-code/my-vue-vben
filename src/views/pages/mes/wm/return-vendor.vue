@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>退货单编号</span>
-            <input type="text" placeholder="请输入退货单编号" />
+            <input type="text" placeholder="请输入退货单编号" v-model="searchForm.field1" />
           </div>
           <div>
             <span>退货单名称</span>
-            <input type="text" placeholder="请输入退货单名称" />
+            <input type="text" placeholder="请输入退货单名称" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>供应商退货单列表</div>
           <div>
-            <button>+新增供应商退货单</button>
+            <button @click="handleAdd">+新增供应商退货单</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -56,137 +56,107 @@
                 <td>{{ item.returnDate }}</td>
                 <td>{{ item.status }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共11条记录<span>20条/页</span></div>
-      </div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
     </div>
   </div>
+</div>
 </template>
 
 <script>
+// ========== 导入供应商退货相关API ==========
+import { getReturnVendorPage, deleteReturnVendor } from '#/api/mes/wm/return-vendor';
+
 export default {
   data() {
     return {
-      tabValue: [
-         {
-        id: 1,
-        code: 'RET-2024-001',
-        name: '螺丝退货单',
-        poCode: 'PO-2024-001',
-        supplierCode: 'SUP-001',
-        supplierName: '深圳市华强电子科技有限公司',
-        returnDate: '2024-02-15',
-        status: '已退货'
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
       },
-      {
-        id: 2,
-        code: 'RET-2024-002',
-        name: '塑胶外壳退货单',
-        poCode: 'PO-2024-002',
-        supplierCode: 'SUP-002',
-        supplierName: '广州市盛源塑胶制品有限公司',
-        returnDate: '2024-03-01',
-        status: '待审核'
-      },
-      {
-        id: 3,
-        code: 'RET-2024-003',
-        name: '玻璃制品退货单',
-        poCode: 'PO-2024-007',
-        supplierCode: 'SUP-008',
-        supplierName: '江门市天马玻璃制品有限公司',
-        returnDate: '2024-03-15',
-        status: '已退货'
-      },
-      {
-        id: 4,
-        code: 'RET-2024-004',
-        name: '化工原料退货单',
-        poCode: 'PO-2024-006',
-        supplierCode: 'SUP-007',
-        supplierName: '惠州市金源化工有限公司',
-        returnDate: '2024-04-01',
-        status: '待退货'
-      },
-      {
-        id: 5,
-        code: 'RET-2024-005',
-        name: '电子元件退货单',
-        poCode: 'PO-2024-011',
-        supplierCode: 'SUP-015',
-        supplierName: '佛山市顺达电子贸易行',
-        returnDate: '2024-04-20',
-        status: '已退货'
-      },
-      {
-        id: 6,
-        code: 'RET-2024-006',
-        name: '包装材料退货单',
-        poCode: 'PO-2024-003',
-        supplierCode: 'SUP-005',
-        supplierName: '东莞市恒达精密五金厂',
-        returnDate: '2024-05-01',
-        status: '待审核'
-      },
-      {
-        id: 7,
-        code: 'RET-2024-007',
-        name: '五金配件退货单',
-        poCode: 'PO-2024-012',
-        supplierCode: 'SUP-016',
-        supplierName: '惠州市安达五金制品厂',
-        returnDate: '2024-05-20',
-        status: '已退货'
-      },
-      {
-        id: 8,
-        code: 'RET-2024-008',
-        name: '塑胶原料退货单',
-        poCode: 'PO-2024-014',
-        supplierCode: 'SUP-020',
-        supplierName: '广州市丰源塑胶原料有限公司',
-        returnDate: '2024-06-01',
-        status: '待退货'
-      },
-      {
-        id: 9,
-        code: 'RET-2024-009',
-        name: '照明电器退货单',
-        poCode: 'PO-2024-013',
-        supplierCode: 'SUP-017',
-        supplierName: '江门市明光照明电器厂',
-        returnDate: '2024-06-15',
-        status: '已退货'
-      },
-      {
-        id: 10,
-        code: 'RET-2024-010',
-        name: '精密模具退货单',
-        poCode: 'PO-2024-008',
-        supplierCode: 'SUP-012',
-        supplierName: '东莞市华辉精密模具厂',
-        returnDate: '2024-07-01',
-        status: '待审核'
-      },
-      {
-        id: 11,
-        code: 'RET-2024-011',
-        name: '包装卷材退货单',
-        poCode: 'PO-2024-015',
-        supplierCode: 'SUP-019',
-        supplierName: '东莞市创新包装材料厂',
-        returnDate: '2024-07-15',
-        status: '已退货'
-      }
-      ],
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // ========== 获取供应商退货列表 ==========
+    async loadList() {
+      try {
+        const data = await getReturnVendorPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取供应商退货列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增供应商退货功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑供应商退货功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteReturnVendor(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
+  }
 };
 </script>
 

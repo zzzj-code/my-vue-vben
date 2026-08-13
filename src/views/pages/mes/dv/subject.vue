@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>项目编码</span>
-            <input type="text" placeholder="请输入项目编码" />
+            <input type="text" placeholder="请输入项目编码" v-model="searchForm.field1" />
           </div>
           <div>
             <span>项目名称</span>
-            <input type="text" placeholder="请输入项目名称" />
+            <input type="text" placeholder="请输入项目名称" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>点检保养项目列表</div>
           <div>
-            <button>+新增点检保养项目</button>
+            <button @click="handleAdd">+新增点检保养项目</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -84,122 +84,133 @@
                 </td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </div></div>
 </template>
 
 <script>
+// ========== 导入设备科目相关API ==========
+import { getSubjectPage, deleteSubject } from '#/api/mes/dv/subject';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "INSP-2024-001",
-          name: "冲压机安全检查",
-          type: "点检项目",
-          content: "检查冲压机安全防护装置、急停按钮、安全光幕是否正常",
-          standard: "所有安全装置灵敏有效，急停按钮正常",
-          status: "启用",
-          createTime: "2024-01-15 10:30",
-        },
-        {
-          id: 2,
-          code: "INSP-2024-002",
-          name: "注塑机温度检查",
-          type: "点检项目",
-          content: "检查注塑机料筒温度、模具温度是否在设定范围内",
-          standard: "各段温度偏差不超过±5℃",
-          status: "启用",
-          createTime: "2024-01-15 14:20",
-        },
-        {
-          id: 3,
-          code: "MAIN-2024-001",
-          name: "CNC主轴保养",
-          type: "保养项目",
-          content: "清洁主轴锥孔、更换主轴润滑油、检查主轴皮带松紧度",
-          standard: "主轴无异响、无振动，油位正常",
-          status: "启用",
-          createTime: "2024-01-20 09:15",
-        },
-        {
-          id: 4,
-          code: "INSP-2024-003",
-          name: "叉车制动检查",
-          type: "点检项目",
-          content: "检查叉车制动系统、转向系统、液压系统是否正常",
-          standard: "制动距离≤2米，转向灵活无卡滞",
-          status: "停用",
-          createTime: "2024-02-01 11:00",
-        },
-        {
-          id: 5,
-          code: "MAIN-2024-002",
-          name: "空压机保养",
-          type: "保养项目",
-          content: "更换空压机润滑油、空气滤芯、油滤芯，检查散热器",
-          standard: "运行温度≤85℃，振动值≤2.5mm/s",
-          status: "启用",
-          createTime: "2024-02-10 16:40",
-        },
-        {
-          id: 6,
-          code: "INSP-2024-004",
-          name: "AGV小车运行检查",
-          type: "点检项目",
-          content: "检查AGV小车导航系统、电池电量、安全避障传感器",
-          standard: "导航精度±10mm，电量≥30%，避障灵敏",
-          status: "启用",
-          createTime: "2024-03-01 08:50",
-        },
-        {
-          id: 7,
-          code: "MAIN-2024-003",
-          name: "焊接机器人保养",
-          type: "保养项目",
-          content: "清洁机器人焊枪喷嘴、检查电缆磨损、校准各轴零点",
-          standard: "焊枪清理干净，电缆无破损，零点精度≤0.1mm",
-          status: "启用",
-          createTime: "2024-03-15 13:30",
-        },
-        {
-          id: 8,
-          code: "INSP-2024-005",
-          name: "三坐标测量仪精度检查",
-          type: "点检项目",
-          content: "使用标准球检查三坐标测量仪各轴精度",
-          standard: "各轴精度≤0.005mm，重复精度≤0.003mm",
-          status: "停用",
-          createTime: "2024-04-01 10:20",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
+    // ========== 获取状态文字颜色 ==========
     getStatusColor(status) {
-      const map = {
-        '启用': '#52c41a',
-        '停用': '#8c8c8c'
+      const colorMap = {
+        0: '#006be6',
+        1: '#52c41a',
+        2: '#faad14',
+        3: '#ff4d4f',
+        '0': '#006be6',
+        '1': '#52c41a',
+        '2': '#faad14',
+        '3': '#ff4d4f',
       };
-      return map[status] || '#333';
+      return colorMap[status] || '#006be6';
     },
+    // ========== 获取状态背景颜色 ==========
     getStatusBg(status) {
-      const map = {
-        '启用': '#f6ffed',
-        '停用': '#f5f5f5'
+      const bgMap = {
+        0: '#e6f6ff',
+        1: '#f6ffed',
+        2: '#fffbe6',
+        3: '#fff2f0',
+        '0': '#e6f6ff',
+        '1': '#f6ffed',
+        '2': '#fffbe6',
+        '3': '#fff2f0',
       };
-      return map[status] || '#fff';
-    }
+      return bgMap[status] || '#e6f6ff';
+    },
+    // ========== 获取设备科目列表 ==========
+    async loadList() {
+      try {
+        const data = await getSubjectPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取设备科目列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增设备科目功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑设备科目功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteSubject(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   }
 };
 </script>

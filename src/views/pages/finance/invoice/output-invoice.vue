@@ -4,16 +4,16 @@
       <div class="app-top">
         <div>
           <span>单据编号</span>
-          <input type="text" placeholder="请输入" />
+          <input type="text" placeholder="请输入" v-model="searchForm.invoiceNo" />
         </div>
         <div>
           <span>发票号码</span>
-          <input type="text" placeholder="请输入" />
+          <input type="text" placeholder="请输入" v-model="searchForm.invoiceNumber" />
         </div>
         <div></div>
         <div>
-          <button>重置</button>
-          <button>搜索</button>
+          <button @click="handleReset">重置</button>
+          <button @click="handleSearch">搜索</button>
           展开▽
         </div>
       </div>
@@ -21,7 +21,7 @@
         <div class="main-top">
           <div class="top-1">销项发票</div>
           <div class="top-2">
-            <button>+开票登记</button>
+            <button @click="handleAdd">+开票登记</button>
             <button>导出</button>
           </div>
           <div class="top-3">
@@ -46,7 +46,10 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(item,index) in tabValue" :key="index">
+              <tr v-if="tabValue.length === 0">
+                <td colspan="9" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="(item,index) in tabValue" :key="item.id">
                 <td>{{ index+1 }}</td>
                 <td>{{ item.invoiceNo }}</td>
                 <td>{{ item.invoiceNumber }}</td>
@@ -55,33 +58,121 @@
                 <td>{{ item.totalAmount }}</td>
                 <td>{{ item.status }}</td>
                 <td>{{ item.invoiceDate }}</td>
-                <td class="ol-col"><button>删除</button></td>
+                <td class="ol-col">
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共1条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入销项发票相关API ==========
+import { getOutputInvoicePage, deleteOutputInvoice } from '#/api/finance/invoice/output';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          invoiceNo: "XS20260801001",
-          invoiceNumber: "044001900111",
-          buyerName: "华为技术有限公司",
-          invoiceType: "增值税专用发票",
-          totalAmount: "¥125,800.00",
-          status: "已开票",
-          invoiceDate: "2026-08-01",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        invoiceNo: '',      // 单据编号
+        invoiceNumber: '',  // 发票号码
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadOutputInvoiceList();
+  },
+  methods: {
+    // ========== 获取销项发票列表 ==========
+    async loadOutputInvoiceList() {
+      try {
+        const data = await getOutputInvoicePage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          invoiceNo: this.searchForm.invoiceNo,
+          invoiceNumber: this.searchForm.invoiceNumber,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          invoiceNo: item.invoiceNo || '',          // 单据编号
+          invoiceNumber: item.invoiceNumber || '',  // 发票号码
+          buyerName: item.buyerName || '',          // 购方名称
+          invoiceType: item.invoiceType || '',      // 发票类型
+          totalAmount: item.totalAmount || '',      // 价税合计
+          status: item.status || '',                // 状态
+          invoiceDate: this.formatTimestamp(item.invoiceDate), // 开票日期
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取销项发票列表失败', err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return '';
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadOutputInvoiceList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { invoiceNo: '', invoiceNumber: '' };
+      this.pagination.pageNo = 1;
+      this.loadOutputInvoiceList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadOutputInvoiceList();
+    },
+    // ========== 新增（开票登记） ==========
+    handleAdd() {
+      alert('销项发票开票登记功能待实现');
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert(`编辑销项发票：${row.invoiceNo}`);
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除销项发票「${row.invoiceNo}」吗？`)) return;
+      try {
+        await deleteOutputInvoice(row.id);
+        alert('删除成功');
+        this.loadOutputInvoiceList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>
@@ -252,6 +343,9 @@ export default {
   background-color: #fff;
   padding: 0 20px;
   border-right: 0;
+}
+.empty-row {
+  color: #666;
 }
 .ol-col {
   width: 220px;

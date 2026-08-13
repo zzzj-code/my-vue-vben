@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>入库单号</span>
-            <input type="text" placeholder="请输入入库单号" />
+            <input type="text" placeholder="请输入入库单号" v-model="searchForm.orderNo" />
           </div>
           <div>
             <span>业务单号</span>
-            <input type="text" placeholder="请输入业务单号" />
+            <input type="text" placeholder="请输入业务单号" v-model="searchForm.businessNo" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>入库单列表</div>
           <div>
-            <button>+新增入库单</button>
+            <button @click="handleAdd">+新增入库单</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -105,9 +105,9 @@
                 </td>
                 <td>{{ item.remark }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
-                  <button>打印</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
+                  <button @click="handlePrint(item)">打印</button>
                 </td>
               </tr>
             </tbody>
@@ -119,144 +119,139 @@
 </template>
 
 <script>
+// ========== 导入采购入库相关 API（src/api/wms/purchaseinwarehousing/index.js）==========
+// getPurchaseInWarehousingPage : 采购入库单分页查询（GET /wms/purchase-in-warehousing/page）
+// deletePurchaseInWarehousing  : 删除采购入库单（DELETE /wms/purchase-in-warehousing/delete?id=xxx）
+import {
+  getPurchaseInWarehousingPage,
+  deletePurchaseInWarehousing,
+} from '#/api/wms/purchaseinwarehousing';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          orderNo: "RK20260801001",
-          businessNo: "PO20260801001",
-          status: "已完成",
-          type: "采购入库",
-          warehouse: "北京中心仓",
-          totalQty: "1,250",
-          totalAmount: "125,800.00",
-          supplier: "华为技术有限公司",
-          operator: "张伟",
-          operateTime: "2026-08-01 14:30",
-          remark: "已质检",
-        },
-        {
-          orderNo: "RK20260801002",
-          businessNo: "PO20260801002",
-          status: "待审核",
-          type: "采购入库",
-          warehouse: "上海分仓",
-          totalQty: "860",
-          totalAmount: "89,760.00",
-          supplier: "腾讯科技有限公司",
-          operator: "李娜",
-          operateTime: "2026-08-01 10:15",
-          remark: "已质检",
-        },
-        {
-          orderNo: "RK20260731003",
-          businessNo: "PO20260731003",
-          status: "进行中",
-          type: "退货入库",
-          warehouse: "深圳分仓",
-          totalQty: "320",
-          totalAmount: "32,500.00",
-          supplier: "小米科技有限公司",
-          operator: "王强",
-          operateTime: "2026-07-31 16:45",
-          remark: "质检中",
-        },
-        {
-          orderNo: "RK20260731004",
-          businessNo: "PO20260731004",
-          status: "已完成",
-          type: "调拨入库",
-          warehouse: "广州分仓",
-          totalQty: "2,100",
-          totalAmount: "234,500.00",
-          supplier: "字节跳动有限公司",
-          operator: "刘洋",
-          operateTime: "2026-07-31 09:20",
-          remark: "已质检",
-        },
-        {
-          orderNo: "RK20260730005",
-          businessNo: "PO20260730005",
-          status: "已驳回",
-          type: "采购入库",
-          warehouse: "成都分仓",
-          totalQty: "150",
-          totalAmount: "12,800.00",
-          supplier: "美团科技有限公司",
-          operator: "陈静",
-          operateTime: "2026-07-30 11:00",
-          remark: "资料不齐全",
-        },
-        {
-          orderNo: "RK20260730006",
-          businessNo: "PO20260730006",
-          status: "进行中",
-          type: "采购入库",
-          warehouse: "武汉分仓",
-          totalQty: "680",
-          totalAmount: "67,890.00",
-          supplier: "京东物流有限公司",
-          operator: "赵敏",
-          operateTime: "2026-07-30 08:50",
-          remark: "已质检",
-        },
-        {
-          orderNo: "RK20260729007",
-          businessNo: "PO20260729007",
-          status: "已完成",
-          type: "退货入库",
-          warehouse: "杭州分仓",
-          totalQty: "45",
-          totalAmount: "5,600.00",
-          supplier: "网易科技有限公司",
-          operator: "孙浩",
-          operateTime: "2026-07-29 13:40",
-          remark: "已质检",
-        },
-        {
-          orderNo: "RK20260729008",
-          businessNo: "PO20260729008",
-          status: "待审核",
-          type: "调拨入库",
-          warehouse: "南京分仓",
-          totalQty: "920",
-          totalAmount: "98,200.00",
-          supplier: "阿里巴巴集团",
-          operator: "周婷",
-          operateTime: "2026-07-29 09:10",
-          remark: "已质检",
-        },
-        {
-          orderNo: "RK20260728009",
-          businessNo: "PO20260728009",
-          status: "已完成",
-          type: "采购入库",
-          warehouse: "北京中心仓",
-          totalQty: "560",
-          totalAmount: "56,780.00",
-          supplier: "百度科技有限公司",
-          operator: "吴刚",
-          operateTime: "2026-07-28 15:20",
-          remark: "已质检",
-        },
-        {
-          orderNo: "RK20260728010",
-          businessNo: "PO20260728010",
-          status: "待审核",
-          type: "调拨入库",
-          warehouse: "上海分仓",
-          totalQty: "730",
-          totalAmount: "78,900.00",
-          supplier: "拼多多有限公司",
-          operator: "郑丽",
-          operateTime: "2026-07-28 11:40",
-          remark: "已质检",
-        },
-      ],
+      // ========== 搜索表单 ==========
+      // 与顶部"入库单号 / 业务单号"两个输入框(v-model)绑定
+      searchForm: {
+        orderNo: "",      // 入库单号
+        businessNo: "",   // 业务单号（通常是采购订单号）
+      },
+      // ========== 分页信息 ==========
+      pagination: {
+        pageNo: 1,    // 当前页码
+        pageSize: 20, // 每页条数
+        total: 0,     // 总条数
+      },
+      // ========== 表格数据 ==========
+      // 原先是写死的假数据，现在由接口返回后赋值
+      tabValue: [],
     };
   },
+  mounted() {
+    // 页面加载后自动拉取入库单列表
+    this.loadReceiptList();
+  },
   methods: {
+    // ========== 获取入库单列表 ==========
+    async loadReceiptList() {
+      try {
+        // 调用后端分页接口，携带分页 + 搜索参数
+        const data = await getPurchaseInWarehousingPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          no: this.searchForm.orderNo,             // 入库单号（后端参数名以实际为准）
+          businessNo: this.searchForm.businessNo,  // 业务单号（后端参数名以实际为准）
+        });
+        // requestClient 已帮我们提取响应体的 data 字段，分页结构一般为 { list, total }
+        const list = (data && data.list) || [];
+        // 字段映射：把后端字段转换成页面模板需要的字段（orderNo/businessNo/status/...）
+        this.tabValue = list.map((item) => ({
+          id: item.id,                                        // 主键，删除时使用
+          orderNo: item.no || item.orderNo || "",             // 入库单号
+          businessNo: item.purchaseOrderNo || item.businessNo || "", // 业务单号（采购订单号）
+          status: this.formatStatus(item.status),             // 入库状态（数字枚举 → 中文）
+          type: this.formatType(item.type),                   // 入库类型（数字枚举 → 中文）
+          warehouse: item.warehouseName || item.warehouse || "", // 仓库名称
+          totalQty: this.formatNumber(item.totalQuantity ?? item.totalQty, 0), // 总数量（千分位）
+          totalAmount: this.formatNumber(item.totalAmount, 2),                 // 总金额（保留两位小数）
+          supplier: item.supplierName || item.supplier || "", // 供应商名称
+          operator: item.operator || item.creatorName || "",  // 操作人
+          operateTime: this.formatTimestamp(item.operateTime || item.updateTime || item.createTime), // 操作时间
+          remark: item.remark || "",                          // 备注
+        }));
+        // 更新总条数（用于底部"共X条记录"）
+        this.pagination.total = (data && data.total) || 0;
+      } catch (err) {
+        console.error("获取入库单列表失败", err);
+      }
+    },
+    // ========== 状态格式化 ==========
+    // 后端 status 一般是数字枚举，这里转成页面表格展示的中文
+    // 注意：具体枚举值以后端实际返回为准，若不一致可在 map 中调整
+    formatStatus(status) {
+      const map = { 0: '待审核', 1: '进行中', 2: '已完成', 3: '已驳回' };
+      if (status === null || status === undefined || status === '') return '';
+      return map[status] !== undefined ? map[status] : String(status);
+    },
+    // ========== 类型格式化 ==========
+    // 后端 type 可能是数字枚举，也可能是中文字符串，这里做兼容处理
+    formatType(type) {
+      const map = { 1: '采购入库', 2: '退货入库', 3: '调拨入库' };
+      if (type === null || type === undefined || type === '') return '';
+      return map[type] !== undefined ? map[type] : String(type);
+    },
+    // ========== 数字千分位格式化 ==========
+    // 例：1250 → "1,250"；125800.00 → "125,800.00"
+    formatNumber(value, decimals = 0) {
+      if (value === null || value === undefined || value === '') return '';
+      // 后端若已返回格式化好的字符串，则原样返回，不再处理
+      if (typeof value === 'string') return value;
+      return Number(value).toLocaleString('zh-CN', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      });
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadReceiptList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { orderNo: "", businessNo: "" };
+      this.pagination.pageNo = 1;
+      this.loadReceiptList();
+    },
+    // ========== 新增入库单 ==========
+    handleAdd() {
+      alert("新增入库单功能待实现");
+    },
+    // ========== 编辑入库单 ==========
+    handleEdit(row) {
+      alert(`编辑入库单：${row.orderNo}`);
+    },
+    // ========== 删除入库单 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除「${row.orderNo}」吗？`)) return;
+      try {
+        await deletePurchaseInWarehousing(row.id);
+        alert("删除成功");
+        this.loadReceiptList();
+      } catch (err) {
+        console.error("删除入库单失败", err);
+      }
+    },
+    // ========== 打印 ==========
+    handlePrint(row) {
+      alert(`打印入库单：${row.orderNo}`);
+    },
+    // ========== 状态颜色（模板中状态标签的配色，保留原逻辑）==========
     getStatusColor(status) {
       const map = {
         '已完成': '#52c41a',
@@ -275,7 +270,7 @@ export default {
       };
       return map[status] || '#fff';
     }
-  }
+  },
 };
 </script>
 

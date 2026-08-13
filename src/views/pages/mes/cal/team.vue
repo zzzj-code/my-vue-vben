@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>班组编码</span>
-            <input type="text" placeholder="请输入班组编码" />
+            <input type="text" placeholder="请输入班组编码" v-model="searchForm.field1" />
           </div>
           <div>
             <span>班组名称</span>
-            <input type="text" placeholder="请输入班组名称" />
+            <input type="text" placeholder="请输入班组名称" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>班组列表</div>
           <div>
-            <button>+新增班组</button>
+            <button @click="handleAdd">+新增班组</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -66,83 +66,106 @@
                 <td>{{ item.remark }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </div></div>
 </template>
 
 <script>
+// ========== 导入班组设置相关API ==========
+import { getTeamPage, deleteTeam } from '#/api/mes/cal/team';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "TEAM-001",
-          name: "冲压一班",
-          type: "生产班组",
-          remark: "负责冲压车间白班生产",
-          createTime: "2024-01-15 10:30",
-        },
-        {
-          id: 2,
-          code: "TEAM-002",
-          name: "冲压二班",
-          type: "生产班组",
-          remark: "负责冲压车间夜班生产",
-          createTime: "2024-01-15 14:20",
-        },
-        {
-          id: 3,
-          code: "TEAM-003",
-          name: "注塑一班",
-          type: "生产班组",
-          remark: "负责注塑车间白班生产",
-          createTime: "2024-01-20 09:15",
-        },
-        {
-          id: 4,
-          code: "TEAM-004",
-          name: "注塑二班",
-          type: "生产班组",
-          remark: "负责注塑车间夜班生产",
-          createTime: "2024-02-01 11:00",
-        },
-        {
-          id: 5,
-          code: "TEAM-005",
-          name: "组装一班",
-          type: "生产班组",
-          remark: "负责组装线A生产",
-          createTime: "2024-02-10 16:40",
-        },
-        {
-          id: 6,
-          code: "TEAM-006",
-          name: "组装二班",
-          type: "生产班组",
-          remark: "负责组装线B生产",
-          createTime: "2024-03-01 08:50",
-        },
-        {
-          id: 7,
-          code: "TEAM-007",
-          name: "质检班组",
-          type: "质检班组",
-          remark: "负责产品质量检验",
-          createTime: "2024-03-15 13:30",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // ========== 获取班组设置列表 ==========
+    async loadList() {
+      try {
+        const data = await getTeamPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取班组设置列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增班组设置功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑班组设置功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteTeam(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
+  }
 };
 </script>
 

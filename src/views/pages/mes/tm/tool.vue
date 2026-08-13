@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>工具编码</span>
-            <input type="text" placeholder="请输入工具编码" />
+            <input type="text" placeholder="请输入工具编码" v-model="searchForm.field1" />
           </div>
           <div>
             <span>工具名称</span>
-            <input type="text" placeholder="请输入工具名称" />
+            <input type="text" placeholder="请输入工具名称" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>工具列表</div>
           <div>
-            <button>+新增工具</button>
+            <button @click="handleAdd">+新增工具</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -92,186 +92,133 @@
                 </td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </div></div>
 </template>
 
 <script>
+// ========== 导入工装台账相关API ==========
+import { getToolPage, deleteTool } from '#/api/mes/tm/tool';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "T00001",
-          name: "游标卡尺",
-          toolType: "量具",
-          brand: "三丰",
-          spec: "0-150mm 0.02mm",
-          stockQty: 5,
-          availableQty: 5,
-          maintenanceType: "定期校准",
-          nextMaintenance: "2026-08-15",
-          status: "启用",
-          createTime: "2023-01-15 09:30:00",
-        },
-        {
-          id: 2,
-          code: "T00002",
-          name: "千分尺",
-          toolType: "量具",
-          brand: "三丰",
-          spec: "0-25mm 0.01mm",
-          stockQty: 3,
-          availableQty: 2,
-          maintenanceType: "定期校准",
-          nextMaintenance: "2026-09-01",
-          status: "启用",
-          createTime: "2023-02-20 14:20:00",
-        },
-        {
-          id: 3,
-          code: "T00003",
-          name: "数控刀架",
-          toolType: "刀具",
-          brand: "山特维克",
-          spec: "SDNCN-12-08",
-          stockQty: 8,
-          availableQty: 6,
-          maintenanceType: "日常保养",
-          nextMaintenance: "2026-08-20",
-          status: "启用",
-          createTime: "2023-03-10 10:00:00",
-        },
-        {
-          id: 4,
-          code: "T00004",
-          name: "铣刀",
-          toolType: "刀具",
-          brand: "肯纳",
-          spec: "D10×R0.5×100L",
-          stockQty: 12,
-          availableQty: 8,
-          maintenanceType: "日常保养",
-          nextMaintenance: "2026-08-25",
-          status: "启用",
-          createTime: "2023-04-05 16:40:00",
-        },
-        {
-          id: 5,
-          code: "T00005",
-          name: "百分表",
-          toolType: "量具",
-          brand: "上工",
-          spec: "0-10mm 0.01mm",
-          stockQty: 2,
-          availableQty: 1,
-          maintenanceType: "定期校准",
-          nextMaintenance: "2026-07-30",
-          status: "维修中",
-          createTime: "2023-05-12 11:20:00",
-        },
-        {
-          id: 6,
-          code: "T00006",
-          name: "角磨机",
-          toolType: "电动工具",
-          brand: "博世",
-          spec: "GWS 7-125",
-          stockQty: 3,
-          availableQty: 3,
-          maintenanceType: "定期维护",
-          nextMaintenance: "2026-09-10",
-          status: "启用",
-          createTime: "2023-06-18 08:50:00",
-        },
-        {
-          id: 7,
-          code: "T00007",
-          name: "气动扳手",
-          toolType: "气动工具",
-          brand: "英格索兰",
-          spec: "2135TiMAX",
-          stockQty: 2,
-          availableQty: 2,
-          maintenanceType: "定期维护",
-          nextMaintenance: "2026-08-28",
-          status: "启用",
-          createTime: "2023-07-22 13:30:00",
-        },
-        {
-          id: 8,
-          code: "T00008",
-          name: "旧量具",
-          toolType: "量具",
-          brand: "国产",
-          spec: "LJ-50",
-          stockQty: 1,
-          availableQty: 0,
-          maintenanceType: "定期维护",
-          nextMaintenance: "-",
-          status: "报废",
-          createTime: "2022-10-01 10:00:00",
-        },
-        {
-          id: 9,
-          code: "T00009",
-          name: "电烙铁",
-          toolType: "电动工具",
-          brand: "白光",
-          spec: "936 恒温",
-          stockQty: 4,
-          availableQty: 3,
-          maintenanceType: "日常保养",
-          nextMaintenance: "2026-09-05",
-          status: "启用",
-          createTime: "2023-08-15 15:10:00",
-        },
-        {
-          id: 10,
-          code: "T00010",
-          name: "内六角扳手组",
-          toolType: "手工具",
-          brand: "世达",
-          spec: "09101 9件套",
-          stockQty: 6,
-          availableQty: 6,
-          maintenanceType: "-",
-          nextMaintenance: "-",
-          status: "启用",
-          createTime: "2023-09-20 09:00:00",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
+    // ========== 获取状态文字颜色 ==========
     getStatusColor(status) {
-      const map = {
-        '启用': '#52c41a',
-        '停用': '#8c8c8c',
-        '维修中': '#faad14',
-        '报废': '#ff4d4f'
+      const colorMap = {
+        0: '#006be6',
+        1: '#52c41a',
+        2: '#faad14',
+        3: '#ff4d4f',
+        '0': '#006be6',
+        '1': '#52c41a',
+        '2': '#faad14',
+        '3': '#ff4d4f',
       };
-      return map[status] || '#333';
+      return colorMap[status] || '#006be6';
     },
+    // ========== 获取状态背景颜色 ==========
     getStatusBg(status) {
-      const map = {
-        '启用': '#f6ffed',
-        '停用': '#f5f5f5',
-        '维修中': '#fffbe6',
-        '报废': '#fff2f0'
+      const bgMap = {
+        0: '#e6f6ff',
+        1: '#f6ffed',
+        2: '#fffbe6',
+        3: '#fff2f0',
+        '0': '#e6f6ff',
+        '1': '#f6ffed',
+        '2': '#fffbe6',
+        '3': '#fff2f0',
       };
-      return map[status] || '#fff';
-    }
+      return bgMap[status] || '#e6f6ff';
+    },
+    // ========== 获取工装台账列表 ==========
+    async loadList() {
+      try {
+        const data = await getToolPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取工装台账列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增工装台账功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑工装台账功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteTool(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   }
 };
 </script>

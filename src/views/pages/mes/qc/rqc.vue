@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>检验单编号</span>
-            <input type="text" placeholder="请输入检验单编号" />
+            <input type="text" placeholder="请输入检验单编号" v-model="searchForm.field1" />
           </div>
           <div>
             <span>来源单据类型</span>
-            <input type="text" placeholder="" />
+            <input type="text" placeholder="" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>退货检验单列表</div>
           <div>
-            <button>+新增退货检验单</button>
+            <button @click="handleAdd">+新增退货检验单</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -110,183 +110,132 @@
                   >{{ item.status }}</span>
                 </td>
                 <td class="ol-col">
-                  <button>详情</button>
+                  <button @click="handleEdit(item)">详情</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </div></div>
 </template>
 
 <script>
+// ========== 导入退货检验相关API ==========
+import { getRqcPage, deleteRqc } from '#/api/mes/qc/rqc';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "RQC-2024-001",
-          name: "碳钢螺丝退货检验",
-          sourceType: "退货单",
-          sourceCode: "RET-2024-001",
-          materialCode: "M-2024-001",
-          materialName: "碳钢螺丝",
-          spec: "M4×20 镀锌",
-          unit: "个",
-          batchNo: "B20240115001",
-          result: "合格",
-          checkDate: "2024-02-18",
-          checker: "李明",
-          status: "已检验",
-        },
-        {
-          id: 2,
-          code: "RQC-2024-002",
-          name: "ABS塑料外壳退货检验",
-          sourceType: "退货单",
-          sourceCode: "RET-2024-002",
-          materialCode: "M-2024-002",
-          materialName: "ABS塑料外壳",
-          spec: "100×80×30mm 白色",
-          unit: "个",
-          batchNo: "B20240120002",
-          result: "不合格",
-          checkDate: "2024-03-05",
-          checker: "王芳",
-          status: "已检验",
-        },
-        {
-          id: 3,
-          code: "RQC-2024-003",
-          name: "玻璃制品退货检验",
-          sourceType: "退货单",
-          sourceCode: "RET-2024-003",
-          materialCode: "M-2024-011",
-          materialName: "玻璃面板",
-          spec: "120×80×3mm 钢化",
-          unit: "片",
-          batchNo: "B20240310003",
-          result: "合格",
-          checkDate: "2024-03-20",
-          checker: "刘洋",
-          status: "已检验",
-        },
-        {
-          id: 4,
-          code: "RQC-2024-004",
-          name: "化工原料退货检验",
-          sourceType: "退货单",
-          sourceCode: "RET-2024-004",
-          materialCode: "M-2024-006",
-          materialName: "化工原料A",
-          spec: "25kg/桶 工业级",
-          unit: "桶",
-          batchNo: "B20240401004",
-          result: "合格",
-          checkDate: "2024-04-05",
-          checker: "陈静",
-          status: "已检验",
-        },
-        {
-          id: 5,
-          code: "RQC-2024-005",
-          name: "电子元件退货检验",
-          sourceType: "退货单",
-          sourceCode: "RET-2024-005",
-          materialCode: "M-2024-009",
-          materialName: "电子元件",
-          spec: "SMD 0805 10kΩ",
-          unit: "盘",
-          batchNo: "B20240420005",
-          result: "不合格",
-          checkDate: "2024-04-25",
-          checker: "赵刚",
-          status: "已检验",
-        },
-        {
-          id: 6,
-          code: "RQC-2024-006",
-          name: "包装材料退货检验",
-          sourceType: "退货单",
-          sourceCode: "RET-2024-006",
-          materialCode: "M-2024-003",
-          materialName: "瓦楞纸箱",
-          spec: "400×300×200mm 五层",
-          unit: "个",
-          batchNo: "B20240501006",
-          result: "合格",
-          checkDate: "2024-05-05",
-          checker: "孙丽",
-          status: "已检验",
-        },
-        {
-          id: 7,
-          code: "RQC-2024-007",
-          name: "五金配件退货检验",
-          sourceType: "退货单",
-          sourceCode: "RET-2024-007",
-          materialCode: "M-2024-012",
-          materialName: "五金配件",
-          spec: "M6×30 镀锌螺栓",
-          unit: "个",
-          batchNo: "B20240520007",
-          result: "合格",
-          checkDate: "2024-05-25",
-          checker: "周明",
-          status: "已检验",
-        },
-        {
-          id: 8,
-          code: "RQC-2024-008",
-          name: "塑胶原料退货检验",
-          sourceType: "退货单",
-          sourceCode: "RET-2024-008",
-          materialCode: "M-2024-014",
-          materialName: "塑胶原料",
-          spec: "ABS 757 白色",
-          unit: "kg",
-          batchNo: "B20240601008",
-          result: "不合格",
-          checkDate: "2024-06-05",
-          checker: "吴凯",
-          status: "已检验",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
-    getResultColor(result) {
-      const map = {
-        '合格': '#52c41a',
-        '不合格': '#ff4d4f'
-      };
-      return map[result] || '#333';
-    },
-    getResultBg(result) {
-      const map = {
-        '合格': '#f6ffed',
-        '不合格': '#fff2f0'
-      };
-      return map[result] || '#fff';
-    },
+    // ========== 获取状态文字颜色 ==========
     getStatusColor(status) {
-      const map = {
-        '已检验': '#52c41a',
-        '待检验': '#faad14'
+      const colorMap = {
+        0: '#006be6',
+        1: '#52c41a',
+        2: '#faad14',
+        3: '#ff4d4f',
+        '0': '#006be6',
+        '1': '#52c41a',
+        '2': '#faad14',
+        '3': '#ff4d4f',
       };
-      return map[status] || '#333';
+      return colorMap[status] || '#006be6';
     },
+    // ========== 获取状态背景颜色 ==========
     getStatusBg(status) {
-      const map = {
-        '已检验': '#f6ffed',
-        '待检验': '#fffbe6'
+      const bgMap = {
+        0: '#e6f6ff',
+        1: '#f6ffed',
+        2: '#fffbe6',
+        3: '#fff2f0',
+        '0': '#e6f6ff',
+        '1': '#f6ffed',
+        '2': '#fffbe6',
+        '3': '#fff2f0',
       };
-      return map[status] || '#fff';
-    }
+      return bgMap[status] || '#e6f6ff';
+    },
+    // ========== 获取退货检验列表 ==========
+    async loadList() {
+      try {
+        const data = await getRqcPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取退货检验列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增退货检验功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑退货检验功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteRqc(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   }
 };
 </script>

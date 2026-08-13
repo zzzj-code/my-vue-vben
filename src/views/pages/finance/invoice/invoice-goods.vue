@@ -4,16 +4,16 @@
       <div class="app-top">
         <div>
           <span>项目名称</span>
-          <input type="text" placeholder="请输入" />
+          <input type="text" placeholder="请输入" v-model="searchForm.goodsName" />
         </div>
         <div>
           <span>税收分类编码</span>
-          <input type="text" placeholder="请输入" />
+          <input type="text" placeholder="请输入" v-model="searchForm.taxCode" />
         </div>
         <div></div>
         <div>
-          <button>重置</button>
-          <button>搜索</button>
+          <button @click="handleReset">重置</button>
+          <button @click="handleSearch">搜索</button>
           展开▽
         </div>
       </div>
@@ -21,7 +21,7 @@
         <div class="main-top">
           <div class="top-1">开票项目</div>
           <div class="top-2">
-            <button>+新增</button>
+            <button @click="handleAdd">+新增</button>
             <button>导出</button>
           </div>
           <div class="top-3">
@@ -48,21 +48,128 @@
               <tr v-if="tabValue.length === 0">
                 <td colspan="8" class="empty-row">暂无数据</td>
               </tr>
+              <tr v-for="(item, index) in tabValue" :key="item.id">
+                <td>{{ index + 1 }}</td>
+                <td>{{ item.goodsName }}</td>
+                <td>{{ item.taxCode }}</td>
+                <td>{{ item.specification }}</td>
+                <td>{{ item.unit }}</td>
+                <td>{{ item.taxRate }}</td>
+                <td>{{ item.createTime }}</td>
+                <td class="ol-col">
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共0条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入开票项目相关API ==========
+import { getInvoiceGoodsPage, deleteInvoiceGoods } from '#/api/finance/invoice/goods';
+
 export default {
   data() {
     return {
+      // 搜索表单
+      searchForm: {
+        goodsName: '',  // 项目名称
+        taxCode: '',    // 税收分类编码
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
       tabValue: [],
     };
+  },
+  mounted() {
+    this.loadInvoiceGoodsList();
+  },
+  methods: {
+    // ========== 获取开票项目列表 ==========
+    async loadInvoiceGoodsList() {
+      try {
+        const data = await getInvoiceGoodsPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          goodsName: this.searchForm.goodsName,
+          taxCode: this.searchForm.taxCode,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          goodsName: item.goodsName || '',          // 项目名称
+          taxCode: item.taxCode || '',              // 税收分类编码
+          specification: item.specification || '',  // 规格型号
+          unit: item.unit || '',                    // 单位
+          taxRate: item.taxRate || '',              // 税率(%)
+          createTime: this.formatTimestamp(item.createTime), // 创建时间
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取开票项目列表失败', err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return '';
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadInvoiceGoodsList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { goodsName: '', taxCode: '' };
+      this.pagination.pageNo = 1;
+      this.loadInvoiceGoodsList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadInvoiceGoodsList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert('新增开票项目功能待实现');
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert(`编辑开票项目：${row.goodsName}`);
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除「${row.goodsName}」吗？`)) return;
+      try {
+        await deleteInvoiceGoods(row.id);
+        alert('删除成功');
+        this.loadInvoiceGoodsList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>

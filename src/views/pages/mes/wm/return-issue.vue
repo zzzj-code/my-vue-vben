@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>退料单编号</span>
-            <input type="text" placeholder="请输入退料单编号" />
+            <input type="text" placeholder="请输入退料单编号" v-model="searchForm.field1" />
           </div>
           <div>
             <span>退料单名称</span>
-            <input type="text" placeholder="请输入退料单名称" />
+            <input type="text" placeholder="请输入退料单名称" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>生产退料单列表</div>
           <div>
-            <button>+新增生产退料单</button>
+            <button @click="handleAdd">+新增生产退料单</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -56,117 +56,107 @@
                 <td>{{ item.returnDate }}</td>
                 <td>{{ item.status }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共9条记录<span>20条/页</span></div>
-      </div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
     </div>
   </div>
+</div>
 </template>
 
 <script>
+// ========== 导入退货出库相关API ==========
+import { getReturnIssuePage, deleteReturnIssue } from '#/api/mes/wm/return-issue';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "MR-2024-001",
-          name: "冲压车间螺丝退料",
-          type: "余料退库",
-          moCode: "MO-2024-001",
-          station: "冲压机台A",
-          returnDate: "2024-01-16",
-          status: "已退库",
-        },
-        {
-          id: 2,
-          code: "MR-2024-002",
-          name: "注塑车间塑胶退料",
-          type: "不良品退库",
-          moCode: "MO-2024-002",
-          station: "注塑机A",
-          returnDate: "2024-01-22",
-          status: "待审核",
-        },
-        {
-          id: 3,
-          code: "MR-2024-003",
-          name: "组装车间物料退料",
-          type: "余料退库",
-          moCode: "MO-2024-003",
-          station: "组装线A",
-          returnDate: "2024-02-03",
-          status: "已退库",
-        },
-        {
-          id: 4,
-          code: "MR-2024-004",
-          name: "表面处理退料",
-          type: "不良品退库",
-          moCode: "MO-2024-004",
-          station: "喷涂线A",
-          returnDate: "2024-02-12",
-          status: "待退库",
-        },
-        {
-          id: 5,
-          code: "MR-2024-005",
-          name: "包装车间余料退库",
-          type: "余料退库",
-          moCode: "MO-2024-005",
-          station: "包装线A",
-          returnDate: "2024-03-02",
-          status: "已退库",
-        },
-        {
-          id: 6,
-          code: "MR-2024-006",
-          name: "机加工退料",
-          type: "不良品退库",
-          moCode: "MO-2024-006",
-          station: "CNC加工中心A",
-          returnDate: "2024-03-18",
-          status: "待审核",
-        },
-        {
-          id: 7,
-          code: "MR-2024-007",
-          name: "线束车间端子退料",
-          type: "余料退库",
-          moCode: "MO-2024-007",
-          station: "线束裁切线",
-          returnDate: "2024-04-03",
-          status: "已退库",
-        },
-        {
-          id: 8,
-          code: "MR-2024-008",
-          name: "组装车间不良品退料",
-          type: "不良品退库",
-          moCode: "MO-2024-008",
-          station: "组装线B",
-          returnDate: "2024-04-12",
-          status: "待退库",
-        },
-        {
-          id: 9,
-          code: "MR-2024-009",
-          name: "注塑车间余料退库",
-          type: "余料退库",
-          moCode: "MO-2024-009",
-          station: "注塑机B",
-          returnDate: "2024-05-03",
-          status: "已退库",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // ========== 获取退货出库列表 ==========
+    async loadList() {
+      try {
+        const data = await getReturnIssuePage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取退货出库列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增退货出库功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑退货出库功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteReturnIssue(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
+  }
 };
 </script>
 

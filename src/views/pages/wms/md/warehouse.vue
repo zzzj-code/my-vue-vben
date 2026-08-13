@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>仓库名称</span>
-            <input type="text" placeholder="请输入仓库名称" />
+            <input type="text" placeholder="请输入仓库名称" v-model="searchForm.warehouseName" />
           </div>
           <div>
             <span>仓库编号</span>
-            <input type="text" placeholder="请输入仓库编号" />
+            <input type="text" placeholder="请输入仓库编号" v-model="searchForm.warehouseCode" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>仓库列表</div>
           <div>
-            <button>+新增仓库</button>
+            <button @click="handleAdd">+新增仓库</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -52,83 +52,123 @@
                 <td>{{ item.sort }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span></div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入仓库管理相关 API（src/api/wms/warehousing/index.js）==========
+// getWarehousingList : 获取仓库列表（GET /wms/warehousing/list）
+// deleteWarehousing  : 删除仓库（DELETE /wms/warehousing/delete?id=xxx）
+import { getWarehousingList, deleteWarehousing } from '#/api/wms/warehousing';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          warehouseName: "北京中心仓",
-          warehouseCode: "BJ-001",
-          remark: "华北地区主仓库",
-          sort: 1,
-          createTime: "2026-01-15 09:30",
-        },
-        {
-          warehouseName: "上海分仓",
-          warehouseCode: "SH-002",
-          remark: "华东地区分仓库",
-          sort: 2,
-          createTime: "2026-02-20 14:20",
-        },
-        {
-          warehouseName: "深圳分仓",
-          warehouseCode: "SZ-003",
-          remark: "华南地区分仓库",
-          sort: 3,
-          createTime: "2026-03-10 11:00",
-        },
-        {
-          warehouseName: "广州分仓",
-          warehouseCode: "GZ-004",
-          remark: "华南地区分仓库",
-          sort: 4,
-          createTime: "2026-04-05 16:45",
-        },
-        {
-          warehouseName: "成都分仓",
-          warehouseCode: "CD-005",
-          remark: "西南地区分仓库",
-          sort: 5,
-          createTime: "2026-05-12 10:30",
-        },
-        {
-          warehouseName: "武汉分仓",
-          warehouseCode: "WH-006",
-          remark: "华中地区分仓库",
-          sort: 6,
-          createTime: "2026-06-18 13:50",
-        },
-        {
-          warehouseName: "杭州分仓",
-          warehouseCode: "HZ-007",
-          remark: "华东地区分仓库",
-          sort: 7,
-          createTime: "2026-07-01 08:20",
-        },
-        {
-          warehouseName: "南京分仓",
-          warehouseCode: "NJ-008",
-          remark: "华东地区分仓库",
-          sort: 8,
-          createTime: "2026-07-20 15:10",
-        },
-      ],
+      // ========== 搜索表单 ==========
+      // 与顶部两个搜索输入框(v-model)绑定，供搜索时传给后端
+      searchForm: {
+        warehouseName: "", // 仓库名称
+        warehouseCode: "", // 仓库编号
+      },
+      // ========== 分页信息 ==========
+      // 页面底部"共X条记录 / 20条/页"就是引用这里的 total 和 pageSize
+      pagination: {
+        pageNo: 1,   // 当前页码
+        pageSize: 20, // 每页条数（与底部"20条/页"保持一致）
+        total: 0,     // 总条数（后端返回）
+      },
+      // ========== 表格数据 ==========
+      // 原先是写死的假数据，现在由接口返回后赋值
+      tabValue: [],
     };
-  }
+  },
+  mounted() {
+    // 页面加载完成后自动拉取一次仓库列表
+    this.loadWarehouseList();
+  },
+  methods: {
+    // ========== 获取仓库列表 ==========
+    async loadWarehouseList() {
+      try {
+        // 调用后端接口，携带分页参数 + 搜索条件
+        const data = await getWarehousingList({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          name: this.searchForm.warehouseName, // 仓库名称（后端参数名以实际为准，可调整）
+          code: this.searchForm.warehouseCode, // 仓库编号（后端参数名以实际为准，可调整）
+        });
+        // /list 接口通常直接返回数组；若后端返回 { list, total } 结构也能兼容
+        const list = Array.isArray(data) ? data : (data && data.list) || [];
+        // 字段映射：把后端字段名转换成页面模板里使用的字段名（warehouseName/warehouseCode/...）
+        this.tabValue = list.map((item) => ({
+          id: item.id,                                   // 主键，删除时要用到
+          warehouseName: item.name || item.warehouseName || "",   // 仓库名称
+          warehouseCode: item.code || item.warehouseCode || "",   // 仓库编号
+          remark: item.remark || "",                     // 备注
+          sort: item.sort || 0,                          // 排序
+          createTime: this.formatTimestamp(item.createTime), // 创建时间（毫秒时间戳 → 格式化字符串）
+        }));
+        // 记录总条数；接口若没返回 total 则用数组长度兜底
+        this.pagination.total =
+          data && data.total !== undefined ? data.total : list.length;
+      } catch (err) {
+        // 接口异常（如未登录/网络错误），打印日志，页面保持空表格
+        console.error("获取仓库列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    // 后端 createTime 是毫秒时间戳，转成 "YYYY-MM-DD HH:mm:ss" 便于阅读
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
+    },
+    // ========== 搜索 ==========
+    // 点击"搜索"按钮：回到第一页并重新请求
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadWarehouseList();
+    },
+    // ========== 重置 ==========
+    // 点击"重置"按钮：清空搜索条件并重新请求
+    handleReset() {
+      this.searchForm = { warehouseName: "", warehouseCode: "" };
+      this.pagination.pageNo = 1;
+      this.loadWarehouseList();
+    },
+    // ========== 新增仓库 ==========
+    handleAdd() {
+      alert("新增仓库功能待实现");
+    },
+    // ========== 编辑仓库 ==========
+    handleEdit(row) {
+      alert(`编辑仓库：${row.warehouseName}`);
+    },
+    // ========== 删除仓库 ==========
+    async handleDelete(row) {
+      // 二次确认，避免误删
+      if (!confirm(`确定要删除「${row.warehouseName}」吗？`)) return;
+      try {
+        // 调用后端删除接口（DELETE /wms/warehousing/delete?id=xxx）
+        await deleteWarehousing(row.id);
+        alert("删除成功");
+        // 删除成功后刷新列表
+        this.loadWarehouseList();
+      } catch (err) {
+        console.error("删除仓库失败", err);
+      }
+    },
+  },
 };
 </script>
 

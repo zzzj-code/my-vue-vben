@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>报工单号</span>
-            <input type="text" placeholder="请输入报工单号" />
+            <input type="text" placeholder="请输入报工单号" v-model="searchForm.field1" />
           </div>
           <div>
             <span>报工类型</span>
-            <input type="text" placeholder="请输入报工类型" />
+            <input type="text" placeholder="请输入报工类型" v-model="searchForm.field2" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>生产报工列表</div>
           <div>
-            <button>+新增生产报工</button>
+            <button @click="handleAdd">+新增生产报工</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -105,188 +105,126 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </div></div>
 </template>
 
 <script>
+// ========== 导入生产报工相关API ==========
+import { getFeedbackPage, deleteFeedback } from '#/api/mes/pro/feedback';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "RP-2024-001",
-          type: "计件报工",
-          station: "冲压机台A",
-          process: "冲压成型",
-          moCode: "MO-2024-001",
-          productCode: "M-2024-001",
-          productName: "碳钢螺丝",
-          spec: "M4×20 镀锌",
-          unit: "个",
-          qty: 500,
-          reporter: "张伟",
-          reportTime: "2024-07-15 10:30",
-          approver: "李明",
-          status: "已审核",
-        },
-        {
-          id: 2,
-          code: "RP-2024-002",
-          type: "计件报工",
-          station: "注塑机A",
-          process: "注塑成型",
-          moCode: "MO-2024-002",
-          productCode: "M-2024-002",
-          productName: "ABS塑料外壳",
-          spec: "100×80×30mm 白色",
-          unit: "个",
-          qty: 200,
-          reporter: "王芳",
-          reportTime: "2024-07-15 09:00",
-          approver: "",
-          status: "待审核",
-        },
-        {
-          id: 3,
-          code: "RP-2024-003",
-          type: "工时报工",
-          station: "CNC加工中心A",
-          process: "CNC加工",
-          moCode: "MO-2024-003",
-          productCode: "M-2024-007",
-          productName: "不锈钢弹簧",
-          spec: "线径0.8mm 外径10mm",
-          unit: "个",
-          qty: 300,
-          reporter: "刘洋",
-          reportTime: "2024-07-14 14:20",
-          approver: "李明",
-          status: "已审核",
-        },
-        {
-          id: 4,
-          code: "RP-2024-004",
-          type: "计件报工",
-          station: "组装线A",
-          process: "组装",
-          moCode: "MO-2024-004",
-          productCode: "P-2024-006",
-          productName: "智能网关",
-          spec: "ZigBee 3.0 白色",
-          unit: "台",
-          qty: 50,
-          reporter: "陈静",
-          reportTime: "2024-07-14 11:00",
-          approver: "赵刚",
-          status: "已审核",
-        },
-        {
-          id: 5,
-          code: "RP-2024-005",
-          type: "工时报工",
-          station: "包装线A",
-          process: "包装",
-          moCode: "MO-2024-005",
-          productCode: "P-2024-012",
-          productName: "智能灯泡",
-          spec: "RGB 9W E27螺口",
-          unit: "个",
-          qty: 150,
-          reporter: "孙丽",
-          reportTime: "2024-07-13 08:30",
-          approver: "",
-          status: "待审核",
-        },
-        {
-          id: 6,
-          code: "RP-2024-006",
-          type: "计件报工",
-          station: "冲压机台B",
-          process: "冲压成型",
-          moCode: "MO-2024-006",
-          productCode: "M-2024-013",
-          productName: "铜接线端子",
-          spec: "DT-10 镀锡",
-          unit: "个",
-          qty: 800,
-          reporter: "周明",
-          reportTime: "2024-07-13 09:30",
-          approver: "李明",
-          status: "已审核",
-        },
-        {
-          id: 7,
-          code: "RP-2024-007",
-          type: "计件报工",
-          station: "注塑机B",
-          process: "注塑成型",
-          moCode: "MO-2024-007",
-          productCode: "M-2024-014",
-          productName: "橡胶密封圈",
-          spec: "内径20mm 外径26mm",
-          unit: "个",
-          qty: 400,
-          reporter: "吴凯",
-          reportTime: "2024-07-12 08:00",
-          approver: "赵刚",
-          status: "已审核",
-        },
-        {
-          id: 8,
-          code: "RP-2024-008",
-          type: "工时报工",
-          station: "组装线B",
-          process: "组装",
-          moCode: "MO-2024-008",
-          productCode: "P-2024-018",
-          productName: "智能插座",
-          spec: "10A 250V WiFi版",
-          unit: "个",
-          qty: 80,
-          reporter: "郑华",
-          reportTime: "2024-07-12 10:00",
-          approver: "",
-          status: "待审核",
-        },
-        {
-          id: 9,
-          code: "RP-2024-009",
-          type: "计件报工",
-          station: "喷涂线A",
-          process: "表面处理",
-          moCode: "MO-2024-009",
-          productCode: "M-2024-008",
-          productName: "PC透明面板",
-          spec: "120×80×2mm 透明",
-          unit: "片",
-          qty: 250,
-          reporter: "林峰",
-          reportTime: "2024-07-11 15:00",
-          approver: "李明",
-          status: "已审核",
-        },
-      ],
+      // 搜索表单
+      searchForm: {},
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
+    // ========== 获取状态文字颜色 ==========
     getStatusColor(status) {
-      const map = {
-        '待审核': '#faad14',
-        '已审核': '#52c41a'
+      const colorMap = {
+        0: '#006be6',
+        1: '#52c41a',
+        2: '#faad14',
+        3: '#ff4d4f',
+        '0': '#006be6',
+        '1': '#52c41a',
+        '2': '#faad14',
+        '3': '#ff4d4f',
       };
-      return map[status] || '#333';
+      return colorMap[status] || '#006be6';
     },
+    // ========== 获取状态背景颜色 ==========
     getStatusBg(status) {
-      const map = {
-        '待审核': '#fffbe6',
-        '已审核': '#f6ffed'
+      const bgMap = {
+        0: '#e6f6ff',
+        1: '#f6ffed',
+        2: '#fffbe6',
+        3: '#fff2f0',
+        '0': '#e6f6ff',
+        '1': '#f6ffed',
+        '2': '#fffbe6',
+        '3': '#fff2f0',
       };
-      return map[status] || '#fff';
-    }
+      return bgMap[status] || '#e6f6ff';
+    },
+    // ========== 获取生产报工列表 ==========
+    async loadList() {
+      try {
+        const data = await getFeedbackPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm,
+        });
+        this.tabValue = data.list || [];
+        this.pagination.total = data.total || 0;
+      } catch (err) {
+        console.error("获取生产报工列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = {};
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增生产报工功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert("编辑生产报工功能待实现");
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm("确定要删除吗？")) return;
+      try {
+        await deleteFeedback(row.id);
+        alert("删除成功");
+        this.loadList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   }
 };
 </script>

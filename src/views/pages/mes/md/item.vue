@@ -52,15 +52,15 @@
           <div class="top-inp">
             <div>
               <span>物料编码</span>
-              <input type="text" placeholder="请输入物料编码" />
+              <input type="text" placeholder="请输入物料编码" v-model="searchForm.code" />
             </div>
             <div>
               <span>物料名称</span>
-              <input type="text" placeholder="请输入物料名称" />
+              <input type="text" placeholder="请输入物料名称" v-model="searchForm.name" />
             </div>
             <div>
-              <button>重置</button>
-              <button>搜索</button>
+              <button @click="handleReset">重置</button>
+              <button @click="handleSearch">搜索</button>
               展开▽
             </div>
           </div>
@@ -69,7 +69,7 @@
           <div class="main-top">
             <div>物料产品列表</div>
             <div>
-              <button>+新增物料</button>
+              <button @click="handleAdd">+新增物料</button>
               <button>导入</button>
               <button>导出</button>
               <button>🔍</button>
@@ -136,226 +136,50 @@
                   </td>
                   <td>{{ item.createTime }}</td>
                   <td class="ol-col">
-                    <button>编辑</button>
-                    <button>删除</button>
+                    <button @click="handleEdit(item)">编辑</button>
+                    <button @click="handleDelete(item)">删除</button>
                     <button>标签打印</button>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <div class="main-floot">共{{ tabValue.length }}条记录<span>20条/页</span></div>
+          <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script>
+// ========== 导入物料产品相关API ==========
+import { getItemPage, deleteItem } from '#/api/mes/md/item';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          code: "M-2024-001",
-          name: "碳钢螺丝 M4×20",
-          spec: "M4×20 镀锌",
-          unit: "个",
-          category: "五金类",
-          type: "物料",
-          safetyStock: 5000,
-          status: "启用",
-          createTime: "2024-01-15 10:30",
-        },
-        {
-          code: "M-2024-002",
-          name: "ABS塑料外壳",
-          spec: "100×80×30mm 白色",
-          unit: "个",
-          category: "注塑类",
-          type: "物料",
-          safetyStock: 2000,
-          status: "启用",
-          createTime: "2024-01-20 14:20",
-        },
-        {
-          code: "M-2024-003",
-          name: "瓦楞纸箱",
-          spec: "400×300×200mm 五层",
-          unit: "个",
-          category: "包装类",
-          type: "物料",
-          safetyStock: 3000,
-          status: "启用",
-          createTime: "2024-02-01 09:15",
-        },
-        {
-          code: "M-2024-004",
-          name: "焊接助焊剂",
-          spec: "500ml/瓶 无铅",
-          unit: "瓶",
-          category: "辅料类",
-          type: "物料",
-          safetyStock: 200,
-          status: "停用",
-          createTime: "2024-02-10 16:40",
-        },
-        {
-          code: "P-2024-005",
-          name: "电源适配器半成品",
-          spec: "12V/2A 裸板",
-          unit: "个",
-          category: "半成品",
-          type: "产品",
-          safetyStock: 1000,
-          status: "启用",
-          createTime: "2024-03-01 11:00",
-        },
-        {
-          code: "P-2024-006",
-          name: "智能网关成品",
-          spec: "ZigBee 3.0 白色",
-          unit: "台",
-          category: "产成品",
-          type: "产品",
-          safetyStock: 500,
-          status: "启用",
-          createTime: "2024-03-15 13:30",
-        },
-        {
-          code: "M-2024-007",
-          name: "不锈钢弹簧",
-          spec: "线径0.8mm 外径10mm",
-          unit: "个",
-          category: "五金类",
-          type: "物料",
-          safetyStock: 8000,
-          status: "启用",
-          createTime: "2024-04-01 08:50",
-        },
-        {
-          code: "M-2024-008",
-          name: "PC透明面板",
-          spec: "120×80×2mm 透明",
-          unit: "片",
-          category: "注塑类",
-          type: "物料",
-          safetyStock: 1500,
-          status: "启用",
-          createTime: "2024-04-10 10:20",
-        },
-        {
-          code: "M-2024-009",
-          name: "气泡膜卷材",
-          spec: "500mm宽 双面气泡",
-          unit: "米",
-          category: "包装类",
-          type: "物料",
-          safetyStock: 2000,
-          status: "停用",
-          createTime: "2024-05-01 15:00",
-        },
-        {
-          code: "M-2024-010",
-          name: "散热硅脂",
-          spec: "1g/支 导热系数6W/mK",
-          unit: "支",
-          category: "辅料类",
-          type: "物料",
-          safetyStock: 300,
-          status: "启用",
-          createTime: "2024-05-15 09:30",
-        },
-        {
-          code: "P-2024-011",
-          name: "主板半成品",
-          spec: "PCB 四层板 带元件",
-          unit: "片",
-          category: "半成品",
-          type: "产品",
-          safetyStock: 800,
-          status: "启用",
-          createTime: "2024-06-01 14:10",
-        },
-        {
-          code: "P-2024-012",
-          name: "智能灯泡成品",
-          spec: "RGB 9W E27螺口",
-          unit: "个",
-          category: "产成品",
-          type: "产品",
-          safetyStock: 2000,
-          status: "启用",
-          createTime: "2024-06-20 11:45",
-        },
-        {
-          code: "M-2024-013",
-          name: "铜接线端子",
-          spec: "DT-10 镀锡",
-          unit: "个",
-          category: "五金类",
-          type: "物料",
-          safetyStock: 10000,
-          status: "启用",
-          createTime: "2024-07-01 08:00",
-        },
-        {
-          code: "M-2024-014",
-          name: "橡胶密封圈",
-          spec: "内径20mm 外径26mm",
-          unit: "个",
-          category: "注塑类",
-          type: "物料",
-          safetyStock: 6000,
-          status: "启用",
-          createTime: "2024-07-10 16:20",
-        },
-        {
-          code: "M-2024-015",
-          name: "PE缠绕膜",
-          spec: "500mm宽 2kg/卷",
-          unit: "卷",
-          category: "包装类",
-          type: "物料",
-          safetyStock: 500,
-          status: "启用",
-          createTime: "2024-07-20 13:00",
-        },
-        {
-          code: "M-2024-016",
-          name: "助焊剂稀释剂",
-          spec: "1L/瓶 环保型",
-          unit: "瓶",
-          category: "辅料类",
-          type: "物料",
-          safetyStock: 100,
-          status: "停用",
-          createTime: "2024-08-01 09:10",
-        },
-        {
-          code: "P-2024-017",
-          name: "传感器半成品",
-          spec: "温湿度 SHT30",
-          unit: "个",
-          category: "半成品",
-          type: "产品",
-          safetyStock: 1200,
-          status: "启用",
-          createTime: "2024-08-10 10:30",
-        },
-        {
-          code: "P-2024-018",
-          name: "智能插座成品",
-          spec: "10A 250V WiFi版",
-          unit: "个",
-          category: "产成品",
-          type: "产品",
-          safetyStock: 1500,
-          status: "启用",
-          createTime: "2024-08-20 15:50",
-        },
-      ],
-
+      // 搜索表单
+      searchForm: {
+        code: "",  // 物料编码
+        name: "",  // 物料名称
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
       selectedTab: "day",
       rangeStart: "2026-07-01",
       rangeEnd: "2026-07-25",
@@ -390,7 +214,78 @@ export default {
       ],
     };
   },
+  mounted() {
+    this.loadItemList();
+  },
   methods: {
+    // ========== 获取物料产品列表 ==========
+    async loadItemList() {
+      try {
+        const data = await getItemPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          code: this.searchForm.code,
+          name: this.searchForm.name,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          code: item.code || "",              // 物料编码
+          name: item.name || "",              // 物料名称
+          spec: item.specification || "",     // 规格型号
+          unit: item.unitName || "",          // 单位
+          category: item.categoryName || "",  // 分类
+          type: item.itemType === 0 ? "物料" : "产品", // 类型
+          safetyStock: item.safetyStock || 0, // 安全库存
+          status: item.status === 0 ? "启用" : "停用", // 状态
+          createTime: this.formatTimestamp(item.createTime), // 创建时间
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取物料产品列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadItemList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { code: "", name: "" };
+      this.pagination.pageNo = 1;
+      this.loadItemList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadItemList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增物料功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert(`编辑物料：${row.name}`);
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除「${row.name}」吗？`)) return;
+      try {
+        await deleteItem(row.id);
+        alert("删除成功");
+        this.loadItemList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
     toggleNode(node) {
       if (node.children && node.children.length) {
         node.open = !node.open;
