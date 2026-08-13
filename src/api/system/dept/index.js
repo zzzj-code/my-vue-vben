@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：系统管理模块
+ * 页面：部门管理页面
+ * 功能：部门管理相关接口
+ * 接口前缀：/admin-api/system
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 async function getSimpleDeptList() {
   return requestClient.get("/system/dept/simple-list");

@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：系统管理模块
+ * 页面：字典类型管理页面
+ * 功能：字典类型管理相关接口
+ * 接口前缀：/admin-api/system
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getSimpleDictTypeList() {
   return requestClient.get(

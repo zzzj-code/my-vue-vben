@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：OA协同办公模块
+ * 页面：用印申请页面
+ * 功能：用印申请相关接口
+ * 接口前缀：/admin-api/oa
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getSealApplyBillPage(params) {
   return requestClient.get(

@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>供应商名称</span>
-            <input type="text" placeholder="请输入供应商名称" />
+            <input type="text" placeholder="请输入供应商名称" v-model="searchForm.name" />
           </div>
           <div>
             <span>手机号码</span>
-            <input type="text" placeholder="请输入手机号码" />
+            <input type="text" placeholder="请输入手机号码" v-model="searchForm.mobile" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -73,107 +73,89 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条数据<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入供应商管理相关API ==========
+import { getSupplierPage } from '#/api/erp/purchase/supplier';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: "SUP-2024-001",
-          name: "华为技术有限公司",
-          contact: "张建国",
-          phone: "13800138001",
-          tel: "0755-88886666",
-          email: "supplier@huawei.com",
-          status: "启用",
-          sort: 1,
-          remark: "核心供应商，优先合作",
-        },
-        {
-          id: "SUP-2024-002",
-          name: "联想集团有限公司",
-          contact: "李明辉",
-          phone: "13800138002",
-          tel: "010-88886666",
-          email: "purchase@lenovo.com",
-          status: "启用",
-          sort: 2,
-          remark: "长期合作伙伴",
-        },
-        {
-          id: "SUP-2024-003",
-          name: "小米科技有限公司",
-          contact: "王芳",
-          phone: "13800138003",
-          tel: "010-66668888",
-          email: "supply@xiaomi.com",
-          status: "启用",
-          sort: 3,
-          remark: "",
-        },
-        {
-          id: "SUP-2024-004",
-          name: "苹果电子产品商贸有限公司",
-          contact: "刘洋",
-          phone: "13800138004",
-          tel: "021-88886666",
-          email: "procurement@apple.com",
-          status: "启用",
-          sort: 4,
-          remark: "国际品牌供应商",
-        },
-        {
-          id: "SUP-2024-005",
-          name: "三星电子有限公司",
-          contact: "陈静",
-          phone: "13800138005",
-          tel: "0512-88886666",
-          email: "samsung@supplier.com",
-          status: "暂停",
-          sort: 5,
-          remark: "暂停合作，待评估",
-        },
-        {
-          id: "SUP-2024-006",
-          name: "戴尔中国有限公司",
-          contact: "赵磊",
-          phone: "13800138006",
-          tel: "010-77776666",
-          email: "dell@supplier.com",
-          status: "启用",
-          sort: 6,
-          remark: "电脑供应商",
-        },
-        {
-          id: "SUP-2024-007",
-          name: "索尼中国有限公司",
-          contact: "孙悦",
-          phone: "13800138007",
-          tel: "020-88886666",
-          email: "sony@supplier.com",
-          status: "启用",
-          sort: 7,
-          remark: "电子元件供应商",
-        },
-        {
-          id: "SUP-2024-008",
-          name: "珠海格力电器股份有限公司",
-          contact: "周明",
-          phone: "13800138008",
-          tel: "0756-88886666",
-          email: "gree@supplier.com",
-          status: "启用",
-          sort: 8,
-          remark: "空调设备供应商",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        name: "",   // 供应商名称
+        mobile: "", // 手机号码
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadSupplierList();
+  },
+  methods: {
+    // ========== 获取供应商列表 ==========
+    async loadSupplierList() {
+      try {
+        const data = await getSupplierPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          name: this.searchForm.name,
+          mobile: this.searchForm.mobile,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          name: item.name || "",             // 供应商名称
+          contact: item.contact || "",       // 联系人
+          phone: item.mobile || "",          // 手机号码
+          tel: item.telephone || "",         // 联系电话
+          email: item.email || "",           // 电子邮箱
+          status: item.status === 0 ? "启用" : "禁用", // 状态
+          sort: item.sort || 0,              // 排序
+          remark: item.remark || "",         // 备注
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取供应商列表失败", err);
+      }
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadSupplierList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { name: "", mobile: "" };
+      this.pagination.pageNo = 1;
+      this.loadSupplierList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadSupplierList();
+    },
   },
 };
 </script>

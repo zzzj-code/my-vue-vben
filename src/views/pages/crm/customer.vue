@@ -5,15 +5,15 @@
         <div class="top-box">
           <div>
             <span>线索名称</span>
-            <input type="text" placeholder="请输入线索名称" />
+            <input type="text" placeholder="请输入线索名称" v-model="searchForm.name" />
           </div>
           <div>
             <span>手机号</span>
-            <input type="text" placeholder="请输入手机号" />
+            <input type="text" placeholder="请输入手机号" v-model="searchForm.mobile" />
           </div>
           <div>
             <span>电话</span>
-            <input type="text" placeholder="请输入电话" />
+            <input type="text" placeholder="请输入电话" v-model="searchForm.telephone" />
           </div>
           <div>
             <span>创建时间</span>
@@ -21,8 +21,8 @@
           </div>
           <div></div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -52,12 +52,12 @@
             </div>
           </div>
           <div class="top-2">
-            <button>+新增线索</button>
+            <button @click="handleAdd">+新增线索</button>
             <button>导出</button>
-            <button>🔍</button>
+            <button @click="handleSearch">🔍</button>
           </div>
           <div class="top-3">
-            <button>⟳</button>
+            <button @click="loadCustomerList">⟳</button>
             <button>⛶</button>
             <button>⊞</button>
           </div>
@@ -90,7 +90,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue" :key="item.id">
+              <tr v-for="item in rows" :key="item.id">
                 <td class="col-name">{{ item.name }}</td>
                 <td>{{ item.source }}</td>
                 <td>{{ item.mobile }}</td>
@@ -107,158 +107,163 @@
                 <td>{{ item.department }}</td>
                 <td>{{ item.updateTime }}</td>
                 <td>{{ item.createTime }}</td>
-                <td class="ol-col">编辑&nbsp;&nbsp;删除</td>
+                <td class="ol-col">
+                  <a href="#" @click.prevent="handleEdit(item)">编辑</a>&nbsp;&nbsp;
+                  <a href="#" @click.prevent="handleDelete(item)" style="color: red;">删除</a>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共7条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入客户管理相关API ==========
+// getCustomerPage: 分页查询客户列表
+// getCustomer: 获取单条客户详情
+// createCustomer: 创建客户
+// updateCustomer: 更新客户
+// deleteCustomer: 删除客户
+// exportCustomer: 导出客户Excel
+import { getCustomerPage, deleteCustomer } from '#/api/crm/customer';
+
 export default {
   data() {
     return {
-      activeTab: "mine",
-      tabValue: [
-        {
-          id: 1,
-          name: "张三科技",
-          source: "官网咨询",
-          mobile: "138****1234",
-          phone: "010-8888****",
-          email: "zhangsan@tech.com",
-          address: "北京市朝阳区建国路88号",
-          industry: "互联网",
-          level: "A级",
-          nextContact: "2026-08-05 14:00",
-          remark: "有意向，需跟进",
-          lastFollowTime: "2026-07-28 10:30",
-          lastFollowRecord: "已沟通产品方案，客户感兴趣",
-          owner: "王经理",
-          department: "销售一部",
-          updateTime: "2026-07-28 10:30",
-          createTime: "2026-07-20 09:00",
-        },
-        {
-          id: 2,
-          name: "李四制造",
-          source: "客户转介绍",
-          mobile: "139****5678",
-          phone: "021-6666****",
-          email: "lisi@make.com",
-          address: "上海市浦东新区张江路100号",
-          industry: "制造业",
-          level: "B级",
-          nextContact: "2026-08-10 09:30",
-          remark: "需准备报价单",
-          lastFollowTime: "2026-07-27 16:20",
-          lastFollowRecord: "已发送产品资料，等待回复",
-          owner: "李主管",
-          department: "销售二部",
-          updateTime: "2026-07-27 16:20",
-          createTime: "2026-07-18 14:30",
-        },
-        {
-          id: 3,
-          name: "王五教育",
-          source: "线下展会",
-          mobile: "137****9012",
-          phone: "0755-5555****",
-          email: "wangwu@edu.com",
-          address: "深圳市南山区科技园路66号",
-          industry: "教育行业",
-          level: "A级",
-          nextContact: "2026-08-01 15:00",
-          remark: "决策人已明确，近期签约",
-          lastFollowTime: "2026-07-28 11:00",
-          lastFollowRecord: "已确认合作意向，准备合同",
-          owner: "张经理",
-          department: "销售一部",
-          updateTime: "2026-07-28 11:00",
-          createTime: "2026-07-15 10:00",
-        },
-        {
-          id: 4,
-          name: "赵六医疗",
-          source: "线上广告",
-          mobile: "136****3456",
-          phone: "010-7777****",
-          email: "zhaoliu@med.com",
-          address: "北京市海淀区中关村路88号",
-          industry: "医疗健康",
-          level: "C级",
-          nextContact: "2026-08-12 10:00",
-          remark: "预算有限，需多次沟通",
-          lastFollowTime: "2026-07-26 09:00",
-          lastFollowRecord: "初步沟通，客户在比较竞品",
-          owner: "王经理",
-          department: "销售一部",
-          updateTime: "2026-07-26 09:00",
-          createTime: "2026-07-12 16:20",
-        },
-        {
-          id: 5,
-          name: "孙七金融",
-          source: "合作伙伴推荐",
-          mobile: "135****7890",
-          phone: "021-9999****",
-          email: "sunqi@finance.com",
-          address: "上海市静安区南京西路200号",
-          industry: "金融行业",
-          level: "A级",
-          nextContact: "2026-07-30 14:30",
-          remark: "紧急需求，优先处理",
-          lastFollowTime: "2026-07-28 13:00",
-          lastFollowRecord: "已提供解决方案，客户满意",
-          owner: "李主管",
-          department: "销售二部",
-          updateTime: "2026-07-28 13:00",
-          createTime: "2026-07-10 11:00",
-        },
-        {
-          id: 6,
-          name: "周八零售",
-          source: "官网咨询",
-          mobile: "134****9012",
-          phone: "0755-4444****",
-          email: "zhouba@retail.com",
-          address: "深圳市福田区华强路50号",
-          industry: "零售行业",
-          level: "B级",
-          nextContact: "2026-08-08 09:00",
-          remark: "需要演示产品",
-          lastFollowTime: "2026-07-25 15:30",
-          lastFollowRecord: "已预约线上演示",
-          owner: "张经理",
-          department: "销售一部",
-          updateTime: "2026-07-25 15:30",
-          createTime: "2026-07-08 13:40",
-        },
-        {
-          id: 7,
-          name: "吴九物流",
-          source: "客户转介绍",
-          mobile: "133****2345",
-          phone: "010-3333****",
-          email: "wujiu@logistics.com",
-          address: "北京市通州区物流园区8号",
-          industry: "物流行业",
-          level: "B级",
-          nextContact: "2026-08-06 16:00",
-          remark: "重点跟进客户",
-          lastFollowTime: "2026-07-27 10:00",
-          lastFollowRecord: "已沟通合作细节",
-          owner: "王经理",
-          department: "销售一部",
-          updateTime: "2026-07-27 10:00",
-          createTime: "2026-07-05 09:20",
-        },
-      ],
+      // ========== Tab切换 ==========
+      activeTab: "mine",  // mine=我负责的, participate=我参与的, subordinate=下属负责的
+
+      // ========== 搜索表单数据 ==========
+      searchForm: {
+        name: "",        // 客户名称（模板显示为"线索名称"）
+        mobile: "",      // 手机号
+        telephone: "",   // 电话
+      },
+
+      // ========== 分页数据 ==========
+      pagination: {
+        pageNo: 1,        // 当前页码
+        pageSize: 10,     // 每页条数
+        total: 0,         // 总记录数
+      },
+
+      // ========== 表格数据（从接口获取，初始为空） ==========
+      rows: [],
     };
+  },
+
+  // ========== 页面挂载后自动加载列表 ==========
+  mounted() {
+    this.loadCustomerList();
+  },
+
+  methods: {
+    // ========== 接口对接方法：获取客户列表 ==========
+    async loadCustomerList() {
+      try {
+        // 调用分页查询接口，传入页码、每页条数和搜索条件
+        const data = await getCustomerPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          name: this.searchForm.name,
+          mobile: this.searchForm.mobile,
+          telephone: this.searchForm.telephone,
+        });
+
+        // 将接口返回的数据转换为页面需要的格式
+        this.rows = data.list.map((item) => ({
+          id: item.id,
+          name: item.name || "",
+          source: item.sourceName || "",
+          mobile: item.mobile || "",
+          phone: item.telephone || "",
+          email: item.email || "",
+          address: item.address || "",
+          industry: item.industryName || "",
+          level: item.levelName || "",
+          nextContact: item.contactNextTime || "",
+          remark: item.remark || "",
+          lastFollowTime: this.formatTimestamp(item.followLastTime),
+          lastFollowRecord: item.followLastContent || "",
+          owner: item.ownerUserName || "",
+          department: item.ownerDeptName || "",
+          updateTime: this.formatTimestamp(item.updateTime),
+          createTime: this.formatTimestamp(item.createTime),
+        }));
+
+        // 更新总记录数
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取客户列表失败", err);
+      }
+    },
+
+    // ========== 工具方法：时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+
+    // ========== 搜索按钮 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadCustomerList();
+    },
+
+    // ========== 重置按钮 ==========
+    handleReset() {
+      this.searchForm = { name: "", mobile: "", telephone: "" };
+      this.pagination.pageNo = 1;
+      this.loadCustomerList();
+    },
+
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadCustomerList();
+    },
+
+    // ========== 新增客户 ==========
+    handleAdd() {
+      alert("新增客户功能待实现");
+    },
+
+    // ========== 编辑客户 ==========
+    handleEdit(row) {
+      alert(`编辑客户：${row.name}`);
+    },
+
+    // ========== 删除客户 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除客户「${row.name}」吗？`)) return;
+      try {
+        await deleteCustomer(row.id);
+        alert("删除成功");
+        this.loadCustomerList();
+      } catch (err) {
+        console.error("删除客户失败", err);
+      }
+    },
   },
 };
 </script>
@@ -485,6 +490,9 @@ export default {
   right: 0;
   z-index: 2;
   background-color: #fff;
+}
+.ol-col a{
+  text-decoration: none;
 }
 
 .main-floot {

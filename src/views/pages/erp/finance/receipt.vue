@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>收款单号</span>
-            <input type="text" placeholder="请输入收款单号" />
+            <input type="text" placeholder="请输入收款单号" v-model="searchForm.no" />
           </div>
           <div>
             <span>收款时间</span>
             <input type="text" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div class="top-1">收款单列表</div>
           <div class="top-2">
-            <button>+新增收款单</button>
+            <button @click="handleAdd">+新增收款单</button>
             <button>导出</button>
             <button disabled>批量删除</button>
             <button>🔍</button>
@@ -55,21 +55,145 @@
                 </th>
               </tr>
             </thead>
-            <tbody></tbody>
+            <tbody>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td class="col-check"><input type="checkbox" disabled /></td>
+                <td class="col-id">{{ item.no }}</td>
+                <td>{{ item.customer }}</td>
+                <td>{{ item.receiptTime }}</td>
+                <td>{{ item.creator }}</td>
+                <td>{{ item.financeUser }}</td>
+                <td>{{ item.account }}</td>
+                <td>{{ item.totalPrice }}</td>
+                <td>{{ item.discountPrice }}</td>
+                <td>{{ item.receiptPrice }}</td>
+                <td>{{ item.status }}</td>
+                <td class="ol-col">
+                  <a href="#" @click.prevent="handleDetail(item)">详情</a>&nbsp;&nbsp;
+                  <a href="#" @click.prevent="handleEdit(item)">编辑</a>&nbsp;&nbsp;
+                  <a href="#" @click.prevent="handleApprove(item)">审批</a>&nbsp;&nbsp;
+                  <a href="#" @click.prevent="handleDelete(item)">删除</a>
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
-        <div class="main-floot">共0条数据<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入收款单相关API ==========
+import { getFinanceReceiptPage, deleteFinanceReceipt } from '#/api/erp/finance/receipt';
+
 export default {
   data() {
     return {
+      // 搜索表单
+      searchForm: {
+        no: "",        // 收款单号
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
       tabValue: [],
     };
+  },
+  mounted() {
+    this.loadFinanceReceiptList();
+  },
+  methods: {
+    // ========== 获取收款单列表 ==========
+    async loadFinanceReceiptList() {
+      try {
+        const data = await getFinanceReceiptPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          no: this.searchForm.no,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          no: item.no || "",                     // 收款单号
+          customer: item.customerName || "",     // 客户
+          receiptTime: this.formatTimestamp(item.receiptTime), // 收款时间
+          creator: item.creatorName || "",       // 创建人
+          financeUser: item.financeUserName || "", // 财务人员
+          account: item.accountName || "",       // 收款账户
+          totalPrice: item.totalPrice || 0,      // 合计收款
+          discountPrice: item.discountPrice || 0, // 优惠金额
+          receiptPrice: item.receiptPrice || 0,  // 实际收款
+          status: item.status === 20 ? "已审核" : "未审核", // 状态
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取收款单列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadFinanceReceiptList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { no: "" };
+      this.pagination.pageNo = 1;
+      this.loadFinanceReceiptList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadFinanceReceiptList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增收款单功能待实现");
+    },
+    // ========== 详情 ==========
+    handleDetail(row) {
+      alert(`查看详情：${row.no}`);
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert(`编辑收款单：${row.no}`);
+    },
+    // ========== 审批 ==========
+    handleApprove(row) {
+      alert(`审批收款单：${row.no}`);
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除「${row.no}」吗？`)) return;
+      try {
+        await deleteFinanceReceipt([row.id]);
+        alert("删除成功");
+        this.loadFinanceReceiptList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   },
 };
 </script>

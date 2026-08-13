@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：CRM客户管理模块
+ * 页面：客户限制配置页面
+ * 功能：客户限制配置相关接口
+ * 接口前缀：/admin-api/crm
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 var LimitConfType = /* @__PURE__ */ ((LimitConfType2) => {
   LimitConfType2[LimitConfType2["CUSTOMER_LOCK_LIMIT"] = 2] = "CUSTOMER_LOCK_LIMIT";

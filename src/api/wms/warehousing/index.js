@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：WMS仓储模块
+ * 页面：仓库管理页面
+ * 功能：仓库管理相关接口
+ * 接口前缀：/admin-api/wms
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getWarehousingList(params) {
   return requestClient.get("/wms/warehousing/list", { params });

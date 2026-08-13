@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：系统管理模块
+ * 页面：租户套餐管理页面
+ * 功能：租户套餐管理相关接口
+ * 接口前缀：/admin-api/system
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getTenantPackagePage(params) {
   return requestClient.get(

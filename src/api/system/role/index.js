@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：系统管理模块
+ * 页面：角色管理页面
+ * 功能：角色管理相关接口
+ * 接口前缀：/admin-api/system
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getRolePage(params) {
   return requestClient.get(

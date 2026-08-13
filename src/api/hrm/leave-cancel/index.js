@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：HRM人力资源模块
+ * 页面：请假销假页面
+ * 功能：请假销假相关接口
+ * 接口前缀：/admin-api/hrm
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getLeaveCancelBillPage(params) {
   return requestClient.get("/hrm/leave-cancel-bill/page", { params });

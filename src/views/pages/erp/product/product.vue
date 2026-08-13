@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>名称</span>
-            <input type="text" placeholder="请输入名称" />
+            <input type="text" placeholder="请输入名称" v-model="searchForm.name" />
           </div>
           <div>
             <span>分类</span>
-            <input type="text" placeholder="请输入分类" />
+            <input type="text" placeholder="请输入分类" v-model="searchForm.categoryId" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div class="top-1">产品列表</div>
           <div class="top-2">
-            <button>+新增产品</button>
+            <button @click="handleAdd">+新增产品</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -52,36 +52,139 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>6902083881405</td>
-                <td>娃哈哈饮用纯净水</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td>酒水</td>
-                <td>瓶</td>
-                <td>0.80</td>
-                <td></td>
-                <td></td>
-                <td>开启</td>
-                <td>2026-07-27 10:27:47</td>
-                <td class="ol-col">编辑&nbsp;&nbsp;删除</td>
+              <tr v-for="item in rows" :key="item.id">
+                <td>{{ item.barCode }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.mdmCode }}</td>
+                <td>{{ item.mdmName }}</td>
+                <td>{{ item.standard }}</td>
+                <td>{{ item.categoryName }}</td>
+                <td>{{ item.unitName }}</td>
+                <td>{{ item.purchasePrice }}</td>
+                <td>{{ item.salePrice }}</td>
+                <td>{{ item.minPrice }}</td>
+                <td>{{ item.status }}</td>
+                <td>{{ item.createTime }}</td>
+                <td class="ol-col">
+                  <a href="#" @click.prevent="handleEdit(item)">编辑</a>&nbsp;&nbsp;
+                  <a href="#" @click.prevent="handleDelete(item)">删除</a>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共1条数据<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入产品管理相关API ==========
+import { getProductPage, deleteProduct } from '#/api/erp/product/product';
+
 export default {
   data() {
     return {
-      tabValue: [],
+      // 搜索表单
+      searchForm: {
+        name: "",       // 产品名称
+        categoryId: "", // 产品分类
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      rows: [],
     };
+  },
+  mounted() {
+    this.loadProductList();
+  },
+  methods: {
+    // ========== 获取产品列表 ==========
+    async loadProductList() {
+      try {
+        const data = await getProductPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          name: this.searchForm.name,
+          categoryId: this.searchForm.categoryId,
+        });
+        // 字段映射，适配页面表格
+        this.rows = data.list.map((item) => ({
+          id: item.id,
+          barCode: item.barCode || "",           // 条码
+          name: item.name || "",                 // 名称
+          mdmCode: item.mdmCode || "",           // MDM物料编码
+          mdmName: item.mdmName || "",           // MDM物料名称
+          standard: item.standard || "",         // 规格
+          categoryName: item.categoryName || "", // 分类
+          unitName: item.unitName || "",         // 单位
+          purchasePrice: item.purchasePrice || "", // 采购价格
+          salePrice: item.salePrice || "",       // 销售价格
+          minPrice: item.minPrice || "",         // 最低价格
+          status: item.status === 0 ? "开启" : "关闭", // 状态
+          createTime: this.formatTimestamp(item.createTime), // 创建时间
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取产品列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}:${String(date.getSeconds()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadProductList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { name: "", categoryId: "" };
+      this.pagination.pageNo = 1;
+      this.loadProductList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadProductList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增产品功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert(`编辑产品：${row.name}`);
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除「${row.name}」吗？`)) return;
+      try {
+        await deleteProduct(row.id);
+        alert("删除成功");
+        this.loadProductList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   },
 };
 </script>

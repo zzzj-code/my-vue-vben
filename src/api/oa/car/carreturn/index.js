@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：OA协同办公模块
+ * 页面：还车登记页面
+ * 功能：还车登记相关接口
+ * 接口前缀：/admin-api/oa
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getCarReturnBillPage(params) {
   return requestClient.get("/oa/car-return-bill/page", { params });

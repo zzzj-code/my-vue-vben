@@ -7,21 +7,21 @@
           <div>
             <span>提前提醒设置</span>
             <label>
-              <input type="radio" name="gender" checked />
+              <input type="radio" name="gender" :checked="form.notifyEnabled" @change="form.notifyEnabled = true" />
               开启
             </label>
             <label>
-              <input type="radio" name="gender"/>
+              <input type="radio" name="gender" :checked="!form.notifyEnabled" @change="form.notifyEnabled = false" />
               关闭
             </label>
           </div>
           <div>
             <span>提前提醒天数</span>
-            <input type="text" value="2">
+            <input type="text" v-model="form.notifyDays">
           </div>
           <div>
-            <button>重置</button>
-            <button>提交</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSubmit">提交</button>
           </div>
         </div>
       </div>
@@ -29,7 +29,48 @@
   </div>
 </template>
 
-<script></script>
+<script>
+// ========== 导入合同配置相关API ==========
+import { getContractConfig, updateContractConfig } from '#/api/crm/contract/config';
+
+export default {
+  data() {
+    return {
+      form: {
+        notifyEnabled: true,  // 提前提醒设置
+        notifyDays: 2,        // 提前提醒天数
+      },
+    };
+  },
+  mounted() {
+    this.loadConfig();
+  },
+  methods: {
+    async loadConfig() {
+      try {
+        const data = await getContractConfig();
+        if (data) {
+          this.form.notifyEnabled = data.notifyEnabled !== false;
+          this.form.notifyDays = data.notifyDays || 2;
+        }
+      } catch (err) {
+        console.error("获取合同配置失败", err);
+      }
+    },
+    handleReset() {
+      this.form = { notifyEnabled: true, notifyDays: 2 };
+    },
+    async handleSubmit() {
+      try {
+        await updateContractConfig(this.form);
+        alert("保存成功");
+      } catch (err) {
+        console.error("保存合同配置失败", err);
+      }
+    },
+  },
+};
+</script>
 
 <style scoped>
 .page-wrapper {

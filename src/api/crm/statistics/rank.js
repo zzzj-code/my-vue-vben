@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：CRM客户管理模块
+ * 页面：排行榜页面
+ * 功能：排行榜相关接口
+ * 接口前缀：/admin-api/crm
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getDatas(activeTabName, params) {
   switch (activeTabName) {

@@ -21,10 +21,10 @@
           </div>
         </div>
         <div class="top-b">
-          <button>+新增规则</button>
+          <button @click="handleAdd">+新增规则</button>
         </div>
         <div class="top-c">
-          <button>⟳</button>
+          <button @click="loadList">⟳</button>
           <button>⛶</button>
           <button>⊞</button>
         </div>
@@ -42,24 +42,90 @@
                     <th style="width: 180px;">操作</th>
                 </tr>
             </thead>
+            <tbody>
+                <tr v-for="item in rows" :key="item.id">
+                    <td>{{ item.no }}</td>
+                    <td>{{ item.userNames }}</td>
+                    <td>{{ item.deptNames }}</td>
+                    <td>{{ item.maxCount }}</td>
+                    <td>{{ item.dealCountEnabled }}</td>
+                    <td>{{ item.createTime }}</td>
+                    <td>
+                      <a href="#" @click.prevent="handleEdit(item)">编辑</a>&nbsp;&nbsp;
+                      <a href="#" @click.prevent="handleDelete(item)" style="color: red;">删除</a>
+                    </td>
+                </tr>
+            </tbody>
         </table>
       </div>
-      <div class="app-floot">共0条记录<span>20条/页</span></div>
+      <div class="app-floot">
+        共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+        <div style="float: right;">
+          <button @click="handlePageChange(1)">&lt;&lt;</button>
+          <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+          <button class="active">{{ pagination.pageNo }}</button>
+          <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+          <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入客户限制配置相关API ==========
+import { getCustomerLimitConfigPage, deleteCustomerLimitConfig } from '#/api/crm/customer/limitConfig';
+
 export default {
   data() {
     return {
       activeTab: "customer",
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      rows: [],
     };
+  },
+  mounted() {
+    this.loadList();
   },
   methods: {
     switchTab(tab) {
       this.activeTab = tab;
+      this.loadList();
     },
+    async loadList() {
+      try {
+        const data = await getCustomerLimitConfigPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          type: this.activeTab === 'customer' ? 1 : 2,
+        });
+        this.rows = data.list.map((item) => ({
+          id: item.id,
+          no: item.id,
+          userNames: item.userNames || "",
+          deptNames: item.deptNames || "",
+          maxCount: item.maxCount || 0,
+          dealCountEnabled: item.dealCountEnabled ? "是" : "否",
+          createTime: this.formatTimestamp(item.createTime),
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取客户限制配置列表失败", err);
+      }
+    },
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}:${String(date.getSeconds()).padStart(2,"0")}`;
+    },
+    handleAdd() { alert("新增规则功能待实现"); },
+    handleEdit(row) { alert(`编辑规则：${row.no}`); },
+    async handleDelete(row) {
+      if (!confirm(`确定要删除规则「${row.no}」吗？`)) return;
+      try { await deleteCustomerLimitConfig(row.id); alert("删除成功"); this.loadList(); }
+      catch (err) { console.error("删除失败", err); }
+    },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
   },
 };
 </script>

@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：OA协同办公模块
+ * 页面：会议室预订页面
+ * 功能：会议室预订相关接口
+ * 接口前缀：/admin-api/oa
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getMeetingRoomBookingPage(params) {
   return requestClient.get("/oa/meeting-room-booking/page", { params });

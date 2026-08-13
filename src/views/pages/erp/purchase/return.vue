@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>退货单号</span>
-            <input type="text" placeholder="请输入退货单号" />
+            <input type="text" placeholder="请输入退货单号" v-model="searchForm.no" />
           </div>
           <div>
             <span>产品</span>
-            <input type="text" placeholder="请输入产品" />
+            <input type="text" placeholder="请输入产品" v-model="searchForm.productName" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div class="top-1">采购退货列表</div>
           <div class="top-2">
-            <button>+新增采购订单</button>
+            <button @click="handleAdd">+新增采购退货</button>
             <button>导出</button>
             <button disabled>批量删除</button>
             <button>🔍</button>
@@ -58,7 +58,7 @@
             <tbody>
               <tr v-for="item in tabValue" :key="item.id">
                 <td class="col-check"><input type="checkbox" /></td>
-                <td class="col-id">{{ item.id }}</td>
+                <td class="col-id">{{ item.no }}</td>
                 <td>{{ item.product }}</td>
                 <td>{{ item.supplier }}</td>
                 <td>{{ item.returnTime }}</td>
@@ -80,74 +80,101 @@
                     {{ item.status }}
                   </span>
                 </td>
-                <td class="ol-col">详情&nbsp;&nbsp;编辑&nbsp;&nbsp;删除</td>
+                <td class="ol-col">
+                  <a href="#" @click.prevent="handleDetail(item)">详情</a>&nbsp;&nbsp;
+                  <a href="#" @click.prevent="handleEdit(item)">编辑</a>&nbsp;&nbsp;
+                  <a href="#" @click.prevent="handleDelete(item)">删除</a>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{ tabValue.length }}条数据<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入采购退货相关API ==========
+import { getPurchaseReturnPage, deletePurchaseReturn } from '#/api/erp/purchase/return';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: "RET-2024-001",
-          product: "华为 Mate 60 Pro 256GB",
-          supplier: "华为技术有限公司",
-          returnTime: "2024-01-18 10:30",
-          creator: "张伟",
-          quantity: 2,
-          shouldAmount: 13998.00,
-          paidAmount: 13998.00,
-          unpaidAmount: 0.00,
-          status: "已退款",
-        },
-        {
-          id: "RET-2024-002",
-          product: "小米 14 Ultra 512GB",
-          supplier: "小米科技有限公司",
-          returnTime: "2024-01-28 14:20",
-          creator: "王强",
-          quantity: 5,
-          shouldAmount: 34995.00,
-          paidAmount: 20000.00,
-          unpaidAmount: 14995.00,
-          status: "部分退款",
-        },
-        {
-          id: "RET-2024-003",
-          product: "联想 ThinkPad X1 Carbon",
-          supplier: "联想集团有限公司",
-          returnTime: "2024-02-05 09:15",
-          creator: "李娜",
-          quantity: 1,
-          shouldAmount: 7999.00,
-          paidAmount: 0.00,
-          unpaidAmount: 7999.00,
-          status: "待审核",
-        },
-        {
-          id: "RET-2024-004",
-          product: "Apple iPhone 15 Pro Max",
-          supplier: "苹果电子产品商贸有限公司",
-          returnTime: "2024-02-10 16:40",
-          creator: "刘洋",
-          quantity: 3,
-          shouldAmount: 29997.00,
-          paidAmount: 29997.00,
-          unpaidAmount: 0.00,
-          status: "已退款",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        no: "",        // 退货单号
+        productName: "", // 产品名称
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadPurchaseReturnList();
+  },
   methods: {
+    // ========== 获取采购退货列表 ==========
+    async loadPurchaseReturnList() {
+      try {
+        const data = await getPurchaseReturnPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          no: this.searchForm.no,
+          productName: this.searchForm.productName,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          no: item.no || "",                     // 退货单号
+          product: item.productNames || "",      // 退货产品信息
+          supplier: item.supplierName || "",     // 供应商
+          returnTime: this.formatTimestamp(item.returnTime), // 退货时间
+          creator: item.creatorName || "",       // 创建人
+          quantity: item.totalCount || 0,        // 总数量
+          shouldAmount: item.totalPrice || 0,    // 应退金额
+          paidAmount: item.refundPrice || 0,     // 已退金额
+          unpaidAmount: (item.totalPrice || 0) - (item.refundPrice || 0), // 未退金额
+          status: this.getStatusName(item.status), // 审批状态
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取采购退货列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 状态名称转换 ==========
+    getStatusName(status) {
+      const map = {
+        0: "待审核",
+        10: "待审核",
+        20: "已退款",
+        30: "部分退款",
+      };
+      return map[status] || "待审核";
+    },
+    // ========== 状态颜色 ==========
     getStatusColor(status) {
       const map = {
         '已退款': '#52c41a',
@@ -156,6 +183,7 @@ export default {
       };
       return map[status] || '#333';
     },
+    // ========== 状态背景色 ==========
     getStatusBg(status) {
       const map = {
         '已退款': '#f6ffed',
@@ -163,8 +191,47 @@ export default {
         '待审核': '#fff2f0'
       };
       return map[status] || '#fff';
-    }
-  }
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadPurchaseReturnList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { no: "", productName: "" };
+      this.pagination.pageNo = 1;
+      this.loadPurchaseReturnList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadPurchaseReturnList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增采购退货功能待实现");
+    },
+    // ========== 详情 ==========
+    handleDetail(row) {
+      alert(`查看详情：${row.no}`);
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert(`编辑采购退货：${row.no}`);
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除「${row.no}」吗？`)) return;
+      try {
+        await deletePurchaseReturn([row.id]);
+        alert("删除成功");
+        this.loadPurchaseReturnList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
+  },
 };
 </script>
 

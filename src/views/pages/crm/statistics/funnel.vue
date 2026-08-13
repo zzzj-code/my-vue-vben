@@ -4,27 +4,27 @@
       <div class="app-top">
         <div>
           <span>时间范围</span>
-          <input type="text" placeholder="请选择时间范围" />
+          <input type="text" placeholder="请选择时间范围" v-model="searchForm.timeRange" />
         </div>
         <div>
           <span>时间间隔</span>
-          <input type="text" value="周" />
+          <input type="text" v-model="searchForm.interval" />
         </div>
         <div>
           <span>商机组</span>
-          <input type="text" placeholder="请选择商机组" />
+          <input type="text" placeholder="请选择商机组" v-model="searchForm.businessStatusId" />
         </div>
         <div>
           <span>归属部门</span>
-          <input type="text" placeholder="研发部门" />
+          <input type="text" placeholder="研发部门" v-model="searchForm.deptId" />
         </div>
         <div>
           <span>员工</span>
-          <input type="text" placeholder="员工" />
+          <input type="text" placeholder="员工" v-model="searchForm.userId" />
         </div>
         <div>
-          <button>重置</button>
-          <button>查询</button>
+          <button @click="handleReset">重置</button>
+          <button @click="handleSearch">查询</button>
           收起^
         </div>
       </div>
@@ -34,7 +34,7 @@
             v-for="(item, index) in navList"
             :key="index"
             :class="{ active: activeNav === index }"
-            @click="activeNav = index"
+            @click="switchNav(index)"
           >
             {{ item }}
           </div>
@@ -42,9 +42,10 @@
       </div>
       <div class="app-main">
         <div class="view-toggle">
-          <button :class="{ active: viewMode === 'stage' }" @click="viewMode = 'stage'">阶段视角</button>
-          <button :class="{ active: viewMode === 'amount' }" @click="viewMode = 'amount'">金额视角</button>
+          <button :class="{ active: viewMode === 'stage' }" @click="switchViewMode('stage')">阶段视角</button>
+          <button :class="{ active: viewMode === 'amount' }" @click="switchViewMode('amount')">金额视角</button>
         </div>
+        <div ref="chartRef" style="width: 100%; height: 300px;"></div>
       </div>
       <div class="app-floot">
         <table>
@@ -59,6 +60,17 @@
             <th>未回款金额</th>
             <th>回款完成率(%)</th>
           </tr>
+          <tr v-for="(item, index) in tableData" :key="index">
+            <td>{{ index + 1 }}</td>
+            <td>{{ item.userName }}</td>
+            <td>{{ item.businessCreateCount }}</td>
+            <td>{{ item.businessDealCount }}</td>
+            <td>{{ item.businessDealRate }}</td>
+            <td>{{ item.contractPrice }}</td>
+            <td>{{ item.receivablePrice }}</td>
+            <td>{{ item.unreceivablePrice }}</td>
+            <td>{{ item.receivableRate }}</td>
+          </tr>
         </table>
       </div>
     </div>
@@ -67,6 +79,9 @@
 
 <script>
 import * as echarts from "echarts";
+// ========== 导入漏斗统计相关API ==========
+import { getDatas, getChartDatas } from '#/api/crm/statistics/funnel';
+
 export default {
   data() {
     return {
@@ -77,7 +92,60 @@ export default {
         "新增商机分析",
         "商机转化率分析",
       ],
+      searchForm: {
+        timeRange: "",   // 时间范围
+        interval: "周",  // 时间间隔
+        businessStatusId: "", // 商机组
+        deptId: "",      // 归属部门
+        userId: "",      // 员工
+      },
+      tableData: [],    // 底部表格数据
+      chart: null,      // 图表实例
     };
+  },
+  mounted() {
+    this.initChart();
+    this.loadStatistics();
+  },
+  methods: {
+    // ========== 初始化图表 ==========
+    initChart() {
+      const chartDom = this.$refs.chartRef;
+      if (chartDom) {
+        this.chart = echarts.init(chartDom);
+      }
+    },
+    // ========== 获取统计数据 ==========
+    async loadStatistics() {
+      try {
+        // Tab名称映射
+        const tabNames = [
+          "funnel",                    // 销售漏斗分析
+          "businessSummary",           // 新增商机分析
+          "businessInversionRateSummary", // 商机转化率分析
+        ];
+        const tabName = tabNames[this.activeNav] || "funnel";
+        // 获取图表数据
+        const chartData = await getChartDatas(tabName, this.searchForm);
+        if (chartData && this.chart) {
+          this.chart.setOption(chartData);
+        }
+        // 获取表格数据
+        const tableData = await getDatas(tabName, this.searchForm);
+        if (tableData && Array.isArray(tableData)) {
+          this.tableData = tableData;
+        }
+      } catch (err) {
+        console.error("获取漏斗统计数据失败", err);
+      }
+    },
+    handleSearch() { this.loadStatistics(); },
+    handleReset() {
+      this.searchForm = { timeRange: "", interval: "周", businessStatusId: "", deptId: "", userId: "" };
+      this.loadStatistics();
+    },
+    switchNav(index) { this.activeNav = index; this.loadStatistics(); },
+    switchViewMode(mode) { this.viewMode = mode; this.loadStatistics(); },
   },
 };
 </script>

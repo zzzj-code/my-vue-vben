@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：系统管理模块
+ * 页面：用户管理页面
+ * 功能：用户管理相关接口
+ * 接口前缀：/admin-api/system
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getUserPage(params) {
   return requestClient.get(

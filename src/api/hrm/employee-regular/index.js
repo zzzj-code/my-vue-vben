@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：HRM人力资源模块
+ * 页面：转正申请页面
+ * 功能：转正申请相关接口
+ * 接口前缀：/admin-api/hrm
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getEmployeeRegularBillPage(params) {
   return requestClient.get("/hrm/employee-regular-bill/page", { params });

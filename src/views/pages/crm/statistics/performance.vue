@@ -4,19 +4,19 @@
       <div class="app-top">
         <div>
           <span>选择年份</span>
-          <input type="text" placeholder="2026" />
+          <input type="text" placeholder="2026" v-model="searchForm.year" />
         </div>
         <div>
           <span>归属部门</span>
-          <input type="text" value="归属部门" />
+          <input type="text" v-model="searchForm.deptId" />
         </div>
         <div>
           <span>员工</span>
-          <input type="text" placeholder="请选择员工" />
+          <input type="text" placeholder="请选择员工" v-model="searchForm.userId" />
         </div>
         <div>
-          <button>重置</button>
-          <button>查询</button>
+          <button @click="handleReset">重置</button>
+          <button @click="handleSearch">查询</button>
           收起^
         </div>
       </div>
@@ -26,7 +26,7 @@
             v-for="(item, index) in navList"
             :key="index"
             :class="{ active: activeNav === index }"
-            @click="activeNav = index"
+            @click="switchNav(index)"
           >
             {{ item }}
           </div>
@@ -46,6 +46,17 @@
             <th>未回款金额</th>
             <th>回款完成率(%)</th>
           </tr>
+          <tr v-for="(item, index) in tableData" :key="index">
+            <td>{{ index + 1 }}</td>
+            <td>{{ item.userName }}</td>
+            <td>{{ item.contractCount }}</td>
+            <td>{{ item.contractDealCount }}</td>
+            <td>{{ item.contractDealRate }}</td>
+            <td>{{ item.contractPrice }}</td>
+            <td>{{ item.receivablePrice }}</td>
+            <td>{{ item.unreceivablePrice }}</td>
+            <td>{{ item.receivableRate }}</td>
+          </tr>
         </table>
       </div>
     </div>
@@ -54,6 +65,9 @@
 
 <script>
 import * as echarts from "echarts";
+// ========== 导入业绩统计相关API ==========
+import { getContractCountPerformance, getContractPricePerformance, getReceivablePricePerformance } from '#/api/crm/statistics/performance';
+
 export default {
   data() {
     return {
@@ -64,86 +78,70 @@ export default {
         "员工回款金额统计",
         "合同汇总表",
       ],
+      searchForm: {
+        year: "2026",  // 选择年份
+        deptId: "",    // 归属部门
+        userId: "",    // 员工
+      },
+      tableData: [],    // 底部表格数据
+      chart: null,      // 图表实例
     };
   },
   mounted() {
     this.initChart();
+    this.loadStatistics();
   },
   methods: {
+    // ========== 初始化图表 ==========
     initChart() {
-      const chart = echarts.init(this.$refs.chartRef);
+      this.chart = echarts.init(this.$refs.chartRef);
       const option = {
-        tooltip: {
-          trigger: "axis",
-          axisPointer: {
-            type: "shadow",
-          },
-        },
-        legend: {
-          data: ["新增客户数", "成交客户数"],
-          top: 0,
-          textStyle: {
-            fontSize: 14,
-          },
-        },
-        grid: {
-          left: "3%",
-          right: "4%",
-          bottom: "3%",
-          top: "20%",
-          containLabel: true,
-        },
-        xAxis: {
-          type: "category",
-          data: ["2026-07-21(第30周)", "2026-07-27(第31周)"],
-        },
-        yAxis: {
-          type: "value",
-          minInterval: 1,
-          splitLine: {
-            lineStyle: {
-              type: "dashed",
-              color: "#e8e8e8",
-            },
-          },
-        },
+        tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+        legend: { data: ["新增客户数", "成交客户数"], top: 0, textStyle: { fontSize: 14 } },
+        grid: { left: "3%", right: "4%", bottom: "3%", top: "20%", containLabel: true },
+        xAxis: { type: "category", data: ["2026-07-21(第30周)", "2026-07-27(第31周)"] },
+        yAxis: { type: "value", minInterval: 1 },
         series: [
-          {
-            name: "新增客户数",
-            type: "bar",
-            data: [0, 0],
-            itemStyle: {
-              color: "#006be6",
-              borderRadius: [4, 4, 0, 0],
-            },
-            barWidth: "30%",
-            label: {
-              show: true,
-              position: "top",
-              fontSize: 14,
-              fontWeight: "bold",
-            },
-          },
-          {
-            name: "成交客户数",
-            type: "bar",
-            data: [0, 0],
-            itemStyle: {
-              color: "#52c41a",
-              borderRadius: [4, 4, 0, 0],
-            },
-            barWidth: "30%",
-            label: {
-              show: true,
-              position: "top",
-              fontSize: 14,
-              fontWeight: "bold",
-            },
-          },
+          { name: "新增客户数", type: "bar", data: [0, 1], itemStyle: { color: "#006be6" } },
+          { name: "成交客户数", type: "bar", data: [0, 0], itemStyle: { color: "#52c41a" } },
         ],
       };
-      chart.setOption(option);
+      this.chart.setOption(option);
     },
+    // ========== 获取统计数据 ==========
+    async loadStatistics() {
+      try {
+        let data;
+        // 根据Tab选择不同的API
+        switch (this.activeNav) {
+          case 0: // 员工合同数量统计
+            data = await getContractCountPerformance(this.searchForm);
+            break;
+          case 1: // 员工合同金额统计
+            data = await getContractPricePerformance(this.searchForm);
+            break;
+          case 2: // 员工回款金额统计
+            data = await getReceivablePricePerformance(this.searchForm);
+            break;
+          case 3: // 合同汇总表
+            data = await getContractPricePerformance(this.searchForm);
+            break;
+          default:
+            data = [];
+        }
+        if (data && Array.isArray(data)) {
+          this.tableData = data;
+        }
+      } catch (err) {
+        console.error("获取业绩统计数据失败", err);
+      }
+    },
+    handleSearch() { this.loadStatistics(); },
+    handleReset() {
+      this.searchForm = { year: "2026", deptId: "", userId: "" };
+      this.loadStatistics();
+    },
+    switchNav(index) { this.activeNav = index; this.loadStatistics(); },
   },
 };
 </script>

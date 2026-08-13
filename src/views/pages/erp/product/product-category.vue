@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>分类名称</span>
-            <input type="text" placeholder="请输入分类名称" />
+            <input type="text" placeholder="请输入分类名称" v-model="searchForm.name" />
           </div>
           <div>
             <span>开启状态</span>
-            <input type="text" placeholder="请输入开启状态" />
+            <input type="text" placeholder="请输入开启状态" v-model="searchForm.status" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div class="top-1">产品分类列表</div>
           <div class="top-2">
-            <button>+新增产品分类</button>
+            <button @click="handleAdd">+新增产品分类</button>
             <button>导出</button>
             <button>收缩</button>
             <button>🔍</button>
@@ -48,13 +48,17 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>酒水</td>
-                <td>js</td>
-                <td>1</td>
-                <td>开启</td>
-                <td>2026-07-27 10:27:09</td>
-                <td style="width: 180px;">+新增下级&nbsp;&nbsp;编辑&nbsp;&nbsp;删除</td>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td>{{ item.name }}</td>
+                <td>{{ item.code }}</td>
+                <td>{{ item.sort }}</td>
+                <td>{{ item.status }}</td>
+                <td>{{ item.createTime }}</td>
+                <td style="width: 180px;">
+                  <a href="#" @click.prevent="handleAddChild(item)">+新增下级</a>&nbsp;&nbsp;
+                  <a href="#" @click.prevent="handleEdit(item)">编辑</a>&nbsp;&nbsp;
+                  <a href="#" @click.prevent="handleDelete(item)">删除</a>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -65,11 +69,89 @@
 </template>
 
 <script>
+// ========== 导入产品分类相关API ==========
+import { getProductCategoryList, deleteProductCategory } from '#/api/erp/product/category';
+
 export default {
   data() {
     return {
+      // 搜索表单
+      searchForm: {
+        name: "",   // 分类名称
+        status: "", // 状态
+      },
+      // 表格数据
       tabValue: [],
     };
+  },
+  mounted() {
+    this.loadCategoryList();
+  },
+  methods: {
+    // ========== 获取产品分类列表 ==========
+    async loadCategoryList() {
+      try {
+        const data = await getProductCategoryList({
+          name: this.searchForm.name,
+          status: this.searchForm.status,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = this.formatTreeData(data);
+      } catch (err) {
+        console.error("获取产品分类列表失败", err);
+      }
+    },
+    // ========== 格式化树形数据 ==========
+    formatTreeData(list) {
+      if (!Array.isArray(list)) return [];
+      return list.map((item) => ({
+        id: item.id,
+        name: item.name || "",           // 分类名称
+        code: item.code || "",           // 分类编码
+        sort: item.sort || 0,            // 显示顺序
+        status: item.status === 0 ? "开启" : "关闭", // 分类状态
+        createTime: this.formatTimestamp(item.createTime), // 创建时间
+        children: this.formatTreeData(item.children),
+      }));
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}:${String(date.getSeconds()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.loadCategoryList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { name: "", status: "" };
+      this.loadCategoryList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增产品分类功能待实现");
+    },
+    // ========== 新增下级 ==========
+    handleAddChild(row) {
+      alert(`新增下级分类：${row.name}`);
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert(`编辑分类：${row.name}`);
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除「${row.name}」吗？`)) return;
+      try {
+        await deleteProductCategory(row.id);
+        alert("删除成功");
+        this.loadCategoryList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   },
 };
 </script>

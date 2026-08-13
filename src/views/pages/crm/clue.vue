@@ -5,7 +5,7 @@
         <div class="top-box">
           <div>
             <span>线索名称</span>
-            <input type="text" placeholder="请输入线索名称" />
+            <input type="text" placeholder="请输入线索名称" v-model="searchForm.name" />
           </div>
           <div>
             <span>转化状态</span>
@@ -18,19 +18,19 @@
           </div>
           <div>
             <span>手机号</span>
-            <input type="text" placeholder="请输入手机号" />
+            <input type="text" placeholder="请输入手机号" v-model="searchForm.mobile" />
           </div>
           <div>
             <span>电话</span>
-            <input type="text" placeholder="请输入电话" />
+            <input type="text" placeholder="请输入电话" v-model="searchForm.telephone" />
           </div>
           <div>
             <span>创建时间</span>
             <input type="text" placeholder=">" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -60,12 +60,12 @@
             </div>
           </div>
           <div class="top-2">
-            <button>+新增线索</button>
+            <button @click="handleAdd">+新增线索</button>
             <button>导出</button>
-            <button>🔍</button>
+            <button @click="handleSearch">🔍</button>
           </div>
           <div class="top-3">
-            <button>⟳</button>
+            <button @click="loadClueList">⟳</button>
             <button>⛶</button>
             <button>⊞</button>
           </div>
@@ -97,20 +97,117 @@
                 </th>
               </tr>
             </thead>
+            <tbody>
+              <tr v-for="item in rows" :key="item.id">
+                <td class="col-name">{{ item.name }}</td>
+                <td>{{ item.source }}</td>
+                <td>{{ item.mobile }}</td>
+                <td>{{ item.phone }}</td>
+                <td>{{ item.email }}</td>
+                <td>{{ item.address }}</td>
+                <td>{{ item.industry }}</td>
+                <td>{{ item.level }}</td>
+                <td>{{ item.nextContact }}</td>
+                <td>{{ item.remark }}</td>
+                <td>{{ item.lastFollowTime }}</td>
+                <td>{{ item.lastFollowRecord }}</td>
+                <td>{{ item.owner }}</td>
+                <td>{{ item.department }}</td>
+                <td>{{ item.updateTime }}</td>
+                <td>{{ item.createTime }}</td>
+                <td class="ol-col">
+                  <a href="#" @click.prevent="handleEdit(item)">编辑</a>&nbsp;&nbsp;
+                  <a href="#" @click.prevent="handleDelete(item)" style="color: red;">删除</a>
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
-        <div class="main-floot">共1条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入线索管理相关API ==========
+import { getCluePage, deleteClue } from '#/api/crm/clue';
+
 export default {
   data() {
     return {
       activeTab: "mine",
+      searchForm: {
+        name: "",        // 线索名称
+        mobile: "",      // 手机号
+        telephone: "",   // 电话
+        transformStatus: "", // 转化状态
+      },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      rows: [],
     };
+  },
+  mounted() {
+    this.loadClueList();
+  },
+  methods: {
+    async loadClueList() {
+      try {
+        const data = await getCluePage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          name: this.searchForm.name,
+          mobile: this.searchForm.mobile,
+          telephone: this.searchForm.telephone,
+        });
+        this.rows = data.list.map((item) => ({
+          id: item.id,
+          name: item.name || "",
+          source: item.sourceName || "",
+          mobile: item.mobile || "",
+          phone: item.telephone || "",
+          email: item.email || "",
+          address: item.address || "",
+          industry: item.industryName || "",
+          level: item.levelName || "",
+          nextContact: item.contactNextTime || "",
+          remark: item.remark || "",
+          lastFollowTime: this.formatTimestamp(item.followLastTime),
+          lastFollowRecord: item.followLastContent || "",
+          owner: item.ownerUserName || "",
+          department: item.ownerDeptName || "",
+          updateTime: this.formatTimestamp(item.updateTime),
+          createTime: this.formatTimestamp(item.createTime),
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取线索列表失败", err);
+      }
+    },
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}:${String(date.getSeconds()).padStart(2,"0")}`;
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadClueList(); },
+    handleReset() { this.searchForm = { name: "", mobile: "", telephone: "", transformStatus: "" }; this.pagination.pageNo = 1; this.loadClueList(); },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadClueList(); },
+    handleAdd() { alert("新增线索功能待实现"); },
+    handleEdit(row) { alert(`编辑线索：${row.name}`); },
+    async handleDelete(row) {
+      if (!confirm(`确定要删除线索「${row.name}」吗？`)) return;
+      try { await deleteClue(row.id); alert("删除成功"); this.loadClueList(); }
+      catch (err) { console.error("删除线索失败", err); }
+    },
   },
 };
 </script>
@@ -327,6 +424,9 @@ export default {
   position: sticky;
   right: 0;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.428);
+}
+.ol-col a{
+  text-decoration: none;
 }
 
 /* 表格主体 td */

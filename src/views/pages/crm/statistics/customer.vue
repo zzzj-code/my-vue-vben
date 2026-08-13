@@ -4,24 +4,24 @@
       <div class="app-top">
         <div>
           <span>时间范围</span>
-          <input type="text" placeholder="请选择时间范围" />
+          <input type="text" placeholder="请选择时间范围" v-model="searchForm.timeRange" />
         </div>
         <div>
           <span>时间间隔</span>
-          <input type="text" value="周" />
+          <input type="text" v-model="searchForm.interval" />
         </div>
         <div>
           <span>归属部门</span>
-          <input type="text" placeholder="研发部门" />
+          <input type="text" placeholder="研发部门" v-model="searchForm.deptId" />
         </div>
         <div>
           <span>员工</span>
-          <input type="text" placeholder="请选择员工" />
+          <input type="text" placeholder="请选择员工" v-model="searchForm.userId" />
         </div>
         <div></div>
         <div>
-          <button>重置</button>
-          <button>查询</button>
+          <button @click="handleReset">重置</button>
+          <button @click="handleSearch">查询</button>
           收起^
         </div>
       </div>
@@ -31,7 +31,7 @@
             v-for="(item, index) in navList"
             :key="index"
             :class="{ active: activeNav === index }"
-            @click="activeNav = index"
+            @click="switchNav(index)"
           >
             {{ item }}
           </div>
@@ -51,6 +51,17 @@
                 <th>未回款金额</th>
                 <th>回款完成率(%)</th>
             </tr>
+            <tr v-for="(item, index) in tableData" :key="index">
+                <td>{{ index + 1 }}</td>
+                <td>{{ item.userName }}</td>
+                <td>{{ item.customerCreateCount }}</td>
+                <td>{{ item.customerDealCount }}</td>
+                <td>{{ item.customerDealRate }}</td>
+                <td>{{ item.contractPrice }}</td>
+                <td>{{ item.receivablePrice }}</td>
+                <td>{{ item.unreceivablePrice }}</td>
+                <td>{{ item.receivableRate }}</td>
+            </tr>
         </table>
       </div>
     </div>
@@ -59,6 +70,9 @@
 
 <script>
 import * as echarts from "echarts";
+// ========== 导入客户统计相关API ==========
+import { getDatas, getChartDatas } from '#/api/crm/statistics/customer';
+
 export default {
   data() {
     return {
@@ -73,14 +87,52 @@ export default {
         "地区客户成交周期分析",
         "产品客户成交周期分析",
       ],
+      searchForm: {
+        timeRange: "",   // 时间范围
+        interval: "周",  // 时间间隔
+        deptId: "",      // 归属部门
+        userId: "",      // 员工
+      },
+      tableData: [],    // 底部表格数据
+      chart: null,      // 图表实例
     };
   },
   mounted() {
     this.initChart();
+    this.loadStatistics();
   },
   methods: {
+    // ========== 获取统计数据 ==========
+    async loadStatistics() {
+      try {
+        // Tab名称映射
+        const tabNames = [
+          "customerSummary",  // 客户总量分析
+          "followUpSummary",  // 客户跟进次数分析
+          "followUpType",     // 客户跟进方式分析
+          "conversionStat",   // 客户转化率分析
+          "poolSummary",      // 公海客户分析
+          "dealCycleByUser",  // 员工客户成交周期分析
+          "dealCycleByArea",  // 地区客户成交周期分析
+          "dealCycleByProduct", // 产品客户成交周期分析
+        ];
+        const tabName = tabNames[this.activeNav] || "customerSummary";
+        // 获取图表数据
+        const chartData = await getChartDatas(tabName, this.searchForm);
+        if (chartData && this.chart) {
+          this.updateChart(chartData);
+        }
+        // 获取表格数据
+        const tableData = await getDatas(tabName, this.searchForm);
+        if (tableData && Array.isArray(tableData)) {
+          this.tableData = tableData;
+        }
+      } catch (err) {
+        console.error("获取客户统计数据失败", err);
+      }
+    },
     initChart() {
-      const chart = echarts.init(this.$refs.chartRef);
+      this.chart = echarts.init(this.$refs.chartRef);
       const option = {
         tooltip: {
           trigger: "axis",
@@ -121,37 +173,39 @@ export default {
             name: "新增客户数",
             type: "bar",
             data: [0, 1],
-            itemStyle: {
-              color: "#006be6",
-              borderRadius: [4, 4, 0, 0],
-            },
-            barWidth: "30%",
-            label: {
-              show: true,
-              position: "top",
-              fontSize: 14,
-              fontWeight: "bold",
-            },
+            itemStyle: { color: "#006be6" },
           },
           {
             name: "成交客户数",
             type: "bar",
             data: [0, 0],
-            itemStyle: {
-              color: "#52c41a",
-              borderRadius: [4, 4, 0, 0],
-            },
-            barWidth: "30%",
-            label: {
-              show: true,
-              position: "top",
-              fontSize: 14,
-              fontWeight: "bold",
-            },
+            itemStyle: { color: "#52c41a" },
           },
         ],
       };
-      chart.setOption(option);
+      this.chart.setOption(option);
+    },
+    // ========== 更新图表数据 ==========
+    updateChart(chartData) {
+      if (!this.chart || !chartData) return;
+      this.chart.setOption({
+        xAxis: { data: chartData.xAxis || [] },
+        series: chartData.series || [],
+      });
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.loadStatistics();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { timeRange: "", interval: "周", deptId: "", userId: "" };
+      this.loadStatistics();
+    },
+    // ========== 切换Tab ==========
+    switchNav(index) {
+      this.activeNav = index;
+      this.loadStatistics();
     },
   },
 };

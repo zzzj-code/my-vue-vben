@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>订单单号</span>
-            <input type="text" placeholder="请输入订单单号" />
+            <input type="text" placeholder="请输入订单单号" v-model="searchForm.no" />
           </div>
           <div>
             <span>产品</span>
-            <input type="text" placeholder="请输入产品" />
+            <input type="text" placeholder="请输入产品" v-model="searchForm.productName" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div class="top-1">采购订单列表</div>
           <div class="top-2">
-            <button>+新增采购订单</button>
+            <button @click="handleAdd">+新增采购订单</button>
             <button>导出</button>
             <button disabled>批量删除</button>
             <button>🔍</button>
@@ -58,7 +58,7 @@
             <tbody>
               <tr v-for="item in tabValue" :key="item.id">
                 <td class="col-check"><input type="checkbox" /></td>
-                <td class="col-id">{{ item.id }}</td>
+                <td class="col-id">{{ item.no }}</td>
                 <td>{{ item.product }}</td>
                 <td>{{ item.supplier }}</td>
                 <td>{{ item.orderTime }}</td>
@@ -82,82 +82,104 @@
                     {{ item.status }}
                   </span>
                 </td>
-                <td class="ol-col">详情&nbsp;&nbsp;编辑&nbsp;&nbsp;删除</td>
+                <td class="ol-col">
+                  <a href="#" @click.prevent="handleDetail(item)">详情</a>&nbsp;&nbsp;
+                  <a href="#" @click.prevent="handleEdit(item)">编辑</a>&nbsp;&nbsp;
+                  <a href="#" @click.prevent="handleDelete(item)">删除</a>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共4条数据<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入采购订单相关API ==========
+import { getPurchaseOrderPage, deletePurchaseOrder } from '#/api/erp/purchase/order';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: "PO-2024-001",
-          product: "华为 Mate 60 Pro",
-          supplier: "华为技术有限公司",
-          orderTime: "2024-01-15 14:30",
-          creator: "张伟",
-          quantity: 50,
-          inQuantity: 48,
-          returnQuantity: 2,
-          amount: 349950,
-          taxAmount: 394425,
-          deposit: 100000,
-          status: "已完成",
-        },
-        {
-          id: "PO-2024-002",
-          product: "联想 ThinkPad X1",
-          supplier: "联想集团有限公司",
-          orderTime: "2024-01-20 09:15",
-          creator: "李娜",
-          quantity: 30,
-          inQuantity: 30,
-          returnQuantity: 0,
-          amount: 239970,
-          taxAmount: 271166,
-          deposit: 50000,
-          status: "已入库",
-        },
-        {
-          id: "PO-2024-003",
-          product: "小米 14 Ultra",
-          supplier: "小米科技有限公司",
-          orderTime: "2024-01-25 16:45",
-          creator: "王强",
-          quantity: 100,
-          inQuantity: 95,
-          returnQuantity: 5,
-          amount: 699900,
-          taxAmount: 790887,
-          deposit: 200000,
-          status: "部分入库",
-        },
-        {
-          id: "PO-2024-004",
-          product: "Apple iPhone 15 Pro Max",
-          supplier: "苹果电子产品商贸有限公司",
-          orderTime: "2024-02-01 11:20",
-          creator: "刘洋",
-          quantity: 80,
-          inQuantity: 0,
-          returnQuantity: 0,
-          amount: 799920,
-          taxAmount: 903909,
-          deposit: 300000,
-          status: "待审核",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        no: "",        // 订单单号
+        productName: "", // 产品名称
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadPurchaseOrderList();
+  },
   methods: {
+    // ========== 获取采购订单列表 ==========
+    async loadPurchaseOrderList() {
+      try {
+        const data = await getPurchaseOrderPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          no: this.searchForm.no,
+          productName: this.searchForm.productName,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          no: item.no || "",                     // 订单单号
+          product: item.productNames || "",      // 产品信息
+          supplier: item.supplierName || "",     // 供应商
+          orderTime: this.formatTimestamp(item.orderTime), // 订单时间
+          creator: item.creatorName || "",       // 创建人
+          quantity: item.totalCount || 0,        // 总数量
+          inQuantity: item.inCount || 0,         // 入库数量
+          returnQuantity: item.returnCount || 0, // 退货数量
+          amount: item.totalPrice || 0,          // 金额合计
+          taxAmount: item.totalTaxPrice || 0,    // 含税金额
+          deposit: item.depositPrice || 0,       // 支付定金
+          status: this.getStatusName(item.status), // 状态
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取采购订单列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 状态名称转换 ==========
+    getStatusName(status) {
+      const map = {
+        0: "待审核",
+        1: "已审核",
+        2: "部分入库",
+        3: "已入库",
+        4: "已完成",
+        5: "已取消",
+      };
+      return map[status] || "未知";
+    },
     getStatusColor(status) {
       const map = {
         '已完成': '#52c41a',
@@ -175,8 +197,47 @@ export default {
         '待审核': '#fff2f0'
       };
       return map[status] || '#fff';
-    }
-  }
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadPurchaseOrderList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { no: "", productName: "" };
+      this.pagination.pageNo = 1;
+      this.loadPurchaseOrderList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadPurchaseOrderList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增采购订单功能待实现");
+    },
+    // ========== 详情 ==========
+    handleDetail(row) {
+      alert(`查看详情：${row.no}`);
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert(`编辑采购订单：${row.no}`);
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除「${row.no}」吗？`)) return;
+      try {
+        await deletePurchaseOrder([row.id]);
+        alert("删除成功");
+        this.loadPurchaseOrderList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
+  },
 };
 </script>
 

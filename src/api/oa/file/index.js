@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：OA协同办公模块
+ * 页面：云盘文件管理
+ * 功能：云盘文件管理相关接口
+ * 接口前缀：/admin-api/oa
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getFileInfoPage(params) {
   return requestClient.get("/oa/file/page", {

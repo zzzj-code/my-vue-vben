@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：系统管理模块
+ * 页面：OAuth2客户端配置
+ * 功能：OAuth2客户端配置相关接口
+ * 接口前缀：/admin-api/system
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getOAuth2ClientPage(params) {
   return requestClient.get(

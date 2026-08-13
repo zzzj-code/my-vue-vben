@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：商城模块
+ * 页面：combinationActivity页面
+ * 功能：combinationActivity相关接口
+ * 接口前缀：/admin-api/mall
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getCombinationActivityPage(params) {
   return requestClient.get("/promotion/combination-activity/page", { params });

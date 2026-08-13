@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：WMS仓储模块
+ * 页面：采购入库页面
+ * 功能：采购入库相关接口
+ * 接口前缀：/admin-api/wms
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getPurchaseInWarehousingPage(params) {
   return requestClient.get("/wms/purchase-in-warehousing/page", { params });

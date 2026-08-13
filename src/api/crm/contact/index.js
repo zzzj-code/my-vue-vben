@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：CRM客户管理模块
+ * 页面：联系人管理页面
+ * 功能：联系人管理相关接口
+ * 接口前缀：/admin-api/crm
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getContactPage(params) {
   return requestClient.get(

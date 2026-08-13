@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：公共模块
+ * 页面：index页面
+ * 功能：index相关接口
+ * 接口前缀：
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function createAttachment(data) {
   return requestClient.post("/oa/attachment/create", data);

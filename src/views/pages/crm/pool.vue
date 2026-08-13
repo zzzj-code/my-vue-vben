@@ -5,27 +5,27 @@
         <div class="top-box">
           <div>
             <span>客户名称</span>
-            <input type="text" placeholder="请输入客户名称" />
+            <input type="text" placeholder="请输入客户名称" v-model="searchForm.name" />
           </div>
           <div>
             <span>手机</span>
-            <input type="text" placeholder="请输入手机">
+            <input type="text" placeholder="请输入手机" v-model="searchForm.mobile">
           </div>
           <div>
             <span>所属行业</span>
-            <input type="text" placeholder="请输入所属行业" />
+            <input type="text" placeholder="请输入所属行业" v-model="searchForm.industryId" />
           </div>
           <div>
             <span>客户级别</span>
-            <input type="text" placeholder="请输入客户级别" />
+            <input type="text" placeholder="请输入客户级别" v-model="searchForm.level" />
           </div>
           <div>
             <span>客户来源</span>
-            <input type="text" placeholder="请输入客户来源" />
+            <input type="text" placeholder="请输入客户来源" v-model="searchForm.source" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -35,12 +35,12 @@
           <div class="top-1">
           </div>
           <div class="top-2">
-            <button>+新增线索</button>
+            <button @click="handleAdd">+新增线索</button>
             <button>导出</button>
-            <button>🔍</button>
+            <button @click="handleSearch">🔍</button>
           </div>
           <div class="top-3">
-            <button>⟳</button>
+            <button @click="loadPoolList">⟳</button>
             <button>⛶</button>
             <button>⊞</button>
           </div>
@@ -73,40 +73,115 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in 4" :key="item">
-                <td class="col-name">官网咨询</td>
-                <td>张三科技</td>
-                <td>138****1234</td>
-                <td>010-8888****</td>
-                <td>zhangsan@tech.com</td>
-                <td>北京市朝阳区建国路88号</td>
-                <td>互联网</td>
-                <td>A级</td>
-                <td>2026-08-05 14:00</td>
-                <td>有意向，需跟进</td>
-                <td>2026-07-28 10:30</td>
-                <td>已沟通产品方案，客户感兴趣</td>
-                <td>王经理</td>
-                <td>销售一部</td>
-                <td>2026-07-28 10:30</td>
-                <td>2026-07-20 09:00</td>
-                <td class="ol-col">删除</td>
+              <tr v-for="item in rows" :key="item.id">
+                <td class="col-name">{{ item.name }}</td>
+                <td>{{ item.source }}</td>
+                <td>{{ item.mobile }}</td>
+                <td>{{ item.phone }}</td>
+                <td>{{ item.email }}</td>
+                <td>{{ item.address }}</td>
+                <td>{{ item.industry }}</td>
+                <td>{{ item.level }}</td>
+                <td>{{ item.nextContact }}</td>
+                <td>{{ item.remark }}</td>
+                <td>{{ item.lastFollowTime }}</td>
+                <td>{{ item.lastFollowRecord }}</td>
+                <td>{{ item.owner }}</td>
+                <td>{{ item.department }}</td>
+                <td>{{ item.updateTime }}</td>
+                <td>{{ item.createTime }}</td>
+                <td class="ol-col">
+                  <a href="#" @click.prevent="handleReceive(item)" style="color: green;">领取</a>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共1条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入客户公海相关API ==========
+// 客户公海使用客户管理接口的put-pool-remind-page查询
+import { getPutPoolRemindCustomerPage, receiveCustomer } from '#/api/crm/customer';
+
 export default {
   data() {
     return {
       activeTab: "mine",
+      searchForm: {
+        name: "",        // 客户名称
+        mobile: "",      // 手机
+        industryId: "",  // 所属行业
+        level: "",       // 客户级别
+        source: "",      // 客户来源
+      },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      rows: [],
     };
+  },
+  mounted() {
+    this.loadPoolList();
+  },
+  methods: {
+    async loadPoolList() {
+      try {
+        const data = await getPutPoolRemindCustomerPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          name: this.searchForm.name,
+          mobile: this.searchForm.mobile,
+        });
+        this.rows = data.list.map((item) => ({
+          id: item.id,
+          name: item.name || "",
+          source: item.sourceName || "",
+          mobile: item.mobile || "",
+          phone: item.telephone || "",
+          email: item.email || "",
+          address: item.address || "",
+          industry: item.industryName || "",
+          level: item.levelName || "",
+          nextContact: item.contactNextTime || "",
+          remark: item.remark || "",
+          lastFollowTime: this.formatTimestamp(item.followLastTime),
+          lastFollowRecord: item.followLastContent || "",
+          owner: item.ownerUserName || "",
+          department: item.ownerDeptName || "",
+          updateTime: this.formatTimestamp(item.updateTime),
+          createTime: this.formatTimestamp(item.createTime),
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取客户公海列表失败", err);
+      }
+    },
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}:${String(date.getSeconds()).padStart(2,"0")}`;
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadPoolList(); },
+    handleReset() { this.searchForm = { name: "", mobile: "", industryId: "", level: "", source: "" }; this.pagination.pageNo = 1; this.loadPoolList(); },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadPoolList(); },
+    handleAdd() { alert("新增客户功能待实现"); },
+    async handleReceive(row) {
+      if (!confirm(`确定要领取客户「${row.name}」吗？`)) return;
+      try { await receiveCustomer([row.id]); alert("领取成功"); this.loadPoolList(); }
+      catch (err) { console.error("领取客户失败", err); }
+    },
   },
 };
 </script>
@@ -317,6 +392,9 @@ export default {
   right: 0;
   z-index: 2;
   background-color: #fff;
+}
+.ol-col a{
+  text-decoration: none;
 }
 
 .main-floot {

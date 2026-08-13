@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>出库单号</span>
-            <input type="text" placeholder="请输入出库单号" />
+            <input type="text" placeholder="请输入出库单号" v-model="searchForm.no" />
           </div>
           <div>
             <span>产品</span>
-            <input type="text" placeholder="请输入产品" />
+            <input type="text" placeholder="请输入产品" v-model="searchForm.productName" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div class="top-1">销售出库列表</div>
           <div class="top-2">
-            <button>+新增销售出库</button>
+            <button @click="handleAdd">+新增销售出库</button>
             <button>导出</button>
             <button disabled>批量删除</button>
             <button>🔍</button>
@@ -54,37 +54,141 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
+              <tr v-for="item in tabValue" :key="item.id">
                 <td class="col-check"><input type="checkbox" name="" id=""></td>
-                <td class="col-id">XSCK20260727000001</td>
-                <td>娃哈哈饮用纯净水</td>
-                <td>北京旭阳科技有限公司</td>
-                <td>2026-07-27</td>
-                <td>宇擎源码</td>
-                <td>1.000</td>
-                <td>12.00</td>
-                <td>0.00</td>
-                <td>12.00元</td>
-                <td>已审核</td>                
-                <td class="ol-col">详情&nbsp;&nbsp;审批&nbsp;&nbsp;删除</td>
+                <td class="col-id">{{ item.no }}</td>
+                <td>{{ item.product }}</td>
+                <td>{{ item.customer }}</td>
+                <td>{{ item.outTime }}</td>
+                <td>{{ item.creator }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.totalAmount }}</td>
+                <td>{{ item.paidAmount }}</td>
+                <td>{{ item.unpaidAmount }}元</td>
+                <td>{{ item.status }}</td>
+                <td class="ol-col">
+                  <a href="#" @click.prevent="handleDetail(item)">详情</a>&nbsp;&nbsp;
+                  <a href="#" @click.prevent="handleApprove(item)">审批</a>&nbsp;&nbsp;
+                  <a href="#" @click.prevent="handleDelete(item)">删除</a>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共1条数据<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入销售出库相关API ==========
+import { getSaleOutPage, deleteSaleOut } from '#/api/erp/sale/out';
+
 export default {
   data() {
     return {
-      tabValue: [
-       
-      ],
+      // 搜索表单
+      searchForm: {
+        no: "",        // 出库单号
+        productName: "", // 产品名称
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadSaleOutList();
+  },
+  methods: {
+    // ========== 获取销售出库列表 ==========
+    async loadSaleOutList() {
+      try {
+        const data = await getSaleOutPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          no: this.searchForm.no,
+          productName: this.searchForm.productName,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          no: item.no || "",                     // 出库单号
+          product: item.productNames || "",      // 产品信息
+          customer: item.customerName || "",     // 客户
+          outTime: this.formatTimestamp(item.outTime), // 出库时间
+          creator: item.creatorName || "",       // 创建人
+          quantity: item.totalCount || 0,        // 总数量
+          totalAmount: item.totalPrice || 0,     // 应收金额
+          paidAmount: item.receiptPrice || 0,    // 已收金额
+          unpaidAmount: (item.totalPrice || 0) - (item.receiptPrice || 0), // 未收金额
+          status: item.status === 20 ? "已审核" : "待审核", // 审批状态
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取销售出库列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadSaleOutList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { no: "", productName: "" };
+      this.pagination.pageNo = 1;
+      this.loadSaleOutList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadSaleOutList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增销售出库功能待实现");
+    },
+    // ========== 详情 ==========
+    handleDetail(row) {
+      alert(`查看详情：${row.no}`);
+    },
+    // ========== 审批 ==========
+    handleApprove(row) {
+      alert(`审批销售出库：${row.no}`);
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除「${row.no}」吗？`)) return;
+      try {
+        await deleteSaleOut([row.id]);
+        alert("删除成功");
+        this.loadSaleOutList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   },
 };
 </script>

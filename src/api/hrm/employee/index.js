@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：HRM人力资源模块
+ * 页面：员工档案页面
+ * 功能：员工档案相关接口
+ * 接口前缀：/admin-api/hrm
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getEmployeeArchivePage(params) {
   return requestClient.get(

@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：BPM审批流模块
+ * 页面：index页面
+ * 功能：index相关接口
+ * 接口前缀：/admin-api/bpm
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 async function getTaskTodoPage(params) {
   return requestClient.get("/bpm/task/todo-page", {

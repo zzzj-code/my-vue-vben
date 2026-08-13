@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：CRM客户管理模块
+ * 页面：数据权限配置
+ * 功能：数据权限配置相关接口
+ * 接口前缀：/admin-api/crm
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 var BizTypeEnum = /* @__PURE__ */ ((BizTypeEnum2) => {
   BizTypeEnum2[BizTypeEnum2["CRM_BUSINESS"] = 4] = "CRM_BUSINESS";

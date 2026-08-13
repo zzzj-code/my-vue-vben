@@ -5,12 +5,12 @@
         <div class="top-inp">
           <div>
             <span>分类名称</span>
-            <input type="text" placeholder="请输入分类名称" />
+            <input type="text" placeholder="请输入分类名称" v-model="searchForm.name" />
           </div>
           <div></div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -19,12 +19,12 @@
         <div class="main-top">
           <div></div>
           <div>
-            <button>+新增分类</button>
+            <button @click="handleAdd">+新增分类</button>
             <button>展开</button>
-            <button>🔍</button>
+            <button @click="handleSearch">🔍</button>
           </div>
           <div>
-            <button>⟳</button>
+            <button @click="loadList">⟳</button>
             <button>⛶</button>
             <button>⊞</button>
           </div>
@@ -40,21 +40,89 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>普通分类</td>
-                        <td>1</td>
-                        <td>2023-12-05 14:54:34</td>
-                        <td>+新增下级&nbsp;&nbsp;编辑&nbsp;&nbsp;删除</td>
+                    <tr v-for="item in rows" :key="item.id">
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.no }}</td>
+                        <td>{{ item.createTime }}</td>
+                        <td>
+                          <a href="#" @click.prevent="handleAddChild(item)">+新增下级</a>&nbsp;&nbsp;
+                          <a href="#" @click.prevent="handleEdit(item)">编辑</a>&nbsp;&nbsp;
+                          <a href="#" @click.prevent="handleDelete(item)" style="color: red;">删除</a>
+                        </td>
                     </tr>
                 </tbody>
             </table>
+        </div>
+        <div class="main-floot" style="margin-top: 10px;">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script></script>
+<script>
+// ========== 导入产品分类相关API ==========
+import { getProductCategoryPage, deleteProductCategory } from '#/api/crm/product/category';
+
+export default {
+  data() {
+    return {
+      searchForm: {
+        name: "",  // 分类名称
+      },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      rows: [],
+    };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const data = await getProductCategoryPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          name: this.searchForm.name,
+        });
+        this.rows = data.list.map((item) => ({
+          id: item.id,
+          name: item.name || "",
+          no: item.id,
+          createTime: this.formatTimestamp(item.createTime),
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取产品分类列表失败", err);
+      }
+    },
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}:${String(date.getSeconds()).padStart(2,"0")}`;
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() { this.searchForm = { name: "" }; this.pagination.pageNo = 1; this.loadList(); },
+    handleAdd() { alert("新增分类功能待实现"); },
+    handleAddChild(row) { alert(`新增下级分类：${row.name}`); },
+    handleEdit(row) { alert(`编辑分类：${row.name}`); },
+    async handleDelete(row) {
+      if (!confirm(`确定要删除分类「${row.name}」吗？`)) return;
+      try { await deleteProductCategory(row.id); alert("删除成功"); this.loadList(); }
+      catch (err) { console.error("删除失败", err); }
+    },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+  },
+};
+</script>
 
 <style scoped>
 .page-wrapper {

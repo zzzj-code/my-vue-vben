@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：系统管理模块
+ * 页面：邮箱账号配置
+ * 功能：邮箱账号配置相关接口
+ * 接口前缀：/admin-api/system
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getMailAccountPage(params) {
   return requestClient.get(

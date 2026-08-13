@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：HRM人力资源模块
+ * 页面：调动申请页面
+ * 功能：调动申请相关接口
+ * 接口前缀：/admin-api/hrm
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getEmployeeTransferBillPage(params) {
   return requestClient.get("/hrm/employee-transfer-bill/page", { params });

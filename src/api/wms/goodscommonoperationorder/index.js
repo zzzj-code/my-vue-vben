@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：WMS仓储模块
+ * 页面：通用操作单页面
+ * 功能：通用操作单相关接口
+ * 接口前缀：/admin-api/wms
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getGoodsCommonOperationOrderPage(params) {
   return requestClient.get("/wms/goods-common-operation-order/page", { params });

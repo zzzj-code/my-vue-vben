@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：IoT物联网模块
+ * 页面：index页面
+ * 功能：index相关接口
+ * 接口前缀：/admin-api/iot
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 var ProtocolTypeEnum = /* @__PURE__ */ ((ProtocolTypeEnum2) => {
   ProtocolTypeEnum2["COAP"] = "coap";

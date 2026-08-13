@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：商城模块
+ * 页面：seckillConfig页面
+ * 功能：seckillConfig相关接口
+ * 接口前缀：/admin-api/mall
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getSeckillConfigPage(params) {
   return requestClient.get(

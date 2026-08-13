@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：系统管理模块
+ * 页面：站内信模板配置
+ * 功能：站内信模板配置相关接口
+ * 接口前缀：/admin-api/system
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getNotifyTemplatePage(params) {
   return requestClient.get(

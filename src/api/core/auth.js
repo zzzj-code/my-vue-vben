@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：核心模块
+ * 页面：auth页面
+ * 功能：auth相关接口
+ * 接口前缀：
+ * ============================================================
+ */
 import { baseRequestClient, requestClient } from "#/api/request";
 async function loginApi(data) {
   return requestClient.post("/system/auth/login", data, {

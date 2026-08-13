@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>产品</span>
-            <input type="text" placeholder="请输入产品" />
+            <input type="text" placeholder="请输入产品" v-model="searchForm.productId" />
           </div>
           <div>
             <span>仓库</span>
-            <input type="text" placeholder="请输入仓库" />
+            <input type="text" placeholder="请输入仓库" v-model="searchForm.warehouseId" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -53,40 +53,86 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共3条数据<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入库存查询相关API ==========
+import { getStockPage } from '#/api/erp/stock/stock';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          name: '华为 Mate 60 Pro 256GB',
-          unit: '台',
-          category: '手机通讯',
-          quantity: 156,
-          warehouse: '深圳中心仓'
-        },
-        {
-          name: '联想 ThinkPad X1 Carbon',
-          unit: '台',
-          category: '电脑办公',
-          quantity: 89,
-          warehouse: '北京分仓'
-        },
-        {
-          name: '小米 14 Ultra 512GB',
-          unit: '台',
-          category: '手机通讯',
-          quantity: 234,
-          warehouse: '广州分仓'
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        productId: "",   // 产品ID
+        warehouseId: "", // 仓库ID
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadStockList();
+  },
+  methods: {
+    // ========== 获取库存列表 ==========
+    async loadStockList() {
+      try {
+        const data = await getStockPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          productId: this.searchForm.productId,
+          warehouseId: this.searchForm.warehouseId,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          name: item.productName || "",       // 产品名称
+          unit: item.unitName || "",          // 产品单位
+          category: item.categoryName || "",  // 产品分类
+          quantity: item.count || 0,          // 库存量
+          warehouse: item.warehouseName || "", // 仓库
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取库存列表失败", err);
+      }
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadStockList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { productId: "", warehouseId: "" };
+      this.pagination.pageNo = 1;
+      this.loadStockList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadStockList();
+    },
   },
 };
 </script>

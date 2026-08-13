@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：商城模块
+ * 页面：member页面
+ * 功能：member相关接口
+ * 接口前缀：/admin-api/mall
+ * ============================================================
+ */
 import { formatDateTime } from "@vben/utils";
 import { requestClient } from "#/api/request";
 function getMemberSummary() {

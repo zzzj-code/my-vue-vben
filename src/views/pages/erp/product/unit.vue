@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>单位名称</span>
-            <input type="text" placeholder="请输入单位名称" />
+            <input type="text" placeholder="请输入单位名称" v-model="searchForm.name" />
           </div>
           <div>
             <span>单位状态</span>
-            <input type="text" placeholder="请输入单位状态" />
+            <input type="text" placeholder="请输入单位状态" v-model="searchForm.status" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -65,124 +65,91 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共15条数据<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入产品单位相关API ==========
+import { getProductUnitPage } from '#/api/erp/product/unit';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: "UNIT-001",
-          name: "台",
-          status: "启用",
-          createTime: "2024-01-15 10:00",
-          remark: "常用单位",
-        },
-        {
-          id: "UNIT-002",
-          name: "部",
-          status: "启用",
-          createTime: "2024-01-15 10:05",
-          remark: "电子设备",
-        },
-        {
-          id: "UNIT-003",
-          name: "个",
-          status: "启用",
-          createTime: "2024-01-15 10:10",
-          remark: "通用单位",
-        },
-        {
-          id: "UNIT-004",
-          name: "件",
-          status: "启用",
-          createTime: "2024-01-15 10:15",
-          remark: "服装类",
-        },
-        {
-          id: "UNIT-005",
-          name: "套",
-          status: "启用",
-          createTime: "2024-01-15 10:20",
-          remark: "套装类",
-        },
-        {
-          id: "UNIT-006",
-          name: "箱",
-          status: "启用",
-          createTime: "2024-01-15 10:25",
-          remark: "包装单位",
-        },
-        {
-          id: "UNIT-007",
-          name: "盒",
-          status: "启用",
-          createTime: "2024-01-15 10:30",
-          remark: "小型包装",
-        },
-        {
-          id: "UNIT-008",
-          name: "瓶",
-          status: "启用",
-          createTime: "2024-01-15 10:35",
-          remark: "液体类",
-        },
-        {
-          id: "UNIT-009",
-          name: "千克",
-          status: "启用",
-          createTime: "2024-01-15 10:40",
-          remark: "重量单位",
-        },
-        {
-          id: "UNIT-010",
-          name: "克",
-          status: "暂停",
-          createTime: "2024-01-15 10:45",
-          remark: "小重量单位",
-        },
-        {
-          id: "UNIT-011",
-          name: "升",
-          status: "启用",
-          createTime: "2024-01-15 10:50",
-          remark: "容量单位",
-        },
-        {
-          id: "UNIT-012",
-          name: "米",
-          status: "启用",
-          createTime: "2024-01-15 10:55",
-          remark: "长度单位",
-        },
-        {
-          id: "UNIT-013",
-          name: "平方米",
-          status: "启用",
-          createTime: "2024-01-15 11:00",
-          remark: "面积单位",
-        },
-        {
-          id: "UNIT-014",
-          name: "立方",
-          status: "启用",
-          createTime: "2024-01-15 11:05",
-          remark: "体积单位",
-        },
-        {
-          id: "UNIT-015",
-          name: "桶",
-          status: "启用",
-          createTime: "2024-01-15 11:10",
-          remark: "大容量包装",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        name: "",   // 单位名称
+        status: "", // 单位状态
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadUnitList();
+  },
+  methods: {
+    // ========== 获取产品单位列表 ==========
+    async loadUnitList() {
+      try {
+        const data = await getProductUnitPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          name: this.searchForm.name,
+          status: this.searchForm.status,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          name: item.name || "",             // 单位名称
+          status: item.status === 0 ? "启用" : "禁用", // 单位状态
+          createTime: this.formatTimestamp(item.createTime), // 创建时间
+          remark: item.remark || "",         // 备注
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取产品单位列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}:${String(date.getSeconds()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadUnitList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { name: "", status: "" };
+      this.pagination.pageNo = 1;
+      this.loadUnitList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadUnitList();
+    },
   },
 };
 </script>

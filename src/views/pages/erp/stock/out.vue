@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>出库单号</span>
-            <input type="text" placeholder="请输入出库单号" />
+            <input type="text" placeholder="请输入出库单号" v-model="searchForm.no" />
           </div>
           <div>
             <span>产品</span>
-            <input type="text" placeholder="请输入产品" />
+            <input type="text" placeholder="请输入产品" v-model="searchForm.productName" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div class="top-1">其它出库单列表</div>
           <div class="top-2">
-            <button>+新增其他出库单</button>
+            <button @click="handleAdd">+新增其他出库单</button>
             <button>导出</button>
             <button disabled>批量删除</button>
             <button>🔍</button>
@@ -54,7 +54,7 @@
             <tbody>
               <tr v-for="item in tabValue">
                 <td class="col-check"><input type="checkbox" name="" id=""></td>
-                <td class="col-id">{{ item.id }}</td>
+                <td class="col-id">{{ item.no }}</td>
                 <td>{{ item.product }}</td>
                 <td>{{ item.customer }}</td>
                 <td>{{ item.outTime }}</td>
@@ -62,44 +62,127 @@
                 <td>{{ item.quantity }}</td>
                 <td>{{ item.totalAmount }}</td>
                 <td>{{ item.status }}</td>
-                <td class="ol-col">详情&nbsp;&nbsp;审批&nbsp;&nbsp;删除</td>
+                <td class="ol-col">
+                  <a href="#" @click.prevent="handleDetail(item)">详情</a>&nbsp;&nbsp;
+                  <a href="#" @click.prevent="handleApprove(item)">审批</a>&nbsp;&nbsp;
+                  <a href="#" @click.prevent="handleDelete(item)">删除</a>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共2条数据<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入其他出库相关API ==========
+import { getStockOutPage, deleteStockOut } from '#/api/erp/stock/out';
+
 export default {
   data() {
     return {
-      tabValue: [
-         {
-          id: 'OUT-2024-001',
-          product: '华为 Mate 60 Pro 256GB x 10台',
-          customer: '深圳市华讯科技',
-          outTime: '2024-01-18 14:20',
-          creator: '李明',
-          quantity: 10,
-          totalAmount: 69990,
-          status: '已出库'
-        },
-        {
-          id: 'OUT-2024-002',
-          product: '联想 ThinkPad X1 Carbon x 5台',
-          customer: '北京创新互联科技',
-          outTime: '2024-01-23 11:00',
-          creator: '王强',
-          quantity: 5,
-          totalAmount: 39995,
-          status: '已出库'
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        no: "",        // 出库单号
+        productName: "", // 产品名称
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadStockOutList();
+  },
+  methods: {
+    // ========== 获取其他出库列表 ==========
+    async loadStockOutList() {
+      try {
+        const data = await getStockOutPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          no: this.searchForm.no,
+          productName: this.searchForm.productName,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          no: item.no || "",                     // 出库单号
+          product: item.productNames || "",      // 产品信息
+          customer: item.customerName || "",     // 客户
+          outTime: this.formatTimestamp(item.outTime), // 出库时间
+          creator: item.creatorName || "",       // 创建人
+          quantity: item.totalCount || 0,        // 总数量
+          totalAmount: item.totalPrice || 0,     // 总金额
+          status: item.status === 20 ? "已出库" : "待出库", // 状态
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取其他出库列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadStockOutList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { no: "", productName: "" };
+      this.pagination.pageNo = 1;
+      this.loadStockOutList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadStockOutList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增其他出库功能待实现");
+    },
+    // ========== 详情 ==========
+    handleDetail(row) {
+      alert(`查看详情：${row.no}`);
+    },
+    // ========== 审批 ==========
+    handleApprove(row) {
+      alert(`审批其他出库：${row.no}`);
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除「${row.no}」吗？`)) return;
+      try {
+        await deleteStockOut([row.id]);
+        alert("删除成功");
+        this.loadStockOutList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   },
 };
 </script>

@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：商城模块
+ * 页面：rewardActivity页面
+ * 功能：rewardActivity相关接口
+ * 接口前缀：/admin-api/mall
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function createRewardActivity(data) {
   return requestClient.post("/promotion/reward-activity/create", data);

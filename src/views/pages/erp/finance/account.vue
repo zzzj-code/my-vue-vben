@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>名称</span>
-            <input type="text" placeholder="请输入名称" />
+            <input type="text" placeholder="请输入名称" v-model="searchForm.name" />
           </div>
           <div>
             <span>编码</span>
-            <input type="text" placeholder="请输入编码" />
+            <input type="text" placeholder="请输入编码" v-model="searchForm.code" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div class="top-1">结算账户列表</div>
           <div class="top-2">
-            <button>+新增结算账户</button>
+            <button @click="handleAdd">+新增结算账户</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -47,31 +47,129 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>第一个结算账户</td>
-                <td></td>
-                <td></td>
-                <td>0</td>
-                <td>开启</td>
-                <td>否</td>
-                <td>2026-07-27 10:33:58</td>
-                <td class="ol-col">编辑&nbsp;&nbsp;删除</td>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td>{{ item.name }}</td>
+                <td>{{ item.code }}</td>
+                <td>{{ item.remark }}</td>
+                <td>{{ item.sort }}</td>
+                <td>{{ item.status }}</td>
+                <td>{{ item.defaultStatus }}</td>
+                <td>{{ item.createTime }}</td>
+                <td class="ol-col">
+                  <a href="#" @click.prevent="handleEdit(item)">编辑</a>&nbsp;&nbsp;
+                  <a href="#" @click.prevent="handleDelete(item)">删除</a>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共1条数据<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入结算账户相关API ==========
+import { getAccountPage, deleteAccount } from '#/api/erp/finance/account';
+
 export default {
   data() {
     return {
+      // 搜索表单
+      searchForm: {
+        name: "", // 名称
+        code: "", // 编码
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
       tabValue: [],
     };
+  },
+  mounted() {
+    this.loadAccountList();
+  },
+  methods: {
+    // ========== 获取结算账户列表 ==========
+    async loadAccountList() {
+      try {
+        const data = await getAccountPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          name: this.searchForm.name,
+          code: this.searchForm.code,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          name: item.name || "",               // 名称
+          code: item.code || "",               // 编码
+          remark: item.remark || "",           // 备注
+          sort: item.sort || 0,                // 排序
+          status: item.status === 0 ? "开启" : "关闭", // 状态
+          defaultStatus: item.defaultStatus === 1 ? "是" : "否", // 是否默认
+          createTime: this.formatTimestamp(item.createTime), // 创建时间
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取结算账户列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}:${String(date.getSeconds()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadAccountList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { name: "", code: "" };
+      this.pagination.pageNo = 1;
+      this.loadAccountList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadAccountList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增结算账户功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert(`编辑结算账户：${row.name}`);
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除「${row.name}」吗？`)) return;
+      try {
+        await deleteAccount(row.id);
+        alert("删除成功");
+        this.loadAccountList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   },
 };
 </script>

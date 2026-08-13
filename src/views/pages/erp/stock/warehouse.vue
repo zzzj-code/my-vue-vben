@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>仓库名称</span>
-            <input type="text" placeholder="请输入仓库名称" />
+            <input type="text" placeholder="请输入仓库名称" v-model="searchForm.name" />
           </div>
           <div>
             <span>仓库状态</span>
-            <input type="text" placeholder="请输入仓库状态" />
+            <input type="text" placeholder="请输入仓库状态" v-model="searchForm.status" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div class="top-1">仓库列表</div>
           <div class="top-2">
-            <button>+新增仓库</button>
+            <button @click="handleAdd">+新增仓库</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -50,35 +50,135 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>食品</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td>2026-07-27 10:30:17</td>
-                <td class="ol-col">编辑&nbsp;&nbsp;删除</td>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td>{{ item.name }}</td>
+                <td>{{ item.address }}</td>
+                <td>{{ item.storagePrice }}</td>
+                <td>{{ item.handlingPrice }}</td>
+                <td>{{ item.principal }}</td>
+                <td>{{ item.sort }}</td>
+                <td>{{ item.status }}</td>
+                <td>{{ item.defaultStatus }}</td>
+                <td>{{ item.remark }}</td>
+                <td>{{ item.createTime }}</td>
+                <td class="ol-col">
+                  <a href="#" @click.prevent="handleEdit(item)">编辑</a>&nbsp;&nbsp;
+                  <a href="#" @click.prevent="handleDelete(item)">删除</a>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共1条数据<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入仓库管理相关API ==========
+import { getWarehousePage, deleteWarehouse } from '#/api/erp/stock/warehouse';
+
 export default {
   data() {
     return {
-      tabValue: [
-      ],
+      // 搜索表单
+      searchForm: {
+        name: "",   // 仓库名称
+        status: "", // 仓库状态
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadWarehouseList();
+  },
+  methods: {
+    // ========== 获取仓库列表 ==========
+    async loadWarehouseList() {
+      try {
+        const data = await getWarehousePage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          name: this.searchForm.name,
+          status: this.searchForm.status,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          name: item.name || "",               // 仓库名称
+          address: item.address || "",         // 仓库地址
+          storagePrice: item.storagePrice || "", // 仓储费
+          handlingPrice: item.handlingPrice || "", // 搬运费
+          principal: item.principal || "",     // 负责人
+          sort: item.sort || 0,                // 排序
+          status: item.status === 0 ? "开启" : "关闭", // 状态
+          defaultStatus: item.defaultStatus === 1 ? "是" : "否", // 是否默认
+          remark: item.remark || "",           // 备注
+          createTime: this.formatTimestamp(item.createTime), // 创建时间
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取仓库列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}:${String(date.getSeconds()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadWarehouseList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { name: "", status: "" };
+      this.pagination.pageNo = 1;
+      this.loadWarehouseList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadWarehouseList();
+    },
+    // ========== 新增 ==========
+    handleAdd() {
+      alert("新增仓库功能待实现");
+    },
+    // ========== 编辑 ==========
+    handleEdit(row) {
+      alert(`编辑仓库：${row.name}`);
+    },
+    // ========== 删除 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除「${row.name}」吗？`)) return;
+      try {
+        await deleteWarehouse(row.id);
+        alert("删除成功");
+        this.loadWarehouseList();
+      } catch (err) {
+        console.error("删除失败", err);
+      }
+    },
   },
 };
 </script>

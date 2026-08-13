@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：系统管理模块
+ * 页面：菜单管理页面
+ * 功能：菜单管理相关接口
+ * 接口前缀：/admin-api/system
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 async function getSimpleMenusList() {
   return requestClient.get("/system/menu/simple-list");

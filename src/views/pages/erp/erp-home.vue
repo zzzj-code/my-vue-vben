@@ -4,23 +4,23 @@
       <div class="app-top">
         <div class="top-1">
           <div><h3>今日销售</h3></div>
-          <div>0<span></span></div>
-          <div>今日采购 <span>0</span></div>
+          <div>{{ saleSummary.todayPrice }}<span></span></div>
+          <div>今日采购 <span>{{ purchaseSummary.todayPrice }}</span></div>
         </div>
         <div class="top-1">
           <div><h3>昨日销售</h3></div>
-          <div>0<span></span></div>
-          <div>昨日采购 <span>0</span></div>
+          <div>{{ saleSummary.yesterdayPrice }}<span></span></div>
+          <div>昨日采购 <span>{{ purchaseSummary.yesterdayPrice }}</span></div>
         </div>
         <div class="top-1">
           <div><h3>本月销售</h3></div>
-          <div>0<span></span></div>
-          <div>本月采购 <span>0</span></div>
+          <div>{{ saleSummary.monthPrice }}<span></span></div>
+          <div>本月采购 <span>{{ purchaseSummary.monthPrice }}</span></div>
         </div>
         <div class="top-1">
           <div><h3>今年销售</h3></div>
-          <div>0<span></span></div>
-          <div>今年采购 <span>0</span></div>
+          <div>{{ saleSummary.yearPrice }}<span></span></div>
+          <div>今年采购 <span>{{ purchaseSummary.yearPrice }}</span></div>
         </div>
       </div>
       <div class="app-main">
@@ -43,12 +43,41 @@
 
 <script>
 import * as echarts from "echarts";
+// ========== 导入销售统计和采购统计相关API ==========
+import { getSaleSummary, getSaleTimeSummary } from '#/api/erp/statistics/sale';
+import { getPurchaseSummary, getPurchaseTimeSummary } from '#/api/erp/statistics/purchase';
+
 export default {
   data() {
-    return {};
+    return {
+      // 销售统计数据
+      saleSummary: {
+        todayPrice: 0,    // 今日销售
+        yesterdayPrice: 0, // 昨日销售
+        monthPrice: 0,    // 本月销售
+        yearPrice: 0,     // 今年销售
+      },
+      // 采购统计数据
+      purchaseSummary: {
+        todayPrice: 0,    // 今日采购
+        yesterdayPrice: 0, // 昨日采购
+        monthPrice: 0,    // 本月采购
+        yearPrice: 0,     // 今年采购
+      },
+      // 销售时间统计数据
+      saleTimeSummary: {
+        dates: [],
+        prices: [],
+      },
+      // 采购时间统计数据
+      purchaseTimeSummary: {
+        dates: [],
+        prices: [],
+      },
+    };
   },
   mounted() {
-    this.initChart();
+    this.loadStatistics();
     // 监听窗口变化，自适应
     window.addEventListener("resize", this.handleResize);
   },
@@ -61,6 +90,55 @@ export default {
     window.removeEventListener("resize", this.handleResize);
   },
   methods: {
+    // ========== 加载统计数据 ==========
+    async loadStatistics() {
+      try {
+        // 并行加载销售汇总和采购汇总
+        const [saleData, purchaseData, saleTimeData, purchaseTimeData] = await Promise.all([
+          getSaleSummary().catch(() => null),
+          getPurchaseSummary().catch(() => null),
+          getSaleTimeSummary().catch(() => null),
+          getPurchaseTimeSummary().catch(() => null),
+        ]);
+        // 处理销售汇总数据
+        if (saleData) {
+          this.saleSummary = {
+            todayPrice: saleData.todayPrice || 0,
+            yesterdayPrice: saleData.yesterdayPrice || 0,
+            monthPrice: saleData.monthPrice || 0,
+            yearPrice: saleData.yearPrice || 0,
+          };
+        }
+        // 处理采购汇总数据
+        if (purchaseData) {
+          this.purchaseSummary = {
+            todayPrice: purchaseData.todayPrice || 0,
+            yesterdayPrice: purchaseData.yesterdayPrice || 0,
+            monthPrice: purchaseData.monthPrice || 0,
+            yearPrice: purchaseData.yearPrice || 0,
+          };
+        }
+        // 处理销售时间统计数据
+        if (saleTimeData && saleTimeData.list) {
+          this.saleTimeSummary = {
+            dates: saleTimeData.list.map((item) => item.date || ""),
+            prices: saleTimeData.list.map((item) => item.price || 0),
+          };
+        }
+        // 处理采购时间统计数据
+        if (purchaseTimeData && purchaseTimeData.list) {
+          this.purchaseTimeSummary = {
+            dates: purchaseTimeData.list.map((item) => item.date || ""),
+            prices: purchaseTimeData.list.map((item) => item.price || 0),
+          };
+        }
+        // 初始化图表
+        this.initChart();
+      } catch (err) {
+        console.error("加载统计数据失败", err);
+        this.initChart();
+      }
+    },
     initChart() {
       // 获取 DOM 元素
       const chartDom = this.$refs.chartRef;
@@ -69,7 +147,7 @@ export default {
       this.chart = echarts.init(chartDom);
       this.chart1 = echarts.init(charDom1);
 
-      // 配置选项
+      // 配置选项 - 销售统计
       const option = {
         // 提示框
         tooltip: {
@@ -95,7 +173,7 @@ export default {
         xAxis: {
           type: "category",
           boundaryGap: false,
-          data: [
+          data: this.saleTimeSummary.dates.length > 0 ? this.saleTimeSummary.dates : [
             "2026-02",
             "2026-03",
             "2026-04",
@@ -120,7 +198,7 @@ export default {
             type: "line",
             smooth: true,
             smoothMonotone: "x",
-            data: ["0", "0", "0", "0", "0", "0"],
+            data: this.saleTimeSummary.prices.length > 0 ? this.saleTimeSummary.prices : ["0", "0", "0", "0", "0", "0"],
             symbol: "diamond",
             symbolSize: 10,
             lineStyle: {
@@ -159,7 +237,7 @@ export default {
         xAxis: {
           type: "category",
           boundaryGap: false,
-          data: [
+          data: this.purchaseTimeSummary.dates.length > 0 ? this.purchaseTimeSummary.dates : [
             "2026-02",
             "2026-03",
             "2026-04",
@@ -184,7 +262,7 @@ export default {
             type: "line",
             smooth: true,
             smoothMonotone: "x",
-            data: ["0", "0", "0", "0", "0", "532.8"],
+            data: this.purchaseTimeSummary.prices.length > 0 ? this.purchaseTimeSummary.prices : ["0", "0", "0", "0", "0", "532.8"],
             symbol: "diamond",
             symbolSize: 10,
             areaStyle: {

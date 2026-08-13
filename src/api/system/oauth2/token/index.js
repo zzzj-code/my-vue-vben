@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：系统管理模块
+ * 页面：OAuth2令牌管理
+ * 功能：OAuth2令牌管理相关接口
+ * 接口前缀：/admin-api/system
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getOAuth2TokenPage(params) {
   return requestClient.get(

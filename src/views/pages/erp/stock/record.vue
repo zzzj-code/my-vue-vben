@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>产品</span>
-            <input type="text" placeholder="请输入产品" />
+            <input type="text" placeholder="请输入产品" v-model="searchForm.productName" />
           </div>
           <div>
             <span>仓库</span>
-            <input type="text" placeholder="请输入仓库" />
+            <input type="text" placeholder="请输入仓库" v-model="searchForm.warehouseName" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -48,7 +48,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.product }}</td>
                 <td>{{ item.category }}</td>
                 <td>{{ item.unit }}</td>
@@ -63,235 +63,97 @@
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共18条数据<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入库存记录相关API ==========
+import { getStockRecordPage } from '#/api/erp/stock/record';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          product: "华为 Mate 60 Pro 256GB",
-          category: "手机通讯",
-          unit: "台",
-          warehouse: "深圳中心仓",
-          type: "入库",
-          orderNo: "IN-2024-001",
-          date: "2024-01-16 10:30",
-          quantity: 50,
-          stock: 120,
-          operator: "张伟",
-        },
-        {
-          product: "华为 Mate 60 Pro 256GB",
-          category: "手机通讯",
-          unit: "台",
-          warehouse: "深圳中心仓",
-          type: "出库",
-          orderNo: "OUT-2024-001",
-          date: "2024-01-18 14:20",
-          quantity: 10,
-          stock: 110,
-          operator: "李明",
-        },
-        {
-          product: "华为 Mate 60 Pro 256GB",
-          category: "手机通讯",
-          unit: "台",
-          warehouse: "深圳中心仓",
-          type: "入库",
-          orderNo: "IN-2024-005",
-          date: "2024-01-25 09:15",
-          quantity: 30,
-          stock: 140,
-          operator: "张伟",
-        },
-        {
-          product: "联想 ThinkPad X1 Carbon",
-          category: "电脑办公",
-          unit: "台",
-          warehouse: "北京分仓",
-          type: "入库",
-          orderNo: "IN-2024-002",
-          date: "2024-01-21 14:20",
-          quantity: 30,
-          stock: 80,
-          operator: "李娜",
-        },
-        {
-          product: "联想 ThinkPad X1 Carbon",
-          category: "电脑办公",
-          unit: "台",
-          warehouse: "北京分仓",
-          type: "出库",
-          orderNo: "OUT-2024-003",
-          date: "2024-01-23 11:00",
-          quantity: 5,
-          stock: 75,
-          operator: "王强",
-        },
-        {
-          product: "小米 14 Ultra 512GB",
-          category: "手机通讯",
-          unit: "台",
-          warehouse: "广州分仓",
-          type: "入库",
-          orderNo: "IN-2024-003",
-          date: "2024-01-26 09:15",
-          quantity: 100,
-          stock: 180,
-          operator: "王强",
-        },
-        {
-          product: "小米 14 Ultra 512GB",
-          category: "手机通讯",
-          unit: "台",
-          warehouse: "广州分仓",
-          type: "出库",
-          orderNo: "OUT-2024-005",
-          date: "2024-01-28 16:30",
-          quantity: 25,
-          stock: 155,
-          operator: "刘洋",
-        },
-        {
-          product: "Apple iPhone 15 Pro Max",
-          category: "手机通讯",
-          unit: "台",
-          warehouse: "上海分仓",
-          type: "入库",
-          orderNo: "IN-2024-004",
-          date: "2024-02-02 16:40",
-          quantity: 80,
-          stock: 95,
-          operator: "刘洋",
-        },
-        {
-          product: "三星 Galaxy S24 Ultra",
-          category: "手机通讯",
-          unit: "台",
-          warehouse: "深圳中心仓",
-          type: "入库",
-          orderNo: "IN-2024-005",
-          date: "2024-02-06 11:00",
-          quantity: 60,
-          stock: 150,
-          operator: "陈静",
-        },
-        {
-          product: "三星 Galaxy S24 Ultra",
-          category: "手机通讯",
-          unit: "台",
-          warehouse: "深圳中心仓",
-          type: "出库",
-          orderNo: "OUT-2024-008",
-          date: "2024-02-08 09:30",
-          quantity: 15,
-          stock: 135,
-          operator: "赵磊",
-        },
-        {
-          product: "戴尔 XPS 16 笔记本",
-          category: "电脑办公",
-          unit: "台",
-          warehouse: "北京分仓",
-          type: "入库",
-          orderNo: "IN-2024-006",
-          date: "2024-02-11 13:30",
-          quantity: 25,
-          stock: 55,
-          operator: "赵磊",
-        },
-        {
-          product: "索尼 WH-1000XM5 耳机",
-          category: "音频设备",
-          unit: "副",
-          warehouse: "深圳中心仓",
-          type: "入库",
-          orderNo: "IN-2024-007",
-          date: "2024-02-16 08:50",
-          quantity: 200,
-          stock: 300,
-          operator: "孙悦",
-        },
-        {
-          product: "索尼 WH-1000XM5 耳机",
-          category: "音频设备",
-          unit: "副",
-          warehouse: "深圳中心仓",
-          type: "出库",
-          orderNo: "OUT-2024-012",
-          date: "2024-02-18 15:20",
-          quantity: 30,
-          stock: 270,
-          operator: "周明",
-        },
-        {
-          product: "格力空调 KFR-35GW",
-          category: "家用电器",
-          unit: "台",
-          warehouse: "广州分仓",
-          type: "入库",
-          orderNo: "IN-2024-008",
-          date: "2024-02-21 15:10",
-          quantity: 150,
-          stock: 200,
-          operator: "周明",
-        },
-        {
-          product: "海尔冰箱 BCD-500",
-          category: "家用电器",
-          unit: "台",
-          warehouse: "上海分仓",
-          type: "入库",
-          orderNo: "IN-2024-009",
-          date: "2024-03-02 10:00",
-          quantity: 40,
-          stock: 60,
-          operator: "吴芳",
-        },
-        {
-          product: "小米电视 S Pro 65",
-          category: "家用电器",
-          unit: "台",
-          warehouse: "深圳中心仓",
-          type: "入库",
-          orderNo: "IN-2024-010",
-          date: "2024-03-06 14:30",
-          quantity: 120,
-          stock: 180,
-          operator: "郑华",
-        },
-        {
-          product: "小米电视 S Pro 65",
-          category: "家用电器",
-          unit: "台",
-          warehouse: "深圳中心仓",
-          type: "出库",
-          orderNo: "OUT-2024-020",
-          date: "2024-03-08 10:00",
-          quantity: 20,
-          stock: 160,
-          operator: "张伟",
-        },
-        {
-          product: "OPPO Find X7 Ultra",
-          category: "手机通讯",
-          unit: "台",
-          warehouse: "广州分仓",
-          type: "入库",
-          orderNo: "IN-2024-011",
-          date: "2024-03-10 09:30",
-          quantity: 92,
-          stock: 120,
-          operator: "林峰",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        productName: "",   // 产品名称
+        warehouseName: "", // 仓库名称
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadStockRecordList();
+  },
+  methods: {
+    // ========== 获取库存记录列表 ==========
+    async loadStockRecordList() {
+      try {
+        const data = await getStockRecordPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          productName: this.searchForm.productName,
+          warehouseName: this.searchForm.warehouseName,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          product: item.productName || "",      // 产品名称
+          category: item.categoryName || "",    // 产品分类
+          unit: item.unitName || "",            // 产品单位
+          warehouse: item.warehouseName || "",  // 仓库
+          type: item.type === 1 ? "入库" : "出库", // 类型
+          orderNo: item.bizNo || "",            // 出入库单号
+          date: this.formatTimestamp(item.recordTime), // 出入库日期
+          quantity: item.count || 0,            // 出入库数量
+          stock: item.totalCount || 0,          // 库存量
+          operator: item.creatorName || "",     // 操作人
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取库存记录列表失败", err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadStockRecordList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { productName: "", warehouseName: "" };
+      this.pagination.pageNo = 1;
+      this.loadStockRecordList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadStockRecordList();
+    },
   },
 };
 </script>

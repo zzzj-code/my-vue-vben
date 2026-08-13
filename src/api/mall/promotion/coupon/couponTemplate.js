@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：商城模块
+ * 页面：couponTemplate页面
+ * 功能：couponTemplate相关接口
+ * 接口前缀：/admin-api/mall
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function createCouponTemplate(data) {
   return requestClient.post("/promotion/coupon-template/create", data);

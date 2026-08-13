@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：基础设施模块
+ * 页面：index页面
+ * 功能：index相关接口
+ * 接口前缀：/admin-api/infra
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getFileConfigPage(params) {
   return requestClient.get(

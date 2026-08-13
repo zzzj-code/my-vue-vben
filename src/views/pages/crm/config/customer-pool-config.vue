@@ -7,40 +7,40 @@
           <div>
             <span>客户公海规则设置</span>
             <label>
-              <input type="radio" name="gender1" checked />
+              <input type="radio" name="gender1" :checked="form.enabled" @change="form.enabled = true" />
               开启
             </label>
             <label>
-              <input type="radio" name="gender1"/>
+              <input type="radio" name="gender1" :checked="!form.enabled" @change="form.enabled = false" />
               关闭
             </label>
           </div>
           <div>
             <span>未跟进天数</span>
-            <input type="text" value="31">
+            <input type="text" v-model="form.followDays">
           </div>
           <div>
             <span>未成交天数</span>
-            <input type="text" value="5">
+            <input type="text" v-model="form.dealDays">
           </div>
           <div>
             <span>提前提醒设置</span>
             <label>
-              <input type="radio" name="gender" checked />
+              <input type="radio" name="gender" :checked="form.notifyEnabled" @change="form.notifyEnabled = true" />
               开启
             </label>
             <label>
-              <input type="radio" name="gender"/>
+              <input type="radio" name="gender" :checked="!form.notifyEnabled" @change="form.notifyEnabled = false" />
               关闭
             </label>
           </div>
           <div>
             <span>提前提醒天数</span>
-            <input type="text" value="2">
+            <input type="text" v-model="form.notifyDays">
           </div>
           <div>
-            <button>重置</button>
-            <button>提交</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSubmit">提交</button>
           </div>
         </div>
       </div>
@@ -48,7 +48,54 @@
   </div>
 </template>
 
-<script></script>
+<script>
+// ========== 导入客户公海配置相关API ==========
+import { getCustomerPoolConfig, updateCustomerPoolConfig } from '#/api/crm/customer/poolConfig';
+
+export default {
+  data() {
+    return {
+      form: {
+        enabled: true,        // 客户公海规则设置
+        followDays: 31,       // 未跟进天数
+        dealDays: 5,          // 未成交天数
+        notifyEnabled: true,  // 提前提醒设置
+        notifyDays: 2,        // 提前提醒天数
+      },
+    };
+  },
+  mounted() {
+    this.loadConfig();
+  },
+  methods: {
+    async loadConfig() {
+      try {
+        const data = await getCustomerPoolConfig();
+        if (data) {
+          this.form.enabled = data.enabled !== false;
+          this.form.followDays = data.followDays || 31;
+          this.form.dealDays = data.dealDays || 5;
+          this.form.notifyEnabled = data.notifyEnabled !== false;
+          this.form.notifyDays = data.notifyDays || 2;
+        }
+      } catch (err) {
+        console.error("获取客户公海配置失败", err);
+      }
+    },
+    handleReset() {
+      this.form = { enabled: true, followDays: 31, dealDays: 5, notifyEnabled: true, notifyDays: 2 };
+    },
+    async handleSubmit() {
+      try {
+        await updateCustomerPoolConfig(this.form);
+        alert("保存成功");
+      } catch (err) {
+        console.error("保存客户公海配置失败", err);
+      }
+    },
+  },
+};
+</script>
 
 <style scoped>
 .page-wrapper {

@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：资产管理模块
+ * 页面：index页面
+ * 功能：index相关接口
+ * 接口前缀：/admin-api/asset
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getLifeTimePage(params) {
   return requestClient.get("/asset/life-time/page", { params });

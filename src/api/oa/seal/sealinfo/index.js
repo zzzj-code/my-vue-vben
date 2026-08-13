@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：OA协同办公模块
+ * 页面：印章信息页面
+ * 功能：印章信息相关接口
+ * 接口前缀：/admin-api/oa
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getSealPage(params) {
   return requestClient.get("/oa/seal/page", { params });

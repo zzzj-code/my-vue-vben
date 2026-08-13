@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ * 模块：系统管理模块
+ * 页面：OAuth2开放平台
+ * 功能：OAuth2开放平台相关接口
+ * 接口前缀：/admin-api/system
+ * ============================================================
+ */
 import { requestClient } from "#/api/request";
 function getAuthorize(clientId) {
   return requestClient.get(

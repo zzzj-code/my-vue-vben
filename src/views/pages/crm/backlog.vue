@@ -3,14 +3,14 @@
     <div class="app">
       <div class="app-left">
         <ul class="left-nav">
-          <li>今日需联系客户</li>
-          <li>分配给我的线索</li>
-          <li>分配给我的客户</li>
-          <li>待进入公海的客户</li>
-          <li>待审核合同</li>
-          <li>待审核回款</li>
-          <li>待回款提醒</li>
-          <li>即将到期的合同</li>
+          <li @click="handleMenuClick('today')">今日需联系客户</li>
+          <li @click="handleMenuClick('clue')">分配给我的线索</li>
+          <li @click="handleMenuClick('customer')">分配给我的客户</li>
+          <li @click="handleMenuClick('pool')">待进入公海的客户</li>
+          <li @click="handleMenuClick('contract')">待审核合同</li>
+          <li @click="handleMenuClick('receivable')">待审核回款</li>
+          <li @click="handleMenuClick('remind')">待回款提醒</li>
+          <li @click="handleMenuClick('expire')">即将到期的合同</li>
         </ul>
       </div>
       <div class="app-right">
@@ -18,15 +18,15 @@
           <div class="top-inp">
             <div>
               <span>状态</span>
-              <input type="text" placeholder="今日需练习" />
+              <input type="text" placeholder="今日需练习" v-model="searchForm.status" />
             </div>
             <div>
               <span>归属</span>
-              <input type="text" placeholder="我负责的" />
+              <input type="text" placeholder="我负责的" v-model="searchForm.owner" />
             </div>
             <div>
-              <button>重置</button>
-              <button>搜索</button>
+              <button @click="handleReset">重置</button>
+              <button @click="handleSearch">搜索</button>
               收起▽
             </div>
           </div>
@@ -69,16 +69,134 @@
                   </th>
                 </tr>
               </thead>
+              <tbody>
+                <tr v-for="item in rows" :key="item.id">
+                  <td class="col-name">{{ item.name }}</td>
+                  <td>{{ item.code }}</td>
+                  <td>{{ item.source }}</td>
+                  <td>{{ item.contact }}</td>
+                  <td>{{ item.mobile }}</td>
+                  <td>{{ item.phone }}</td>
+                  <td>{{ item.email }}</td>
+                  <td>{{ item.level }}</td>
+                  <td>{{ item.industry }}</td>
+                  <td>{{ item.nextContact }}</td>
+                  <td>{{ item.remark }}</td>
+                  <td>{{ item.lockStatus }}</td>
+                  <td>{{ item.dealStatus }}</td>
+                  <td>{{ item.lastFollowTime }}</td>
+                  <td>{{ item.lastFollowRecord }}</td>
+                  <td>{{ item.address }}</td>
+                  <td>{{ item.website }}</td>
+                  <td>{{ item.scale }}</td>
+                  <td>{{ item.value }}</td>
+                  <td>{{ item.status }}</td>
+                  <td>{{ item.poolDays }}</td>
+                  <td>{{ item.owner }}</td>
+                  <td>{{ item.department }}</td>
+                  <td>{{ item.updateTime }}</td>
+                  <td>{{ item.createTime }}</td>
+                  <td>{{ item.creator }}</td>
+                  <td class="ol-col">
+                    <a href="#" @click.prevent="handleEdit(item)">编辑</a>
+                  </td>
+                </tr>
+              </tbody>
             </table>
           </div>
-          <div class="main-floot">共0条记录<span>20条/页</span></div>
+          <div class="main-floot">
+            共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+            <div style="float: right;">
+              <button @click="handlePageChange(1)">&lt;&lt;</button>
+              <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+              <button class="active">{{ pagination.pageNo }}</button>
+              <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+              <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script></script>
+<script>
+// ========== 导入客户管理相关API ==========
+// 待办页面使用客户管理接口查询今日需联系客户
+import { getCustomerPage, getTodayContactCustomerCount } from '#/api/crm/customer';
+
+export default {
+  data() {
+    return {
+      activeMenu: "today", // 当前选中的左侧菜单
+      searchForm: {
+        status: "",  // 状态
+        owner: "",   // 归属
+      },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      rows: [],
+    };
+  },
+  mounted() {
+    this.loadBacklogList();
+  },
+  methods: {
+    async loadBacklogList() {
+      try {
+        const data = await getCustomerPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        });
+        this.rows = data.list.map((item) => ({
+          id: item.id,
+          name: item.name || "",
+          code: item.no || "",
+          source: item.sourceName || "",
+          contact: item.contactName || "",
+          mobile: item.mobile || "",
+          phone: item.telephone || "",
+          email: item.email || "",
+          level: item.levelName || "",
+          industry: item.industryName || "",
+          nextContact: item.contactNextTime || "",
+          remark: item.remark || "",
+          lockStatus: item.lockStatusName || "",
+          dealStatus: item.dealStatusName || "",
+          lastFollowTime: this.formatTimestamp(item.followLastTime),
+          lastFollowRecord: item.followLastContent || "",
+          address: item.address || "",
+          website: item.website || "",
+          scale: item.scaleName || "",
+          value: item.valueName || "",
+          status: item.statusName || "",
+          poolDays: item.poolDays || "",
+          owner: item.ownerUserName || "",
+          department: item.ownerDeptName || "",
+          updateTime: this.formatTimestamp(item.updateTime),
+          createTime: this.formatTimestamp(item.createTime),
+          creator: item.creatorName || "",
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error("获取待办列表失败", err);
+      }
+    },
+    formatTimestamp(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}:${String(date.getSeconds()).padStart(2,"0")}`;
+    },
+    handleMenuClick(menu) {
+      this.activeMenu = menu;
+      this.loadBacklogList();
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadBacklogList(); },
+    handleReset() { this.searchForm = { status: "", owner: "" }; this.pagination.pageNo = 1; this.loadBacklogList(); },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadBacklogList(); },
+    handleEdit(row) { alert(`编辑客户：${row.name}`); },
+  },
+};
+</script>
 
 <style scoped>
 .page-wrapper {
@@ -250,6 +368,9 @@
   right: 0;
   z-index: 2;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.428);
+}
+.ol-col a{
+  text-decoration: none;
 }
 
 /* 表格主体 td 保持原有边框 */
