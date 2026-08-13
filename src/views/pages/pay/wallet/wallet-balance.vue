@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>用户编号</span>
-            <input type="text" placeholder="请输入用户编号" />
+            <input type="text" placeholder="请输入用户编号" v-model="searchForm.userId" />
           </div>
           <div>
             <span>用户类型</span>
-            <input type="text" placeholder="请输入用户类型" />
+            <input type="text" placeholder="请输入用户类型" v-model="searchForm.userType" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -45,14 +45,21 @@
                 <td>{{ item.frozenAmount }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>详情</button>
+                  <button @click="handleDetail(item)">详情</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
-          共{{ tabValue.length }}条记录<span>20条/页</span>
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
         </div>
       </div>
     </div>
@@ -60,212 +67,79 @@
 </template>
 
 <script>
+// ========== 导入钱包余额相关API ==========
+import { getWalletPage, getWallet } from '#/api/pay/wallet/balance';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          userNo: "U100001",
-          userType: "个人用户",
-          balance: 3280.5,
-          totalExpense: 15680.0,
-          totalRecharge: 20000.0,
-          frozenAmount: 0.0,
-          createTime: "2026-01-15 10:30:00",
-        },
-        {
-          id: 2,
-          userNo: "U100002",
-          userType: "企业用户",
-          balance: 15680.0,
-          totalExpense: 84320.0,
-          totalRecharge: 100000.0,
-          frozenAmount: 5000.0,
-          createTime: "2026-01-20 14:20:00",
-        },
-        {
-          id: 3,
-          userNo: "U100003",
-          userType: "个人用户",
-          balance: 567.8,
-          totalExpense: 25432.2,
-          totalRecharge: 26000.0,
-          frozenAmount: 0.0,
-          createTime: "2026-02-01 09:15:00",
-        },
-        {
-          id: 4,
-          userNo: "U100004",
-          userType: "商户用户",
-          balance: 28340.0,
-          totalExpense: 215660.0,
-          totalRecharge: 250000.0,
-          frozenAmount: 12000.0,
-          createTime: "2026-02-10 16:45:00",
-        },
-        {
-          id: 5,
-          userNo: "U100005",
-          userType: "VIP用户",
-          balance: 18920.5,
-          totalExpense: 31079.5,
-          totalRecharge: 50000.0,
-          frozenAmount: 0.0,
-          createTime: "2026-02-15 11:20:00",
-        },
-        {
-          id: 6,
-          userNo: "U100006",
-          userType: "个人用户",
-          balance: 234.5,
-          totalExpense: 9765.5,
-          totalRecharge: 10000.0,
-          frozenAmount: 0.0,
-          createTime: "2026-02-20 08:50:00",
-        },
-        {
-          id: 7,
-          userNo: "U100007",
-          userType: "企业用户",
-          balance: 45200.0,
-          totalExpense: 254800.0,
-          totalRecharge: 300000.0,
-          frozenAmount: 8000.0,
-          createTime: "2026-03-01 13:30:00",
-        },
-        {
-          id: 8,
-          userNo: "U100008",
-          userType: "个人用户",
-          balance: 1250.0,
-          totalExpense: 8750.0,
-          totalRecharge: 10000.0,
-          frozenAmount: 0.0,
-          createTime: "2026-03-10 15:10:00",
-        },
-        {
-          id: 9,
-          userNo: "U100009",
-          userType: "商户用户",
-          balance: 16780.0,
-          totalExpense: 83220.0,
-          totalRecharge: 100000.0,
-          frozenAmount: 3000.0,
-          createTime: "2026-03-15 09:40:00",
-        },
-        {
-          id: 10,
-          userNo: "U100010",
-          userType: "VIP用户",
-          balance: 35890.0,
-          totalExpense: 64110.0,
-          totalRecharge: 100000.0,
-          frozenAmount: 15000.0,
-          createTime: "2026-03-20 12:00:00",
-        },
-        {
-          id: 11,
-          userNo: "U100011",
-          userType: "个人用户",
-          balance: 890.0,
-          totalExpense: 19110.0,
-          totalRecharge: 20000.0,
-          frozenAmount: 0.0,
-          createTime: "2026-04-01 10:20:00",
-        },
-        {
-          id: 12,
-          userNo: "U100012",
-          userType: "企业用户",
-          balance: 78900.0,
-          totalExpense: 421100.0,
-          totalRecharge: 500000.0,
-          frozenAmount: 25000.0,
-          createTime: "2026-04-05 14:30:00",
-        },
-        {
-          id: 13,
-          userNo: "U100013",
-          userType: "个人用户",
-          balance: 345.6,
-          totalExpense: 12654.4,
-          totalRecharge: 13000.0,
-          frozenAmount: 0.0,
-          createTime: "2026-04-10 08:15:00",
-        },
-        {
-          id: 14,
-          userNo: "U100014",
-          userType: "商户用户",
-          balance: 23450.0,
-          totalExpense: 176550.0,
-          totalRecharge: 200000.0,
-          frozenAmount: 5000.0,
-          createTime: "2026-04-15 16:50:00",
-        },
-        {
-          id: 15,
-          userNo: "U100015",
-          userType: "VIP用户",
-          balance: 56780.0,
-          totalExpense: 93220.0,
-          totalRecharge: 150000.0,
-          frozenAmount: 20000.0,
-          createTime: "2026-04-20 11:30:00",
-        },
-        {
-          id: 16,
-          userNo: "U100016",
-          userType: "个人用户",
-          balance: 2300.0,
-          totalExpense: 17700.0,
-          totalRecharge: 20000.0,
-          frozenAmount: 0.0,
-          createTime: "2026-05-01 09:00:00",
-        },
-        {
-          id: 17,
-          userNo: "U100017",
-          userType: "企业用户",
-          balance: 123400.0,
-          totalExpense: 876600.0,
-          totalRecharge: 1000000.0,
-          frozenAmount: 50000.0,
-          createTime: "2026-05-05 13:40:00",
-        },
-        {
-          id: 18,
-          userNo: "U100018",
-          userType: "个人用户",
-          balance: 678.9,
-          totalExpense: 8321.1,
-          totalRecharge: 9000.0,
-          frozenAmount: 0.0,
-          createTime: "2026-05-10 15:25:00",
-        },
-        {
-          id: 19,
-          userNo: "U100019",
-          userType: "商户用户",
-          balance: 45670.0,
-          totalExpense: 454330.0,
-          totalRecharge: 500000.0,
-          frozenAmount: 15000.0,
-          createTime: "2026-05-15 10:10:00",
-        },
-        {
-          id: 20,
-          userNo: "U100020",
-          userType: "个人用户",
-          balance: 12340.0,
-          totalExpense: 37660.0,
-          totalRecharge: 50000.0,
-          frozenAmount: 0.0,
-          createTime: "2026-05-20 14:55:00",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        userId: '',
+        userType: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getWalletPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          userNo: item.userId || '',
+          userType: this.getTypeName(item.userType),
+          balance: item.balance / 100 || 0,
+          totalExpense: item.totalExpense / 100 || 0,
+          totalRecharge: item.totalRecharge / 100 || 0,
+          frozenAmount: item.frozenPrice / 100 || 0,
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 用户类型转换
+    getTypeName(type) {
+      const map = { 1: '个人用户', 2: '企业用户', 3: '商户用户' };
+      return map[type] || '未知';
+    },
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 详情
+    handleDetail(item) {
+      alert(`钱包详情：
+用户编号：${item.userNo}
+用户类型：${item.userType}
+余额：¥${item.balance.toFixed(2)}
+累计支出：¥${item.totalExpense.toFixed(2)}
+累计充值：¥${item.totalRecharge.toFixed(2)}
+冻结金额：¥${item.frozenAmount.toFixed(2)}
+创建时间：${item.createTime}`);
+    },
   },
 };
 </script>

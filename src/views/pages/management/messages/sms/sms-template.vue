@@ -3,17 +3,17 @@
     <div class="app">
       <div class="app-top">
         <div class="top-inp">
+            <div>
+              <span>模板名称</span>
+              <input type="text" placeholder="请输入模板名称" v-model="searchForm.name" />
+            </div>
+            <div>
+              <span>模板编码</span>
+              <input type="text" placeholder="请输入模板编码" v-model="searchForm.code" />
+            </div>
           <div>
-            <span>短信类型</span>
-            <input type="text" placeholder="请输入短信类型" />
-          </div>
-          <div>
-            <span>开启状态</span>
-            <input type="text" placeholder="请输入开启状态" />
-          </div>
-          <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,8 +22,7 @@
         <div class="main-top">
           <div>短信模板列表</div>
           <div>
-            <button>+新增短信模板</button>
-            <button disabled>批量删除</button>
+            <button @click="handleAdd">+新增</button>
             <button>🔍</button>
           </div>
           <div>
@@ -36,247 +35,116 @@
           <table>
             <thead>
               <tr>
-                <th><input type="checkbox" /></th>
                 <th>编号</th>
-                <th>短信类型</th>
                 <th>模板名称</th>
                 <th>模板编码</th>
-                <th>模板内容</th>
-                <th>开启状态</th>
-                <th>短信 API 的模板编号</th>
                 <th>短信渠道</th>
+                <th>模板内容</th>
+                <th>类型</th>
+                <th>开启状态</th>
                 <th>创建时间</th>
-                <th>备注</th>
                 <th class="ol-col">操作</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td><input type="checkbox" /></td>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="9" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
-                <td>{{ item.smsType }}</td>
-                <td>{{ item.templateName }}</td>
-                <td>{{ item.templateCode }}</td>
-                <td>{{ item.templateContent }}</td>
-                <td>{{ item.enableStatus }}</td>
-                <td>{{ item.apiTemplateId }}</td>
-                <td>{{ item.channel }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.code }}</td>
+                <td>{{ item.channelId }}</td>
+                <td>{{ item.content }}</td>
+                <td>{{ item.type }}</td>
+                <td>{{ item.status === 0 ? '启用' : '停用' }}</td>
                 <td>{{ item.createTime }}</td>
-                <td>{{ item.remark }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>测试</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共15条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入短信模板列表相关API ==========
+import { getSmsTemplatePage, deleteSmsTemplate } from '#/api/system/sms/template';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          smsType: "验证码",
-          templateName: "注册验证码",
-          templateCode: "SMS_001",
-          templateContent: "您的验证码是：{code}，5分钟内有效，请勿泄露。",
-          enableStatus: "开启",
-          apiTemplateId: "SMS_123456789",
-          channel: "阿里云",
-          createTime: "2026-08-01 09:00:00",
-          remark: "用户注册场景",
-        },
-        {
-          id: 2,
-          smsType: "验证码",
-          templateName: "登录验证码",
-          templateCode: "SMS_002",
-          templateContent: "您正在登录系统，验证码：{code}，有效期为5分钟。",
-          enableStatus: "开启",
-          apiTemplateId: "SMS_987654321",
-          channel: "腾讯云",
-          createTime: "2026-08-01 10:30:00",
-          remark: "用户登录场景",
-        },
-        {
-          id: 3,
-          smsType: "验证码",
-          templateName: "支付验证码",
-          templateCode: "SMS_003",
-          templateContent:
-            "您正在进行支付操作，验证码：{code}，请勿泄露给他人。",
-          enableStatus: "开启",
-          apiTemplateId: "SMS_456789123",
-          channel: "阿里云",
-          createTime: "2026-07-31 14:20:00",
-          remark: "支付安全验证",
-        },
-        {
-          id: 4,
-          smsType: "通知",
-          templateName: "订单创建通知",
-          templateCode: "SMS_004",
-          templateContent:
-            "您的订单已创建成功，订单号：{orderNo}，金额：{amount}元。",
-          enableStatus: "开启",
-          apiTemplateId: "SMS_789123456",
-          channel: "阿里云",
-          createTime: "2026-07-31 16:45:00",
-          remark: "订单流程",
-        },
-        {
-          id: 5,
-          smsType: "通知",
-          templateName: "订单支付成功",
-          templateCode: "SMS_005",
-          templateContent:
-            "您的订单{orderNo}已支付成功，支付金额：{amount}元。",
-          enableStatus: "开启",
-          apiTemplateId: "SMS_321654987",
-          channel: "腾讯云",
-          createTime: "2026-07-30 11:00:00",
-          remark: "支付确认",
-        },
-        {
-          id: 6,
-          smsType: "通知",
-          templateName: "订单发货通知",
-          templateCode: "SMS_006",
-          templateContent:
-            "您的订单{orderNo}已发货，快递单号：{trackingNo}，请注意查收。",
-          enableStatus: "停用",
-          apiTemplateId: "SMS_654987321",
-          channel: "阿里云",
-          createTime: "2026-07-30 09:30:00",
-          remark: "物流通知",
-        },
-        {
-          id: 7,
-          smsType: "通知",
-          templateName: "库存预警通知",
-          templateCode: "SMS_007",
-          templateContent:
-            "商品{productName}库存不足，当前库存：{stock}件，请及时补货。",
-          enableStatus: "开启",
-          apiTemplateId: "SMS_159357852",
-          channel: "阿里云",
-          createTime: "2026-07-29 13:50:00",
-          remark: "库存管理",
-        },
-        {
-          id: 8,
-          smsType: "营销",
-          templateName: "节日促销",
-          templateCode: "SMS_008",
-          templateContent:
-            "【限时特惠】{productName}限时折扣{discount}折，点击链接：{link} 立即购买！",
-          enableStatus: "开启",
-          apiTemplateId: "SMS_852753159",
-          channel: "腾讯云",
-          createTime: "2026-07-29 15:10:00",
-          remark: "营销活动",
-        },
-        {
-          id: 9,
-          smsType: "营销",
-          templateName: "会员权益通知",
-          templateCode: "SMS_009",
-          templateContent:
-            "尊敬的会员，您本月有{points}积分即将过期，请及时兑换。",
-          enableStatus: "停用",
-          apiTemplateId: "SMS_753951456",
-          channel: "阿里云",
-          createTime: "2026-07-28 10:00:00",
-          remark: "会员运营",
-        },
-        {
-          id: 10,
-          smsType: "通知",
-          templateName: "密码重置通知",
-          templateCode: "SMS_010",
-          templateContent:
-            "您已成功重置密码，新密码：{newPassword}，请及时登录修改。",
-          enableStatus: "开启",
-          apiTemplateId: "SMS_951753456",
-          channel: "腾讯云",
-          createTime: "2026-07-28 08:20:00",
-          remark: "账号安全",
-        },
-        {
-          id: 11,
-          smsType: "验证码",
-          templateName: "修改密码验证码",
-          templateCode: "SMS_011",
-          templateContent: "您正在修改密码，验证码：{code}，有效期为10分钟。",
-          enableStatus: "开启",
-          apiTemplateId: "SMS_456123789",
-          channel: "阿里云",
-          createTime: "2026-07-27 14:00:00",
-          remark: "安全验证",
-        },
-        {
-          id: 12,
-          smsType: "营销",
-          templateName: "新品上市通知",
-          templateCode: "SMS_012",
-          templateContent:
-            "新品{productName}已上市，限时优惠{price}元，点击查看：{link}",
-          enableStatus: "停用",
-          apiTemplateId: "SMS_789456123",
-          channel: "腾讯云",
-          createTime: "2026-07-27 11:30:00",
-          remark: "新品推广",
-        },
-        {
-          id: 13,
-          smsType: "通知",
-          templateName: "账单提醒",
-          templateCode: "SMS_013",
-          templateContent:
-            "您本月账单已生成，金额：{amount}元，请于{billDate}前完成支付。",
-          enableStatus: "开启",
-          apiTemplateId: "SMS_321789654",
-          channel: "阿里云",
-          createTime: "2026-07-26 09:00:00",
-          remark: "财务管理",
-        },
-        {
-          id: 14,
-          smsType: "通知",
-          templateName: "会议通知",
-          templateCode: "SMS_014",
-          templateContent:
-            "会议提醒：{meetingName}将于{meetingTime}在{meetingPlace}召开，请准时参加。",
-          enableStatus: "开启",
-          apiTemplateId: "SMS_654321789",
-          channel: "腾讯云",
-          createTime: "2026-07-26 16:00:00",
-          remark: "内部通知",
-        },
-        {
-          id: 15,
-          smsType: "验证码",
-          templateName: "修改手机号验证码",
-          templateCode: "SMS_015",
-          templateContent:
-            "您正在修改绑定的手机号，验证码：{code}，5分钟内有效。",
-          enableStatus: "开启",
-          apiTemplateId: "SMS_147258369",
-          channel: "阿里云",
-          createTime: "2026-07-25 10:30:00",
-          remark: "安全设置",
-        },
-      ],
+      searchForm: {
+        name: '',
+        code: '',
+      },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getSmsTemplatePage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          name: item.name || '',
+          code: item.code || '',
+          channelId: item.channelId || '',
+          content: item.content || '',
+          type: item.type || '',
+          status: item.status || '',
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(row) { alert('编辑功能待实现'); },
+    async handleDelete(row) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteSmsTemplate(row.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>
@@ -293,7 +161,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -352,7 +219,6 @@ export default {
   border: 0;
   color: #fff;
 }
-
 .app-main {
   width: 100%;
   height: 492px;
@@ -366,7 +232,7 @@ export default {
   display: flex;
 }
 .main-top div:first-child {
-  width: 60%;
+  width: 55%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -374,7 +240,7 @@ export default {
   font-weight: 600;
 }
 .main-top div:nth-child(2) {
-  width: 30%;
+  width: 35%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -382,18 +248,12 @@ export default {
   margin-right: 10px;
 }
 .main-top div:nth-child(2) button {
-  width: 134px;
+  width: 106px;
   height: 32px;
   background-color: #006be6;
   border: 0;
   color: #fff;
   border-radius: 10px;
-}
-.main-top div:nth-child(2) button:nth-child(2) {
-  width: 106px;
-  border: 1px solid #ccc;
-  background-color: #fff;
-  color: black;
 }
 .main-top div:nth-child(2) button:last-child {
   width: 30px;
@@ -425,7 +285,7 @@ export default {
 }
 .main-tab table {
   width: max-content;
-  min-width: 1600px;
+  min-width: 1200px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -445,8 +305,11 @@ export default {
   padding: 0 20px;
   border-right: 0;
 }
+.empty-row {
+  color: #666;
+}
 .ol-col {
-  width: 220px;
+  width: 130px;
   position: sticky;
   right: 0;
   border-left: 1px solid #ccc;
@@ -461,7 +324,6 @@ export default {
 .ol-col button:nth-child(2) {
   color: red;
 }
-
 .main-floot {
   width: 100%;
   height: 36px;

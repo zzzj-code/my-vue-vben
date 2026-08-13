@@ -3,27 +3,26 @@
     <div class="app">
       <div class="app-top">
         <div class="top-inp">
+            <div>
+              <span>用户编号</span>
+              <input type="text" placeholder="请输入用户编号" v-model="searchForm.userId" />
+            </div>
+            <div>
+              <span>模板编码</span>
+              <input type="text" placeholder="请输入模板编码" v-model="searchForm.templateCode" />
+            </div>
           <div>
-            <span>用户编号</span>
-            <input type="text" placeholder="请输入用户编号" />
-          </div>
-          <div>
-            <span>用户类型</span>
-            <input type="text" placeholder="请输入用户类型" />
-          </div>
-          <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
       </div>
       <div class="app-main">
         <div class="main-top">
-          <div>站内信列表</div>
+          <div>站内信消息列表</div>
           <div>
-            <button style="background-color: #fff;"></button>
-            <button style="background-color: #fff; border: 0;"></button>
+            
             <button>🔍</button>
           </div>
           <div>
@@ -37,48 +36,113 @@
             <thead>
               <tr>
                 <th>编号</th>
-                <th>用户类型</th>
                 <th>用户编号</th>
+                <th>用户类型</th>
                 <th>模板编码</th>
-                <th>发送人名称</th>
-                <th>模版内容</th>
-                <th>模版参数</th>
-                <th>模版类型</th>
-                <th>是否已读</th>
+                <th>模板名称</th>
+                <th>模板内容</th>
+                <th>阅读状态</th>
                 <th>阅读时间</th>
                 <th>创建时间</th>
                 <th class="ol-col">操作</th>
               </tr>
             </thead>
             <tbody>
-              <div class="asd">暂无数据</div>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="10" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td>{{ item.id }}</td>
+                <td>{{ item.userId }}</td>
+                <td>{{ item.userType }}</td>
+                <td>{{ item.templateCode }}</td>
+                <td>{{ item.templateNickname }}</td>
+                <td>{{ item.templateContent }}</td>
+                <td>{{ item.readStatus }}</td>
+                <td>{{ item.readTime }}</td>
+                <td>{{ item.createTime }}</td>
+                <td class="ol-col">
+                  <button @click="handleEdit(item)">编辑</button>
+                  
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共0条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入站内信消息列表相关API ==========
+import { getNotifyMessagePage } from '#/api/system/notify/message';
+
 export default {
   data() {
     return {
-      tabValue: [
-        
-      ],
+      searchForm: {
+        userId: '',
+        templateCode: '',
+      },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getNotifyMessagePage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          userId: item.userId || '',
+          userType: item.userType || '',
+          templateCode: item.templateCode || '',
+          templateNickname: item.templateNickname || '',
+          templateContent: item.templateContent || '',
+          readStatus: item.readStatus || '',
+          readTime: item.readTime || '',
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(row) { alert('编辑功能待实现'); },
   },
 };
 </script>
 
 <style scoped>
-.asd{
-    position: absolute;
-    top: 60%;
-    left: 51%;
-}
 .page-wrapper {
   width: 1030px;
   display: grid;
@@ -90,7 +154,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -149,7 +212,6 @@ export default {
   border: 0;
   color: #fff;
 }
-
 .app-main {
   width: 100%;
   height: 492px;
@@ -163,7 +225,7 @@ export default {
   display: flex;
 }
 .main-top div:first-child {
-  width: 60%;
+  width: 55%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -171,7 +233,7 @@ export default {
   font-weight: 600;
 }
 .main-top div:nth-child(2) {
-  width: 30%;
+  width: 35%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -179,18 +241,12 @@ export default {
   margin-right: 10px;
 }
 .main-top div:nth-child(2) button {
-  width: 134px;
+  width: 106px;
   height: 32px;
   background-color: #006be6;
   border: 0;
   color: #fff;
   border-radius: 10px;
-}
-.main-top div:nth-child(2) button:nth-child(2) {
-  width: 106px;
-  border: 1px solid #ccc;
-  background-color: #fff;
-  color: black;
 }
 .main-top div:nth-child(2) button:last-child {
   width: 30px;
@@ -222,7 +278,7 @@ export default {
 }
 .main-tab table {
   width: max-content;
-  min-width: 1590px;
+  min-width: 1200px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -242,8 +298,11 @@ export default {
   padding: 0 20px;
   border-right: 0;
 }
+.empty-row {
+  color: #666;
+}
 .ol-col {
-  width: 80px;
+  width: 130px;
   position: sticky;
   right: 0;
   border-left: 1px solid #ccc;
@@ -258,7 +317,6 @@ export default {
 .ol-col button:nth-child(2) {
   color: red;
 }
-
 .main-floot {
   width: 100%;
   height: 36px;

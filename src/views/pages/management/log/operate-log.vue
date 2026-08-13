@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>操作人</span>
-            <input type="text" placeholder="请输入操作人" />
+            <input type="text" placeholder="请输入操作人" v-model="searchForm.userId" />
           </div>
           <div>
             <span>操作模块</span>
-            <input type="text" placeholder="请输入操作模块" />
+            <input type="text" placeholder="请输入操作模块" v-model="searchForm.module" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -47,239 +47,117 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-if="tabValue.length === 0">
+                <td colspan="9" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
-                <td>{{ item.operator }}</td>
+                <td>{{ item.userId }}</td>
                 <td>{{ item.module }}</td>
-                <td>{{ item.action }}</td>
+                <td>{{ item.name }}</td>
                 <td>{{ item.content }}</td>
-                <td>{{ item.operateTime }}</td>
-                <td>{{ item.businessId }}</td>
-                <td>{{ item.ip }}</td>
+                <td>{{ item.createTime }}</td>
+                <td>{{ item.bizId }}</td>
+                <td>{{ item.userIp }}</td>
                 <td class="ol-col">
-                  <button>详情</button>
+                  <button @click="handleDetail(item)">详情</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共20条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入操作日志相关API ==========
+import { getOperateLogPage } from '#/api/system/operate-log';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: "LOG20260801001",
-          operator: "张伟",
-          module: "用户管理",
-          action: "新增用户",
-          content: "新增用户：张三（账号：zhangsan）",
-          operateTime: "2026-08-01 09:00:00",
-          businessId: "USER_001",
-          ip: "192.168.1.100",
-        },
-        {
-          id: "LOG20260801002",
-          operator: "李娜",
-          module: "订单管理",
-          action: "创建订单",
-          content: "创建订单：ORD20260801001，金额：299.00元",
-          operateTime: "2026-08-01 10:30:00",
-          businessId: "ORD20260801001",
-          ip: "192.168.1.101",
-        },
-        {
-          id: "LOG20260801003",
-          operator: "王强",
-          module: "库存管理",
-          action: "库存调整",
-          content: "商品ID：10001，调整数量：+50件，调整后库存：150件",
-          operateTime: "2026-08-01 14:20:00",
-          businessId: "INV_001",
-          ip: "192.168.1.102",
-        },
-        {
-          id: "LOG20260731004",
-          operator: "刘洋",
-          module: "财务管理",
-          action: "生成账单",
-          content: "生成2026年7月账单，共23笔，总金额：45,678.00元",
-          operateTime: "2026-07-31 16:45:00",
-          businessId: "BILL_202607",
-          ip: "192.168.1.103",
-        },
-        {
-          id: "LOG20260731005",
-          operator: "陈静",
-          module: "用户管理",
-          action: "更新用户",
-          content: "更新用户：李四（账号：lisi），修改邮箱为：lisi@example.com",
-          operateTime: "2026-07-31 11:30:00",
-          businessId: "USER_002",
-          ip: "192.168.1.104",
-        },
-        {
-          id: "LOG20260730006",
-          operator: "赵敏",
-          module: "订单管理",
-          action: "取消订单",
-          content: "取消订单：ORD20260730001，原因：用户申请取消",
-          operateTime: "2026-07-30 09:30:00",
-          businessId: "ORD20260730001",
-          ip: "192.168.1.105",
-        },
-        {
-          id: "LOG20260730007",
-          operator: "孙浩",
-          module: "权限管理",
-          action: "分配权限",
-          content: "为用户：王五（账号：wangwu）分配角色：仓库管理员",
-          operateTime: "2026-07-30 14:00:00",
-          businessId: "USER_003",
-          ip: "192.168.1.106",
-        },
-        {
-          id: "LOG20260729008",
-          operator: "周婷",
-          module: "库存管理",
-          action: "盘点入库",
-          content: "盘点入库：商品ID：10005，数量：30件，备注：盘点调整",
-          operateTime: "2026-07-29 10:15:00",
-          businessId: "INV_005",
-          ip: "192.168.1.107",
-        },
-        {
-          id: "LOG20260729009",
-          operator: "吴刚",
-          module: "财务管理",
-          action: "确认收款",
-          content:
-            "确认收款：订单ORD20260728001，金额：1,299.00元，支付方式：微信支付",
-          operateTime: "2026-07-29 15:30:00",
-          businessId: "ORD20260728001",
-          ip: "192.168.1.108",
-        },
-        {
-          id: "LOG20260728010",
-          operator: "郑丽",
-          module: "系统管理",
-          action: "系统配置",
-          content: "修改系统配置：短信发送间隔从60秒调整为30秒",
-          operateTime: "2026-07-28 08:30:00",
-          businessId: "SYS_CONFIG",
-          ip: "192.168.1.109",
-        },
-        {
-          id: "LOG20260728011",
-          operator: "张伟",
-          module: "用户管理",
-          action: "重置密码",
-          content: "重置用户：赵六（账号：zhaoliu）的密码",
-          operateTime: "2026-07-28 10:45:00",
-          businessId: "USER_004",
-          ip: "192.168.1.100",
-        },
-        {
-          id: "LOG20260727012",
-          operator: "李娜",
-          module: "订单管理",
-          action: "订单发货",
-          content: "订单ORD20260726001已发货，快递：顺丰，单号：SF1234567890",
-          operateTime: "2026-07-27 11:20:00",
-          businessId: "ORD20260726001",
-          ip: "192.168.1.101",
-        },
-        {
-          id: "LOG20260727013",
-          operator: "王强",
-          module: "库存管理",
-          action: "库存预警",
-          content:
-            "商品ID：10008 库存低于安全线，当前库存：5件，安全库存：20件",
-          operateTime: "2026-07-27 16:00:00",
-          businessId: "INV_008",
-          ip: "192.168.1.102",
-        },
-        {
-          id: "LOG20260726014",
-          operator: "刘洋",
-          module: "财务管理",
-          action: "生成报表",
-          content:
-            "生成2026年Q2财务报表，收入：1,234,567.00元，支出：987,654.00元",
-          operateTime: "2026-07-26 14:30:00",
-          businessId: "RPT_Q2_2026",
-          ip: "192.168.1.103",
-        },
-        {
-          id: "LOG20260726015",
-          operator: "陈静",
-          module: "用户管理",
-          action: "禁用用户",
-          content: "禁用用户：孙七（账号：sunqi），原因：账号异常",
-          operateTime: "2026-07-26 09:15:00",
-          businessId: "USER_005",
-          ip: "192.168.1.104",
-        },
-        {
-          id: "LOG20260725016",
-          operator: "赵敏",
-          module: "订单管理",
-          action: "订单退款",
-          content: "订单ORD20260725001退款成功，退款金额：599.00元",
-          operateTime: "2026-07-25 15:00:00",
-          businessId: "ORD20260725001",
-          ip: "192.168.1.105",
-        },
-        {
-          id: "LOG20260725017",
-          operator: "孙浩",
-          module: "权限管理",
-          action: "创建角色",
-          content: "创建角色：财务专员，分配权限：查看账单、确认收款",
-          operateTime: "2026-07-25 10:30:00",
-          businessId: "ROLE_001",
-          ip: "192.168.1.106",
-        },
-        {
-          id: "LOG20260724018",
-          operator: "周婷",
-          module: "库存管理",
-          action: "库存调拨",
-          content: "从北京中心仓调拨商品ID：10010，数量：200件至上海分仓",
-          operateTime: "2026-07-24 13:45:00",
-          businessId: "TRANS_001",
-          ip: "192.168.1.107",
-        },
-        {
-          id: "LOG20260724019",
-          operator: "吴刚",
-          module: "财务管理",
-          action: "发票开具",
-          content:
-            "开具发票：INV20260724001，金额：5,600.00元，购方：华为技术有限公司",
-          operateTime: "2026-07-24 09:00:00",
-          businessId: "INV20260724001",
-          ip: "192.168.1.108",
-        },
-        {
-          id: "LOG20260723020",
-          operator: "郑丽",
-          module: "系统管理",
-          action: "数据库备份",
-          content: "全量数据库备份完成，备份文件大小：1.2GB，耗时：5分23秒",
-          operateTime: "2026-07-23 02:00:00",
-          businessId: "BACKUP_001",
-          ip: "127.0.0.1",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        userId: '',  // 操作人
+        module: '',  // 操作模块
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadOperateLogList();
+  },
+  methods: {
+    // ========== 获取操作日志列表 ==========
+    async loadOperateLogList() {
+      try {
+        const data = await getOperateLogPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          userId: this.searchForm.userId,
+          module: this.searchForm.module,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,                          // 日志编号
+          userId: item.userId || '',            // 操作人
+          module: item.module || '',            // 操作模块
+          name: item.name || '',                // 操作名
+          content: item.content || '',          // 操作内容
+          createTime: this.formatTimestamp(item.createTime), // 操作时间
+          bizId: item.bizId || '',              // 业务编号
+          userIp: item.userIp || '',            // 操作IP
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取操作日志列表失败', err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return '';
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadOperateLogList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { userId: '', module: '' };
+      this.pagination.pageNo = 1;
+      this.loadOperateLogList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadOperateLogList();
+    },
+    // ========== 详情 ==========
+    handleDetail(row) {
+      alert(`操作日志详情：${row.name}`);
+    },
   },
 };
 </script>
@@ -441,6 +319,9 @@ export default {
   background-color: #fff;
   padding: 0 20px;
   border-right: 0;
+}
+.empty-row {
+  color: #666;
 }
 .ol-col {
   width: 80px;

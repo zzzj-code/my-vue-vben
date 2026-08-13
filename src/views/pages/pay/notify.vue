@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>应用编号</span>
-            <input type="text" placeholder="请输入应用编号" />
+            <input type="text" placeholder="请输入应用编号" v-model="searchForm.appId" />
           </div>
           <div>
             <span>通知类型</span>
-            <input type="text" placeholder="请输入通知类型" />
+            <input type="text" placeholder="请输入通知类型" v-model="searchForm.type" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>通知列表</div>
           <div>
-            <button style="background-color: #fff; color: #006be6; border: 1px solid #ccc;">导出</button>
+            <button @click="handleExport" style="background-color: #fff; color: #006be6; border: 1px solid #ccc;">导出</button>
             <button>🔍</button>
           </div>
           <div>
@@ -91,8 +91,15 @@
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ totalRecords }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -101,74 +108,78 @@
 </template>
 
 <script>
+// ========== 导入支付通知相关API ==========
+import { getNotifyTaskPage } from '#/api/pay/notify';
+
 export default {
   data() {
     return {
-      allData: [],
+      // 搜索表单
+      searchForm: {
+        appId: '',
+        type: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
       tabValue: [],
     };
   },
-  computed: {
-    totalRecords() {
-      return this.allData.length;
-    },
-  },
   mounted() {
-    this.generateData();
-    this.tabValue = this.allData;
+    this.loadList();
   },
   methods: {
-    generateData() {
-      const appNames = ['电商平台', '生活服务', '教育平台', '医疗健康', '餐饮外卖'];
-      const notifyTypes = ['支付通知', '退款通知'];
-      const statuses = ['待发送', '发送中', '发送成功', '发送失败'];
-      const merchantInfoList = [
-        '订单支付-20260115001',
-        '退款处理-20260115002', 
-        '订单支付-20260116003',
-        '退款处理-20260116004',
-        '订单支付-20260117005',
-        '退款处理-20260117006'
-      ];
-      
-      this.allData = [];
-      for (let i = 1; i <= 30; i++) {
-        const createDate = this.generateRandomTime();
-        const lastNotify = this.addMinutes(createDate, Math.floor(Math.random() * 60) + 5);
-        const nextNotify = this.addMinutes(lastNotify, Math.floor(Math.random() * 120) + 30);
-        
-        this.allData.push({
-          id: i,
-          taskNo: `TASK${String(i).padStart(6, '0')}`,
-          appName: appNames[Math.floor(Math.random() * appNames.length)],
-          merchantInfo: merchantInfoList[Math.floor(Math.random() * merchantInfoList.length)],
-          notifyType: notifyTypes[Math.floor(Math.random() * notifyTypes.length)],
-          relatedNo: `REL${String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}`,
-          status: statuses[Math.floor(Math.random() * statuses.length)],
-          lastNotifyTime: lastNotify,
-          nextNotifyTime: nextNotify,
-          notifyCount: Math.floor(Math.random() * 10) + 1,
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
         });
+        const data = await getNotifyTaskPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          taskNo: item.no || '',
+          appName: item.appName || '',
+          merchantInfo: item.merchantOrderId || '',
+          notifyType: this.getTypeName(item.type),
+          relatedNo: item.merchantOrderId || '',
+          status: this.getStatusName(item.status),
+          lastNotifyTime: item.lastExecuteTime || '',
+          nextNotifyTime: item.nextExecuteTime || '',
+          notifyCount: item.notifyTimes || 0,
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
       }
     },
-    generateRandomTime() {
-      const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
-      const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
-      const hour = String(Math.floor(Math.random() * 24)).padStart(2, '0');
-      const minute = String(Math.floor(Math.random() * 60)).padStart(2, '0');
-      const second = String(Math.floor(Math.random() * 60)).padStart(2, '0');
-      return `2026-${month}-${day} ${hour}:${minute}:${second}`;
+    // 通知类型转换
+    getTypeName(type) {
+      const map = { 1: '支付通知', 2: '退款通知' };
+      return map[type] || '未知';
     },
-    addMinutes(timeStr, minutes) {
-      const date = new Date(`2026-01-01 ${timeStr.split(' ')[1]}`);
-      date.setMinutes(date.getMinutes() + minutes);
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hour = String(date.getHours()).padStart(2, '0');
-      const min = String(date.getMinutes()).padStart(2, '0');
-      const sec = String(date.getSeconds()).padStart(2, '0');
-      return `2026-${month}-${day} ${hour}:${min}:${sec}`;
+    // 状态转换
+    getStatusName(status) {
+      const map = { 0: '待发送', 1: '发送中', 2: '发送成功', 3: '发送失败' };
+      return map[status] || '未知';
     },
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 导出
+    handleExport() { alert('导出功能待实现'); },
+    // 状态颜色
     getStatusColor(status) {
       const map = {
         '待发送': '#faad14',
@@ -194,6 +205,7 @@ export default {
       };
       return map[type] || '#1890ff';
     },
+    // 详情
     handleDetail(item) {
       alert(`通知详情：
 任务编号：${item.taskNo}

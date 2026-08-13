@@ -8,22 +8,24 @@
             <div class="search-row">
               <div class="search-item">
                 <label>字典名称</label>
-                <input type="text" placeholder="请输入" />
+                <input type="text" placeholder="请输入" v-model="dictTypeSearch.name" />
               </div>
               <div class="search-item">
                 <label>字典类型</label>
-                <input type="text" placeholder="请输入" />
+                <input type="text" placeholder="请输入" v-model="dictTypeSearch.type" />
               </div>
               <div class="search-item">
                 <label>状态</label>
-                <select>
+                <select v-model="dictTypeSearch.status">
                   <option value="">请选择</option>
+                  <option value="0">启用</option>
+                  <option value="1">停用</option>
                 </select>
               </div>
             </div>
             <div class="search-btns">
-              <button class="btn-reset">重置</button>
-              <button class="btn-search">搜索</button>
+              <button class="btn-reset" @click="handleDictTypeReset">重置</button>
+              <button class="btn-search" @click="handleDictTypeSearch">搜索</button>
               <span class="collapse-text">收起 △</span>
             </div>
           </div>
@@ -31,7 +33,7 @@
             <div class="content-header">
               <div class="header-left">
                 <span class="title">字典类型列表</span>
-                <button class="btn-primary">+ 新增字典类型</button>
+                <button class="btn-primary" @click="handleAddDictType">+ 新增字典类型</button>
                 <button class="btn-primary">导出</button>
                 <button class="btn-outline">批量删除</button>
                 <button class="btn-icon-circle blue">🔍</button>
@@ -54,23 +56,28 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(row, index) in dictTypeList" :key="index">
+                  <tr v-if="dictTypeList.length === 0">
+                    <td colspan="5" class="empty-row">暂无数据</td>
+                  </tr>
+                  <tr v-for="(row, index) in dictTypeList" :key="row.id" :class="{ active: selectedDictTypeId === row.id }" @click="handleSelectDictType(row)">
                     <td class="check-col"><input type="checkbox" /></td>
-                    <td>{{ row.code }}</td>
+                    <td>{{ row.id }}</td>
                     <td>{{ row.name }}</td>
                     <td class="type-col">{{ row.type }}</td>
                     <td class="op-col">
-                      <button class="op-edit">编辑</button>
-                      <button class="op-del">删除</button>
+                      <button class="op-edit" @click.stop="handleEditDictType(row)">编辑</button>
+                      <button class="op-del" @click.stop="handleDeleteDictType(row)">删除</button>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <div class="pagination-bar">
-              <span class="total-text">共 {{ dictTypeTotal }} 条记录</span>
-              <select class="page-size">
-                <option>20条/页</option>
+              <span class="total-text">共 {{ dictTypePagination.total }} 条记录</span>
+              <select class="page-size" v-model="dictTypePagination.pageSize" @change="handleDictTypePageSizeChange">
+                <option :value="10">10条/页</option>
+                <option :value="20">20条/页</option>
+                <option :value="50">50条/页</option>
               </select>
             </div>
           </div>
@@ -82,18 +89,20 @@
             <div class="search-row">
               <div class="search-item">
                 <label>字典标签</label>
-                <input type="text" placeholder="请输入" />
+                <input type="text" placeholder="请输入" v-model="dictDataSearch.label" />
               </div>
               <div class="search-item">
                 <label>状态</label>
-                <select>
+                <select v-model="dictDataSearch.status">
                   <option value="">请选择</option>
+                  <option value="0">启用</option>
+                  <option value="1">停用</option>
                 </select>
               </div>
             </div>
             <div class="search-btns">
-              <button class="btn-reset">重置</button>
-              <button class="btn-search">搜索</button>
+              <button class="btn-reset" @click="handleDictDataReset">重置</button>
+              <button class="btn-search" @click="handleDictDataSearch">搜索</button>
               <span class="collapse-text">收起 △</span>
             </div>
           </div>
@@ -101,7 +110,7 @@
             <div class="content-header">
               <div class="header-left">
                 <span class="title">字典数据列表</span>
-                <button class="btn-primary">+新增字典数据</button>
+                <button class="btn-primary" @click="handleAddDictData">+新增字典数据</button>
                 <button class="btn-primary">导出</button>
                 <button class="btn-outline">批量删除</button>
                 <button class="btn-icon-circle blue">🔍</button>
@@ -124,23 +133,28 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(row, index) in dictDataList" :key="index">
+                  <tr v-if="dictDataList.length === 0">
+                    <td colspan="5" class="empty-row">暂无数据</td>
+                  </tr>
+                  <tr v-for="(row, index) in dictDataList" :key="row.id">
                     <td class="check-col"><input type="checkbox" /></td>
-                    <td>{{ row.code }}</td>
+                    <td>{{ row.id }}</td>
                     <td>{{ row.label }}</td>
                     <td>{{ row.value }}</td>
                     <td class="op-col">
-                      <button class="op-edit">编辑</button>
-                      <button class="op-del">删除</button>
+                      <button class="op-edit" @click="handleEditDictData(row)">编辑</button>
+                      <button class="op-del" @click="handleDeleteDictData(row)">删除</button>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <div class="pagination-bar">
-              <span class="total-text">共 {{ dictDataTotal }} 条记录</span>
-              <select class="page-size">
-                <option>20条/页</option>
+              <span class="total-text">共 {{ dictDataPagination.total }} 条记录</span>
+              <select class="page-size" v-model="dictDataPagination.pageSize" @change="handleDictDataPageSizeChange">
+                <option :value="10">10条/页</option>
+                <option :value="20">20条/页</option>
+                <option :value="50">50条/页</option>
               </select>
             </div>
           </div>
@@ -151,34 +165,182 @@
 </template>
 
 <script>
+// ========== 导入字典类型和字典数据相关API ==========
+import { getDictTypePage, deleteDictType } from '#/api/system/dict/type';
+import { getDictDataPage, deleteDictData } from '#/api/system/dict/data';
+
 export default {
   name: 'DictManagement',
   data() {
     return {
-      dictTypeTotal: 361,
-      dictDataTotal: 1729,
-      dictTypeList: [
-        { code: '1061127', name: '资产折旧单据类型', type: '' },
-        { code: '1061126', name: '资产折旧财务推送状态', type: 'asset' },
-        { code: '1061125', name: '资产折旧过账状态', type: 'as' },
-        { code: '1061124', name: '盘点差异处理类型', type: '' },
-        { code: '1061123', name: '资产自定义字段类型', type: '' },
-        { code: '1061122', name: '盘点分派状态', type: '' },
-        { code: '1061116', name: '巡检记录状态', type: '' },
-      ],
-      dictDataList: [
-        { code: '4175', label: '生产出库', value: '202' },
-        { code: '4174', label: '销售出库', value: '201' },
-        { code: '4173', label: '退货出库', value: '200' },
-        { code: '4172', label: '归还入库', value: '103' },
-        { code: '4171', label: '退货入库', value: '102' },
-        { code: '4170', label: '采购入库', value: '101' },
-        { code: '4169', label: '生产入库', value: '100' },
-        { code: '4165', label: '盘库单', value: '4' },
-      ],
-    }
-  }
-}
+      // 选中的字典类型ID
+      selectedDictTypeId: '',
+      // 字典类型搜索表单
+      dictTypeSearch: {
+        name: '',    // 字典名称
+        type: '',    // 字典类型
+        status: '',  // 状态
+      },
+      // 字典类型分页
+      dictTypePagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 字典类型列表
+      dictTypeList: [],
+      // 字典数据搜索表单
+      dictDataSearch: {
+        label: '',   // 字典标签
+        status: '',  // 状态
+      },
+      // 字典数据分页
+      dictDataPagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 字典数据列表
+      dictDataList: [],
+    };
+  },
+  mounted() {
+    this.loadDictTypeList();
+  },
+  methods: {
+    // ========== 加载字典类型列表 ==========
+    async loadDictTypeList() {
+      try {
+        const data = await getDictTypePage({
+          pageNo: this.dictTypePagination.pageNo,
+          pageSize: this.dictTypePagination.pageSize,
+          name: this.dictTypeSearch.name,
+          type: this.dictTypeSearch.type,
+          status: this.dictTypeSearch.status,
+        });
+        this.dictTypeList = data.list.map((item) => ({
+          id: item.id,
+          name: item.name || '',
+          type: item.type || '',
+          status: item.status,
+        }));
+        this.dictTypePagination.total = data.total;
+      } catch (err) {
+        console.error('加载字典类型列表失败', err);
+      }
+    },
+    // ========== 加载字典数据列表 ==========
+    async loadDictDataList() {
+      if (!this.selectedDictTypeId) {
+        this.dictDataList = [];
+        this.dictDataPagination.total = 0;
+        return;
+      }
+      try {
+        const data = await getDictDataPage({
+          pageNo: this.dictDataPagination.pageNo,
+          pageSize: this.dictDataPagination.pageSize,
+          dictTypeId: this.selectedDictTypeId,
+          label: this.dictDataSearch.label,
+          status: this.dictDataSearch.status,
+        });
+        this.dictDataList = data.list.map((item) => ({
+          id: item.id,
+          label: item.label || '',
+          value: item.value || '',
+          status: item.status,
+        }));
+        this.dictDataPagination.total = data.total;
+      } catch (err) {
+        console.error('加载字典数据列表失败', err);
+      }
+    },
+    // ========== 选中字典类型 ==========
+    handleSelectDictType(row) {
+      this.selectedDictTypeId = row.id;
+      this.dictDataPagination.pageNo = 1;
+      this.loadDictDataList();
+    },
+    // ========== 字典类型搜索 ==========
+    handleDictTypeSearch() {
+      this.dictTypePagination.pageNo = 1;
+      this.loadDictTypeList();
+    },
+    // ========== 字典类型重置 ==========
+    handleDictTypeReset() {
+      this.dictTypeSearch = { name: '', type: '', status: '' };
+      this.dictTypePagination.pageNo = 1;
+      this.loadDictTypeList();
+    },
+    // ========== 字典类型每页条数切换 ==========
+    handleDictTypePageSizeChange() {
+      this.dictTypePagination.pageNo = 1;
+      this.loadDictTypeList();
+    },
+    // ========== 字典数据搜索 ==========
+    handleDictDataSearch() {
+      this.dictDataPagination.pageNo = 1;
+      this.loadDictDataList();
+    },
+    // ========== 字典数据重置 ==========
+    handleDictDataReset() {
+      this.dictDataSearch = { label: '', status: '' };
+      this.dictDataPagination.pageNo = 1;
+      this.loadDictDataList();
+    },
+    // ========== 字典数据每页条数切换 ==========
+    handleDictDataPageSizeChange() {
+      this.dictDataPagination.pageNo = 1;
+      this.loadDictDataList();
+    },
+    // ========== 新增字典类型 ==========
+    handleAddDictType() {
+      alert('新增字典类型功能待实现');
+    },
+    // ========== 编辑字典类型 ==========
+    handleEditDictType(row) {
+      alert(`编辑字典类型：${row.name}`);
+    },
+    // ========== 删除字典类型 ==========
+    async handleDeleteDictType(row) {
+      if (!confirm(`确定要删除字典类型「${row.name}」吗？`)) return;
+      try {
+        await deleteDictType(row.id);
+        alert('删除成功');
+        if (this.selectedDictTypeId === row.id) {
+          this.selectedDictTypeId = '';
+          this.dictDataList = [];
+        }
+        this.loadDictTypeList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
+    // ========== 新增字典数据 ==========
+    handleAddDictData() {
+      if (!this.selectedDictTypeId) {
+        alert('请先选择字典类型');
+        return;
+      }
+      alert('新增字典数据功能待实现');
+    },
+    // ========== 编辑字典数据 ==========
+    handleEditDictData(row) {
+      alert(`编辑字典数据：${row.label}`);
+    },
+    // ========== 删除字典数据 ==========
+    async handleDeleteDictData(row) {
+      if (!confirm(`确定要删除字典数据「${row.label}」吗？`)) return;
+      try {
+        await deleteDictData(row.id);
+        alert('删除成功');
+        this.loadDictDataList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -428,6 +590,10 @@ export default {
   background-color: #f5f7fa;
 }
 
+.data-table tbody tr.active {
+  background-color: #ecf5ff;
+}
+
 .check-col {
   width: 36px;
   text-align: center !important;
@@ -471,6 +637,11 @@ export default {
 
 .op-del:hover {
   color: #f78989;
+}
+
+.empty-row {
+  color: #666;
+  text-align: center;
 }
 
 /* 分页 */

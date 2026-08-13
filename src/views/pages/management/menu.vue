@@ -5,7 +5,7 @@
         <div class="main-top">
           <div>菜单列表</div>
           <div>
-            <button>+新增菜单</button>
+            <button @click="handleAdd">+新增菜单</button>
             <button>收缩</button>
           </div>
           <div>
@@ -29,7 +29,22 @@
               </tr>
             </thead>
             <tbody>
-              <div class="asd">暂无数据</div>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="8" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td>{{ item.name }}</td>
+                <td>{{ item.type === 1 ? '目录' : item.type === 2 ? '菜单' : '按钮' }}</td>
+                <td>{{ item.sort }}</td>
+                <td>{{ item.permission }}</td>
+                <td>{{ item.component }}</td>
+                <td>{{ item.componentName }}</td>
+                <td>{{ item.status === 0 ? '启用' : '停用' }}</td>
+                <td class="ol-col">
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -39,13 +54,58 @@
 </template>
 
 <script>
+// ========== 导入菜单管理相关API ==========
+import { getMenuList, deleteMenu } from '#/api/system/menu';
+
 export default {
   data() {
     return {
-      tabValue: [
-        
-      ],
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadMenuList();
+  },
+  methods: {
+    // ========== 获取菜单列表 ==========
+    async loadMenuList() {
+      try {
+        const data = await getMenuList({});
+        // 字段映射，适配页面表格（菜单列表是树形结构，这里平铺显示）
+        this.tabValue = data.map((item) => ({
+          id: item.id,                          // 菜单ID
+          name: item.name || '',                // 菜单名称
+          type: item.type,                      // 菜单类型（1=目录，2=菜单，3=按钮）
+          sort: item.sort || 0,                 // 显示排序
+          permission: item.permission || '',    // 权限标识
+          component: item.component || '',      // 组件路径
+          componentName: item.componentName || '', // 组件名称
+          status: item.status,                  // 状态（0=启用，1=停用）
+        }));
+      } catch (err) {
+        console.error('获取菜单列表失败', err);
+      }
+    },
+    // ========== 新增菜单 ==========
+    handleAdd() {
+      alert('新增菜单功能待实现');
+    },
+    // ========== 编辑菜单 ==========
+    handleEdit(row) {
+      alert(`编辑菜单：${row.name}`);
+    },
+    // ========== 删除菜单 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除菜单「${row.name}」吗？`)) return;
+      try {
+        await deleteMenu(row.id);
+        alert('删除成功');
+        this.loadMenuList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>
@@ -159,6 +219,9 @@ export default {
   background-color: #fff;
   padding: 0 20px;
   border-right: 0;
+}
+.empty-row {
+  color: #666;
 }
 .ol-col {
   width: 220px;

@@ -5,7 +5,7 @@
         <div class="main-top">
           <div>示例订单列表</div>
           <div>
-            <button>+发起订单</button>
+            <button @click="handleAdd">+发起订单</button>
             <button>🔍</button>
           </div>
           <div>
@@ -44,14 +44,23 @@
                 <td>{{ item.payTime }}</td>
                 <td>{{ item.refundTime }}</td>
                 <td class="ol-col">
-                  <button>+前往支付</button>
+                  <button @click="handlePay(item)" v-if="!item.isPay">+前往支付</button>
+                  <button @click="handleRefund(item)" v-else-if="item.isPay && !item.refundAmount">退款</button>
+                  <span v-else>已退款</span>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
-          共{{ tabValue.length }}条记录<span>20条/页</span>
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
         </div>
       </div>
     </div>
@@ -59,252 +68,65 @@
 </template>
 
 <script>
+// ========== 导入示例订单相关API ==========
+import { getDemoOrderPage, createDemoOrder, refundDemoOrder } from '#/api/pay/demo/order';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          orderNo: "ORD2026001",
-          userNo: "U10001",
-          productName: "iPhone 15 Pro Max 256GB",
-          payPrice: 8999.0,
-          refundAmount: 0.0,
-          createTime: "2026-01-15 10:30:00",
-          payNo: "PAY20260115001",
-          isPay: "已支付",
-          payTime: "2026-01-15 10:35:00",
-          refundTime: "-",
-        },
-        {
-          orderNo: "ORD2026002",
-          userNo: "U10002",
-          productName: "会员VIP年卡",
-          payPrice: 298.0,
-          refundAmount: 0.0,
-          createTime: "2026-01-16 14:20:00",
-          payNo: "PAY20260116002",
-          isPay: "已支付",
-          payTime: "2026-01-16 14:25:00",
-          refundTime: "-",
-        },
-        {
-          orderNo: "ORD2026003",
-          userNo: "U10003",
-          productName: "课程包套餐",
-          payPrice: 1999.0,
-          refundAmount: 0.0,
-          createTime: "2026-01-17 09:15:00",
-          payNo: "PAY20260117003",
-          isPay: "已支付",
-          payTime: "2026-01-17 09:20:00",
-          refundTime: "-",
-        },
-        {
-          orderNo: "ORD2026004",
-          userNo: "U10004",
-          productName: "体检套餐",
-          payPrice: 2680.0,
-          refundAmount: 2680.0,
-          createTime: "2026-01-18 16:45:00",
-          payNo: "PAY20260118004",
-          isPay: "已退款",
-          payTime: "2026-01-18 16:50:00",
-          refundTime: "2026-01-20 10:00:00",
-        },
-        {
-          orderNo: "ORD2026005",
-          userNo: "U10005",
-          productName: "外卖优惠券",
-          payPrice: 59.9,
-          refundAmount: 0.0,
-          createTime: "2026-01-19 11:20:00",
-          payNo: "PAY20260119005",
-          isPay: "已支付",
-          payTime: "2026-01-19 11:25:00",
-          refundTime: "-",
-        },
-        {
-          orderNo: "ORD2026006",
-          userNo: "U10006",
-          productName: "笔记本电脑",
-          payPrice: 6999.0,
-          refundAmount: 0.0,
-          createTime: "2026-01-20 08:50:00",
-          payNo: "PAY20260120006",
-          isPay: "已支付",
-          payTime: "2026-01-20 08:55:00",
-          refundTime: "-",
-        },
-        {
-          orderNo: "ORD2026007",
-          userNo: "U10007",
-          productName: "美妆礼盒",
-          payPrice: 399.0,
-          refundAmount: 399.0,
-          createTime: "2026-01-21 13:30:00",
-          payNo: "PAY20260121007",
-          isPay: "已退款",
-          payTime: "2026-01-21 13:35:00",
-          refundTime: "2026-01-23 15:20:00",
-        },
-        {
-          orderNo: "ORD2026008",
-          userNo: "U10008",
-          productName: "健身月卡",
-          payPrice: 299.0,
-          refundAmount: 0.0,
-          createTime: "2026-01-22 15:10:00",
-          payNo: "PAY20260122008",
-          isPay: "已支付",
-          payTime: "2026-01-22 15:15:00",
-          refundTime: "-",
-        },
-        {
-          orderNo: "ORD2026009",
-          userNo: "U10009",
-          productName: "酒店预订",
-          payPrice: 1280.0,
-          refundAmount: 0.0,
-          createTime: "2026-01-23 09:40:00",
-          payNo: "PAY20260123009",
-          isPay: "已支付",
-          payTime: "2026-01-23 09:45:00",
-          refundTime: "-",
-        },
-        {
-          orderNo: "ORD2026010",
-          userNo: "U10010",
-          productName: "机票订购",
-          payPrice: 2380.0,
-          refundAmount: 2380.0,
-          createTime: "2026-01-24 12:00:00",
-          payNo: "PAY20260124010",
-          isPay: "已退款",
-          payTime: "2026-01-24 12:05:00",
-          refundTime: "2026-01-26 09:30:00",
-        },
-        {
-          orderNo: "ORD2026011",
-          userNo: "U10011",
-          productName: "游戏充值",
-          payPrice: 648.0,
-          refundAmount: 0.0,
-          createTime: "2026-01-25 10:20:00",
-          payNo: "PAY20260125011",
-          isPay: "未支付",
-          payTime: "-",
-          refundTime: "-",
-        },
-        {
-          orderNo: "ORD2026012",
-          userNo: "U10012",
-          productName: "视频会员",
-          payPrice: 198.0,
-          refundAmount: 0.0,
-          createTime: "2026-01-26 14:30:00",
-          payNo: "PAY20260126012",
-          isPay: "已支付",
-          payTime: "2026-01-26 14:35:00",
-          refundTime: "-",
-        },
-        {
-          orderNo: "ORD2026013",
-          userNo: "U10013",
-          productName: "云存储服务",
-          payPrice: 399.0,
-          refundAmount: 399.0,
-          createTime: "2026-01-27 08:15:00",
-          payNo: "PAY20260127013",
-          isPay: "已退款",
-          payTime: "2026-01-27 08:20:00",
-          refundTime: "2026-01-29 11:00:00",
-        },
-        {
-          orderNo: "ORD2026014",
-          userNo: "U10014",
-          productName: "设计素材包",
-          payPrice: 99.0,
-          refundAmount: 0.0,
-          createTime: "2026-01-28 16:50:00",
-          payNo: "PAY20260128014",
-          isPay: "已支付",
-          payTime: "2026-01-28 16:55:00",
-          refundTime: "-",
-        },
-        {
-          orderNo: "ORD2026015",
-          userNo: "U10015",
-          productName: "在线课程",
-          payPrice: 3299.0,
-          refundAmount: 0.0,
-          createTime: "2026-01-29 11:30:00",
-          payNo: "PAY20260129015",
-          isPay: "已支付",
-          payTime: "2026-01-29 11:35:00",
-          refundTime: "-",
-        },
-        {
-          orderNo: "ORD2026016",
-          userNo: "U10016",
-          productName: "鲜花配送",
-          payPrice: 168.0,
-          refundAmount: 0.0,
-          createTime: "2026-02-01 09:00:00",
-          payNo: "PAY20260201016",
-          isPay: "已支付",
-          payTime: "2026-02-01 09:05:00",
-          refundTime: "-",
-        },
-        {
-          orderNo: "ORD2026017",
-          userNo: "U10017",
-          productName: "蛋糕预定",
-          payPrice: 258.0,
-          refundAmount: 258.0,
-          createTime: "2026-02-02 13:40:00",
-          payNo: "PAY20260202017",
-          isPay: "已退款",
-          payTime: "2026-02-02 13:45:00",
-          refundTime: "2026-02-04 16:00:00",
-        },
-        {
-          orderNo: "ORD2026018",
-          userNo: "U10018",
-          productName: "电影票",
-          payPrice: 79.9,
-          refundAmount: 0.0,
-          createTime: "2026-02-03 15:25:00",
-          payNo: "PAY20260203018",
-          isPay: "未支付",
-          payTime: "-",
-          refundTime: "-",
-        },
-        {
-          orderNo: "ORD2026019",
-          userNo: "U10019",
-          productName: "景区门票",
-          payPrice: 199.0,
-          refundAmount: 0.0,
-          createTime: "2026-02-04 10:10:00",
-          payNo: "PAY20260204019",
-          isPay: "已支付",
-          payTime: "2026-02-04 10:15:00",
-          refundTime: "-",
-        },
-        {
-          orderNo: "ORD2026020",
-          userNo: "U10020",
-          productName: "打车充值",
-          payPrice: 100.0,
-          refundAmount: 0.0,
-          createTime: "2026-02-05 14:55:00",
-          payNo: "PAY20260205020",
-          isPay: "已支付",
-          payTime: "2026-02-05 15:00:00",
-          refundTime: "-",
-        },
-      ],
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        const data = await getDemoOrderPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          orderNo: item.no || '',
+          userNo: item.userId || '',
+          productName: item.subject || '',
+          payPrice: item.price / 100 || 0,
+          refundAmount: item.refundPrice / 100 || 0,
+          createTime: item.createTime || '',
+          payNo: item.payOrderNo || '',
+          isPay: item.payStatus === 1,
+          payTime: item.payTime || '-',
+          refundTime: item.refundTime || '-',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 新增订单
+    handleAdd() { alert('新增订单功能待实现'); },
+    // 前往支付
+    handlePay(item) { alert(`前往支付：${item.orderNo}`); },
+    // 退款
+    async handleRefund(item) {
+      if (!confirm(`确定要退款订单"${item.orderNo}"吗？`)) return;
+      try {
+        await refundDemoOrder({ id: item.id });
+        alert('退款成功');
+        this.loadList();
+      } catch (err) {
+        console.error('退款失败', err);
+      }
+    },
   },
 };
 </script>

@@ -3,7 +3,7 @@
     <div class="app">
       <div class="app-left">
         <div class="left-main">
-          <input type="text" placeholder="🔍搜索部门" />
+          <input type="text" placeholder="🔍搜索部门" v-model="deptSearch" />
           <div class="main-tab">
             <ul class="org-tree">
               <li
@@ -50,15 +50,15 @@
           <div class="top-inp">
             <div>
               <span>用户名</span>
-              <input type="text" placeholder="请输入用户名（..." />
+              <input type="text" placeholder="请输入用户名（..." v-model="searchForm.username" />
             </div>
             <div>
               <span>用户姓名</span>
-              <input type="text" placeholder="请输入用户姓名" />
+              <input type="text" placeholder="请输入用户姓名" v-model="searchForm.nickname" />
             </div>
             <div>
-              <button>重置</button>
-              <button>搜索</button>
+              <button @click="handleReset">重置</button>
+              <button @click="handleSearch">搜索</button>
               <span class="expand-text">展开 ▽</span>
             </div>
           </div>
@@ -67,7 +67,7 @@
           <div class="main-top">
             <div>用户列表</div>
             <div>
-              <button>+ 新增用户</button>
+              <button @click="handleAdd">+ 新增用户</button>
               <button>导出</button>
               <button>导入</button>
               <button>批量删除</button>
@@ -94,16 +94,19 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(row, index) in tableData" :key="index">
+                <tr v-if="tableData.length === 0">
+                  <td colspan="7" class="empty-row">暂无数据</td>
+                </tr>
+                <tr v-for="(row, index) in tableData" :key="row.id">
                   <td class="check-col"><input type="checkbox" /></td>
-                  <td>{{ row.userId }}</td>
+                  <td>{{ row.id }}</td>
                   <td>{{ row.username }}</td>
-                  <td>{{ row.realName }}</td>
-                  <td>{{ row.department }}</td>
-                  <td>{{ row.phone }}</td>
+                  <td>{{ row.nickname }}</td>
+                  <td>{{ row.deptName }}</td>
+                  <td>{{ row.mobile }}</td>
                   <td class="ol-col">
-                    <button class="btn-edit">编辑</button>
-                    <button class="btn-del">删除</button>
+                    <button class="btn-edit" @click="handleEdit(row)">编辑</button>
+                    <button class="btn-del" @click="handleDelete(row)">删除</button>
                     <button class="btn-more">更多 ▾</button>
                   </td>
                 </tr>
@@ -112,11 +115,19 @@
           </div>
 
           <div class="main-floot">
-            <span>共 {{ totalCount }} 条记录</span>
-            <select class="page-size-select">
-              <option>20条/页</option>
-              <option>50条/页</option>
+            <span>共 {{ pagination.total }} 条记录</span>
+            <select class="page-size-select" v-model="pagination.pageSize" @change="handlePageSizeChange">
+              <option :value="10">10条/页</option>
+              <option :value="20">20条/页</option>
+              <option :value="50">50条/页</option>
             </select>
+            <div style="float: right;">
+              <button @click="handlePageChange(1)">&lt;&lt;</button>
+              <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+              <button class="active">{{ pagination.pageNo }}</button>
+              <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+              <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+            </div>
           </div>
         </div>
       </div>
@@ -125,142 +136,139 @@
 </template>
 
 <script>
+// ========== 导入用户管理和部门管理相关API ==========
+import { getUserPage, deleteUser } from '#/api/system/user';
+import { getDeptList } from '#/api/system/dept';
+
 export default {
   data() {
     return {
-      totalCount: 21,
-      treeData: [
-        {
-          id: "yuqing",
-          label: "宇擎源码",
-          open: true,
-          children: [
-            {
-              id: "shenzhen",
-              label: "深圳总公司",
-              open: true,
-              children: [
-                {
-                  id: "yanfa",
-                  label: "研发部门",
-                  open: true,
-                  children: [
-                    { id: "test", label: "测试部门" },
-                  ],
-                },
-                { id: "market", label: "市场部门" },
-                { id: "finance", label: "财务部门" },
-              ],
-            },
-            {
-              id: "changsha",
-              label: "长沙分公司",
-              open: true,
-              children: [
-                { id: "cs-market", label: "市场部门" },
-                { id: "cs-finance", label: "财务部门" },
-              ],
-            },
-            {
-              id: "jinan",
-              label: "济南研发分公司",
-              open: true,
-              children: [
-                { id: "jinan-yanfa", label: "济南研发部" },
-              ],
-            },
-          ],
-        },
-        {
-          id: "bodazhengheng",
-          label: "博大正恒集团",
-          open: true,
-          children: [
-            { id: "zongjingban", label: "集团总经办" },
-            { id: "zongheguanli", label: "集团综合管理部" },
-            { id: "jituan-caiwu", label: "集团财务部" },
-            {
-              id: "sichuan-boda",
-              label: "四川博大正恒信息技术有限公司",
-              open: true,
-              children: [
-                { id: "sichuan-yanfa", label: "四川博大正恒研发部" },
-              ],
-            },
-          ],
-        },
-      ],
-      tableData: [
-        {
-          userId: "161",
-          username: "132300018",
-          realName: "王宁",
-          department: "研发部门",
-          phone: "13323455555",
-        },
-        {
-          userId: "160",
-          username: "132300027",
-          realName: "张华",
-          department: "济南研发部",
-          phone: "13532223444",
-        },
-        {
-          userId: "159",
-          username: "132300028",
-          realName: "张鑫鑫",
-          department: "济南研发部",
-          phone: "13222222222",
-        },
-        {
-          userId: "158",
-          username: "oatest",
-          realName: "OA用户",
-          department: "深圳总公司",
-          phone: "",
-        },
-        {
-          userId: "151",
-          username: "132300025",
-          realName: "张离职",
-          department: "研发部门",
-          phone: "13322342222",
-        },
-        {
-          userId: "150",
-          username: "132300024",
-          realName: "陈雨薇",
-          department: "研发部门",
-          phone: "13600136004",
-        },
-        {
-          userId: "149",
-          username: "10000301",
-          realName: "张一",
-          department: "研发部门",
-          phone: "13800138001",
-        },
-        {
-          userId: "148",
-          username: "132300023",
-          realName: "李晓丽",
-          department: "研发部门",
-          phone: "13345556666",
-        },
-        {
-          userId: "146",
-          username: "132300019",
-          realName: "王国刚",
-          department: "市场部门",
-          phone: "13222322222",
-        },
-      ],
+      // 部门搜索关键词
+      deptSearch: '',
+      // 部门树数据
+      treeData: [],
+      // 搜索表单
+      searchForm: {
+        username: '',  // 用户名
+        nickname: '',  // 用户姓名
+        deptId: '',    // 部门ID
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tableData: [],
     };
   },
+  mounted() {
+    this.loadDeptTree();
+    this.loadUserList();
+  },
   methods: {
+    // ========== 加载部门树 ==========
+    async loadDeptTree() {
+      try {
+        const data = await getDeptList();
+        // 将扁平的部门列表转换为树形结构
+        this.treeData = this.buildTree(data);
+      } catch (err) {
+        console.error('加载部门树失败', err);
+      }
+    },
+    // ========== 构建树形结构 ==========
+    buildTree(list) {
+      const map = {};
+      const roots = [];
+      // 先建立id到节点的映射
+      list.forEach((item) => {
+        map[item.id] = {
+          id: item.id,
+          label: item.name,
+          open: true,
+          children: [],
+        };
+      });
+      // 构建父子关系
+      list.forEach((item) => {
+        const node = map[item.id];
+        if (item.parentId && map[item.parentId]) {
+          map[item.parentId].children.push(node);
+        } else {
+          roots.push(node);
+        }
+      });
+      return roots;
+    },
+    // ========== 加载用户列表 ==========
+    async loadUserList() {
+      try {
+        const data = await getUserPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          username: this.searchForm.username,
+          nickname: this.searchForm.nickname,
+          deptId: this.searchForm.deptId,
+        });
+        // 字段映射，适配页面表格
+        this.tableData = data.list.map((item) => ({
+          id: item.id,                    // 用户ID
+          username: item.username || '',  // 用户名（账号）
+          nickname: item.nickname || '',  // 用户姓名
+          deptName: item.deptName || '',  // 部门名称
+          mobile: item.mobile || '',      // 手机号码
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('加载用户列表失败', err);
+      }
+    },
+    // ========== 展开/收起部门树节点 ==========
     toggleNode(node) {
       if (node.children && node.children.length) {
         node.open = !node.open;
+      }
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadUserList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { username: '', nickname: '', deptId: '' };
+      this.pagination.pageNo = 1;
+      this.loadUserList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadUserList();
+    },
+    // ========== 每页条数切换 ==========
+    handlePageSizeChange() {
+      this.pagination.pageNo = 1;
+      this.loadUserList();
+    },
+    // ========== 新增用户 ==========
+    handleAdd() {
+      alert('新增用户功能待实现');
+    },
+    // ========== 编辑用户 ==========
+    handleEdit(row) {
+      alert(`编辑用户：${row.username}`);
+    },
+    // ========== 删除用户 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除用户「${row.username}」吗？`)) return;
+      try {
+        await deleteUser(row.id);
+        alert('删除成功');
+        this.loadUserList();
+      } catch (err) {
+        console.error('删除失败', err);
       }
     },
   },
@@ -606,6 +614,10 @@ export default {
 
 .check-col input[type="checkbox"] {
   cursor: pointer;
+}
+
+.empty-row {
+  color: #666;
 }
 
 /* 操作按钮 */

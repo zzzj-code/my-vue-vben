@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>应用编号</span>
-            <input type="text" placeholder="请输入应用编号" />
+            <input type="text" placeholder="请输入应用编号" v-model="searchForm.appId" />
           </div>
           <div>
             <span>支付渠道</span>
-            <input type="text" placeholder="请输入支付渠道" />
+            <input type="text" placeholder="请输入支付渠道" v-model="searchForm.channelCode" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>支付订单列表</div>
           <div>
-            <button>导出</button>
+            <button @click="handleExport">导出</button>
             <button>🔍</button>
           </div>
           <div>
@@ -91,8 +91,15 @@
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ totalRecords }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -101,113 +108,101 @@
 </template>
 
 <script>
+// ========== 导入支付订单相关API ==========
+import { getOrderPage, exportOrder } from '#/api/pay/order';
+
 export default {
   data() {
     return {
-      currentPage: 1,
-      pageSize: 20,
-      allData: [],
+      // 搜索表单
+      searchForm: {
+        appId: '',
+        channelCode: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
       tabValue: [],
     };
   },
-  computed: {
-    totalPages() {
-      return Math.ceil(this.allData.length / this.pageSize);
-    },
-    totalRecords() {
-      return this.allData.length;
-    }
-  },
   mounted() {
-    this.generateData();
-    this.updatePage();
+    this.loadList();
   },
   methods: {
-    generateData() {
-      const channels = ['支付宝', '微信支付', '银联', '钱包支付'];
-      const statuses = ['支付成功', '待支付', '支付失败', '已退款'];
-      const appNames = ['电商平台', '生活服务', '教育平台', '医疗健康', '餐饮外卖'];
-      const productTitles = [
-        'iPhone 15 Pro Max', '会员VIP年卡', '课程包套餐', '体检套餐', '外卖优惠券',
-        '笔记本电脑', '美妆礼盒', '健身月卡', '酒店预订', '机票订购',
-        '游戏充值', '视频会员', '云存储服务', '设计素材包', '在线课程',
-        '鲜花配送', '蛋糕预定', '电影票', '景区门票', '打车充值'
-      ];
-      
-      this.allData = [];
-      for (let i = 1; i <= 50; i++) {
-        const amount = +(Math.random() * 5000 + 10).toFixed(2);
-        const refundAmount = Math.random() > 0.7 ? +(Math.random() * amount * 0.5).toFixed(2) : 0;
-        const fee = +(amount * 0.006).toFixed(2);
-        const status = statuses[Math.floor(Math.random() * statuses.length)];
-        const channel = channels[Math.floor(Math.random() * channels.length)];
-        
-        this.allData.push({
-          id: i,
-          amount: amount,
-          refundAmount: refundAmount,
-          fee: fee,
-          orderNo: `ORD${String(i).padStart(6, '0')}${Date.now().toString().slice(-6)}`,
-          status: status,
-          channel: channel,
-          payTime: this.generateRandomTime(),
-          appName: appNames[Math.floor(Math.random() * appNames.length)],
-          productTitle: productTitles[Math.floor(Math.random() * productTitles.length)],
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
         });
+        const data = await getOrderPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          amount: item.price / 100 || 0,
+          refundAmount: item.refundPrice / 100 || 0,
+          fee: item.feePrice / 100 || 0,
+          orderNo: item.no || '',
+          status: this.getStatusName(item.status),
+          channel: item.channelCode || '',
+          payTime: item.successTime || '',
+          appName: item.appName || '',
+          productTitle: item.subject || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
       }
     },
-    generateRandomTime() {
-      const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
-      const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
-      const hour = String(Math.floor(Math.random() * 24)).padStart(2, '0');
-      const minute = String(Math.floor(Math.random() * 60)).padStart(2, '0');
-      const second = String(Math.floor(Math.random() * 60)).padStart(2, '0');
-      return `2026-${month}-${day} ${hour}:${minute}:${second}`;
+    // 状态转换
+    getStatusName(status) {
+      const map = { 0: '待支付', 1: '已支付', 2: '已关闭', 3: '已退款' };
+      return map[status] || '未知';
     },
-    updatePage() {
-      const start = (this.currentPage - 1) * this.pageSize;
-      const end = start + this.pageSize;
-      this.tabValue = this.allData.slice(start, end);
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
     },
-    prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-        this.updatePage();
-      }
-    },
-    nextPage() {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++;
-        this.updatePage();
-      }
-    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 导出
+    handleExport() { alert('导出功能待实现'); },
+    // 状态颜色
     getStatusColor(status) {
       const map = {
-        '支付成功': '#52c41a',
+        '支付成功': '#52c41a', '已支付': '#52c41a',
         '待支付': '#faad14',
-        '支付失败': '#ff4d4f',
+        '支付失败': '#ff4d4f', '已关闭': '#ff4d4f',
         '已退款': '#8c8c8c'
       };
       return map[status] || '#333';
     },
     getStatusBg(status) {
       const map = {
-        '支付成功': '#f6ffed',
+        '支付成功': '#f6ffed', '已支付': '#f6ffed',
         '待支付': '#fffbe6',
-        '支付失败': '#fff2f0',
+        '支付失败': '#fff2f0', '已关闭': '#fff2f0',
         '已退款': '#f5f5f5'
       };
       return map[status] || '#fff';
     },
     getChannelBg(channel) {
       const map = {
-        '支付宝': '#e8f0fe',
-        '微信支付': '#e8f5e9',
-        '银联': '#fff3e0',
-        '钱包支付': '#f3e5f5'
+        'alipay': '#e8f0fe', '支付宝': '#e8f0fe',
+        'wechat': '#e8f5e9', '微信支付': '#e8f5e9',
+        'union': '#fff3e0', '银联': '#fff3e0',
+        'wallet': '#f3e5f5', '钱包支付': '#f3e5f5'
       };
       return map[channel] || '#f5f5f5';
     },
+    // 详情
     handleDetail(item) {
       alert(`订单详情：
 订单号：${item.orderNo}

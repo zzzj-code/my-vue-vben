@@ -3,17 +3,17 @@
     <div class="app">
       <div class="app-top">
         <div class="top-inp">
+            <div>
+              <span>参数名称</span>
+              <input type="text" placeholder="请输入参数名称" v-model="searchForm.name" />
+            </div>
+            <div>
+              <span>参数键名</span>
+              <input type="text" placeholder="请输入参数键名" v-model="searchForm.key" />
+            </div>
           <div>
-            <span>参数名称</span>
-            <input type="text" placeholder="请输入参数名称" />
-          </div>
-          <div>
-            <span>参数键名</span>
-            <input type="text" placeholder="请输入参数键名" />
-          </div>
-          <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,9 +22,7 @@
         <div class="main-top">
           <div>参数列表</div>
           <div>
-            <button>+新增参数</button>
-            <button>导入</button>
-            <button disabled>批量删除</button>
+            <button @click="handleAdd">+新增</button>
             <button>🔍</button>
           </div>
           <div>
@@ -51,126 +49,107 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-if="tabValue.length === 0">
+                <td colspan="11" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
                 <td><input type="checkbox" /></td>
                 <td>{{ item.id }}</td>
                 <td>{{ item.category }}</td>
-                <td>{{ item.paramName }}</td>
-                <td>{{ item.paramKey }}</td>
-                <td>{{ item.paramValue }}</td>
-                <td>{{ item.isVisible }}</td>
-                <td>{{ item.isBuiltin }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.key }}</td>
+                <td>{{ item.value }}</td>
+                <td>{{ item.visible }}</td>
+                <td>{{ item.builtin }}</td>
                 <td>{{ item.remark }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共20条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入参数列表相关API ==========
+import { getConfigPage, deleteConfig } from '#/api/infra/config';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          category: "系统配置",
-          paramName: "系统名称",
-          paramKey: "sys.name",
-          paramValue: "XX管理系统",
-          isVisible: "是",
-          isBuiltin: "是",
-          remark: "系统显示名称",
-          createTime: "2026-08-01 09:00:00",
-        },
-        {
-          id: 2,
-          category: "系统配置",
-          paramName: "系统版本",
-          paramKey: "sys.version",
-          paramValue: "v3.2.1",
-          isVisible: "是",
-          isBuiltin: "是",
-          remark: "当前系统版本号",
-          createTime: "2026-08-01 10:30:00",
-        },
-        {
-          id: 3,
-          category: "系统配置",
-          paramName: "登录超时时间",
-          paramKey: "sys.login.timeout",
-          paramValue: "1800",
-          isVisible: "是",
-          isBuiltin: "是",
-          remark: "用户登录超时时间（秒）",
-          createTime: "2026-07-31 14:20:00",
-        },
-        {
-          id: 4,
-          category: "业务配置",
-          paramName: "订单自动确认时间",
-          paramKey: "order.auto.confirm",
-          paramValue: "7",
-          isVisible: "是",
-          isBuiltin: "否",
-          remark: "订单自动确认天数",
-          createTime: "2026-07-31 16:45:00",
-        },
-        {
-          id: 5,
-          category: "业务配置",
-          paramName: "支付超时时间",
-          paramKey: "order.pay.timeout",
-          paramValue: "30",
-          isVisible: "是",
-          isBuiltin: "否",
-          remark: "订单支付超时时间（分钟）",
-          createTime: "2026-07-30 11:00:00",
-        },
-        {
-          id: 6,
-          category: "业务配置",
-          paramName: "库存预警阈值",
-          paramKey: "inventory.warn.threshold",
-          paramValue: "10",
-          isVisible: "是",
-          isBuiltin: "否",
-          remark: "库存低于该值时预警",
-          createTime: "2026-07-30 09:30:00",
-        },
-        {
-          id: 7,
-          category: "安全配置",
-          paramName: "密码尝试次数",
-          paramKey: "security.password.attempts",
-          paramValue: "5",
-          isVisible: "否",
-          isBuiltin: "是",
-          remark: "密码错误最大尝试次数",
-          createTime: "2026-07-29 13:50:00",
-        },
-        {
-          id: 8,
-          category: "安全配置",
-          paramName: "验证码有效期",
-          paramKey: "security.captcha.expire",
-          paramValue: "300",
-          isVisible: "否",
-          isBuiltin: "是",
-          remark: "验证码有效时间（秒）",
-          createTime: "2026-07-29 15:10:00",
-        },
-      ],
+      searchForm: {
+        name: '',
+        key: '',
+      },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getConfigPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          category: item.category || '',
+          name: item.name || '',
+          key: item.key || '',
+          value: item.value || '',
+          visible: item.visible || '',
+          builtin: item.builtin || '',
+          remark: item.remark || '',
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(row) { alert('编辑功能待实现'); },
+    async handleDelete(row) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteConfig(row.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>
@@ -187,7 +166,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -246,7 +224,6 @@ export default {
   border: 0;
   color: #fff;
 }
-
 .app-main {
   width: 100%;
   height: 492px;
@@ -276,21 +253,12 @@ export default {
   margin-right: 10px;
 }
 .main-top div:nth-child(2) button {
-  width: 134px;
+  width: 106px;
   height: 32px;
   background-color: #006be6;
   border: 0;
   color: #fff;
   border-radius: 10px;
-}
-.main-top div:nth-child(2) button:nth-child(2) {
-  width: 63px;
-}
-.main-top div:nth-child(2) button:nth-child(3) {
-  width: 106px;
-  border: 1px solid #ccc;
-  background-color: #fff;
-  color: black;
 }
 .main-top div:nth-child(2) button:last-child {
   width: 30px;
@@ -322,7 +290,7 @@ export default {
 }
 .main-tab table {
   width: max-content;
-  min-width: 1500px;
+  min-width: 1200px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -342,8 +310,11 @@ export default {
   padding: 0 20px;
   border-right: 0;
 }
+.empty-row {
+  color: #666;
+}
 .ol-col {
-  width: 160px;
+  width: 130px;
   position: sticky;
   right: 0;
   border-left: 1px solid #ccc;
@@ -358,7 +329,6 @@ export default {
 .ol-col button:nth-child(2) {
   color: red;
 }
-
 .main-floot {
   width: 100%;
   height: 36px;

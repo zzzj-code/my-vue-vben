@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>转账单号</span>
-            <input type="text" placeholder="请输入转账单号" />
+            <input type="text" placeholder="请输入转账单号" v-model="searchForm.no" />
           </div>
           <div>
             <span>转账渠道</span>
-            <input type="text" placeholder="请输入转账渠道" />
+            <input type="text" placeholder="请输入转账渠道" v-model="searchForm.channelCode" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>转账单列表</div>
           <div>
-            <button>导出</button>
+            <button @click="handleExport">导出</button>
             <button>🔍</button>
           </div>
           <div>
@@ -107,8 +107,15 @@
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ totalRecords }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -117,135 +124,102 @@
 </template>
 
 <script>
+// ========== 导入转账订单相关API ==========
+import { getTransferPage, exportTransfer } from '#/api/pay/transfer';
+
 export default {
   data() {
     return {
-      allData: [],
+      // 搜索表单
+      searchForm: {
+        no: '',
+        channelCode: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
       tabValue: [],
     };
   },
-  computed: {
-    totalRecords() {
-      return this.allData.length;
-    },
-  },
   mounted() {
-    this.generateData();
-    this.tabValue = this.allData;
+    this.loadList();
   },
   methods: {
-    generateData() {
-      const channels = ["支付宝", "微信支付", "银联", "钱包支付"];
-      const statuses = ["转账成功", "转账中", "转账失败", "已退回"];
-      const titles = [
-        "工资发放",
-        "供应商货款",
-        "项目奖金",
-        "报销费用",
-        "合作分成",
-        "押金退还",
-        "预付款",
-        "尾款结算",
-        "服务费",
-        "佣金支付",
-        "采购款",
-        "退款处理",
-        "活动经费",
-        "培训费",
-        "咨询费",
-      ];
-      const appNames = [
-        "电商平台",
-        "生活服务",
-        "教育平台",
-        "医疗健康",
-        "餐饮外卖",
-      ];
-      const receiverNames = [
-        "张伟",
-        "李娜",
-        "王强",
-        "刘洋",
-        "陈静",
-        "杨帆",
-        "赵磊",
-        "黄丽",
-        "周婷",
-        "吴刚",
-      ];
-
-      this.allData = [];
-      for (let i = 1; i <= 50; i++) {
-        const transferAmount = +(Math.random() * 50000 + 100).toFixed(2);
-        const status = statuses[Math.floor(Math.random() * statuses.length)];
-        const channel = channels[Math.floor(Math.random() * channels.length)];
-
-        const createDate = this.generateRandomTime();
-        const transferDate = this.addMinutes(
-          createDate,
-          Math.floor(Math.random() * 180) + 10,
-        );
-
-        this.allData.push({
-          id: i,
-          transferAmount: transferAmount,
-          transferNo: `TRF${String(i).padStart(6, "0")}${Date.now().toString().slice(-6)}`,
-          status: status,
-          channel: channel,
-          createTime: createDate,
-          transferTime: transferDate,
-          title: titles[Math.floor(Math.random() * titles.length)],
-          appName: appNames[Math.floor(Math.random() * appNames.length)],
-          receiverName: receiverNames[Math.floor(Math.random() * receiverNames.length)],
-          receiverAccount: `6222${String(Math.floor(Math.random() * 1000000000)).padStart(10, "0")}`,
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
         });
+        const data = await getTransferPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          transferAmount: item.price / 100 || 0,
+          transferNo: item.no || '',
+          status: this.getStatusName(item.status),
+          channel: item.channelCode || '',
+          createTime: item.createTime || '',
+          transferTime: item.successTime || '',
+          title: item.subject || '',
+          appName: item.appName || '',
+          receiverName: item.receiverName || '',
+          receiverAccount: item.receiverAccount || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
       }
     },
-    generateRandomTime() {
-      const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, "0");
-      const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, "0");
-      const hour = String(Math.floor(Math.random() * 24)).padStart(2, "0");
-      const minute = String(Math.floor(Math.random() * 60)).padStart(2, "0");
-      const second = String(Math.floor(Math.random() * 60)).padStart(2, "0");
-      return `2026-${month}-${day} ${hour}:${minute}:${second}`;
+    // 状态转换
+    getStatusName(status) {
+      const map = { 0: '转账中', 1: '转账成功', 2: '转账失败', 3: '已退回' };
+      return map[status] || '未知';
     },
-    addMinutes(timeStr, minutes) {
-      const date = new Date(`2026-01-01 ${timeStr.split(" ")[1]}`);
-      date.setMinutes(date.getMinutes() + minutes);
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      const hour = String(date.getHours()).padStart(2, "0");
-      const min = String(date.getMinutes()).padStart(2, "0");
-      const sec = String(date.getSeconds()).padStart(2, "0");
-      return `2026-${month}-${day} ${hour}:${min}:${sec}`;
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
     },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 导出
+    handleExport() { alert('导出功能待实现'); },
+    // 状态颜色
     getStatusColor(status) {
       const map = {
-        转账成功: "#52c41a",
-        转账中: "#faad14",
-        转账失败: "#ff4d4f",
-        已退回: "#8c8c8c",
+        '转账成功': '#52c41a',
+        '转账中': '#faad14',
+        '转账失败': '#ff4d4f',
+        '已退回': '#8c8c8c',
       };
-      return map[status] || "#333";
+      return map[status] || '#333';
     },
     getStatusBg(status) {
       const map = {
-        转账成功: "#f6ffed",
-        转账中: "#fffbe6",
-        转账失败: "#fff2f0",
-        已退回: "#f5f5f5",
+        '转账成功': '#f6ffed',
+        '转账中': '#fffbe6',
+        '转账失败': '#fff2f0',
+        '已退回': '#f5f5f5',
       };
-      return map[status] || "#fff";
+      return map[status] || '#fff';
     },
     getChannelBg(channel) {
       const map = {
-        支付宝: "#e8f0fe",
-        微信支付: "#e8f5e9",
-        银联: "#fff3e0",
-        钱包支付: "#f3e5f5",
+        'alipay': '#e8f0fe', '支付宝': '#e8f0fe',
+        'wechat': '#e8f5e9', '微信支付': '#e8f5e9',
+        'union': '#fff3e0', '银联': '#fff3e0',
+        'wallet': '#f3e5f5', '钱包支付': '#f3e5f5',
       };
-      return map[channel] || "#f5f5f5";
+      return map[channel] || '#f5f5f5';
     },
+    // 详情
     handleDetail(item) {
       alert(`转账详情：
 转账单号：${item.transferNo}

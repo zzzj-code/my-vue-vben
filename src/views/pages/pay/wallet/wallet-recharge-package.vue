@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>套餐名称</span>
-            <input type="text" placeholder="请输入套餐名称" />
+            <input type="text" placeholder="请输入套餐名称" v-model="searchForm.name" />
           </div>
           <div>
             <span>状态</span>
-            <input type="text" placeholder="请输入状态" />
+            <input type="text" placeholder="请输入状态" v-model="searchForm.status" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>充值套餐列表</div>
           <div>
-            <button>+新增充值套餐</button>
+            <button @click="handleAdd">+新增充值套餐</button>
             <button>🔍</button>
           </div>
           <div>
@@ -53,15 +53,22 @@
                 <td>{{ item.status }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
-          共{{ tabValue.length }}条记录<span>20条/页</span>
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
         </div>
       </div>
     </div>
@@ -69,30 +76,77 @@
 </template>
 
 <script>
+// ========== 导入充值套餐相关API ==========
+import { getWalletRechargePackagePage, createWalletRechargePackage, updateWalletRechargePackage, deleteWalletRechargePackage } from '#/api/pay/wallet/rechargePackage';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          packageNo: "PKG2026001",
-          packageName: "新手特惠套餐",
-          payAmount: 100.0,
-          giftAmount: 20.0,
-          status: "上架",
-          createTime: "2026-01-01 10:00:00",
-        },
-        {
-          id: 2,
-          packageNo: "PKG2026002",
-          packageName: "月度会员套餐",
-          payAmount: 200.0,
-          giftAmount: 50.0,
-          status: "下架",
-          createTime: "2026-01-15 14:30:00",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        name: '',
+        status: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getWalletRechargePackagePage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          packageNo: item.id || '',
+          packageName: item.name || '',
+          payAmount: item.payPrice / 100 || 0,
+          giftAmount: item.giftPrice / 100 || 0,
+          status: item.status === 0 ? '上架' : '下架',
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 新增
+    handleAdd() { alert('新增套餐功能待实现'); },
+    // 编辑
+    handleEdit(item) { alert('编辑功能待实现'); },
+    // 删除
+    async handleDelete(item) {
+      if (!confirm(`确定要删除套餐"${item.packageName}"吗？`)) return;
+      try {
+        await deleteWalletRechargePackage(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>

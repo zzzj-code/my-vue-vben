@@ -21,7 +21,7 @@
         <ul class="submenu">
           <li>
             <router-link
-              to="/demo01-contact"
+              to="/infra/demo01-contact"
               active-class="sub-active"
               class="sub-item"
             >
@@ -30,7 +30,7 @@
           </li>
           <li>
             <router-link
-              to="/demo02-category"
+              to="/infra/demo02-category"
               active-class="sub-active"
               class="sub-item"
             >
@@ -39,7 +39,7 @@
           </li>
           <li>
             <router-link
-              to="/demo03-normal"
+              to="/infra/demo03-normal"
               active-class="sub-active"
               class="sub-item"
             >
@@ -48,7 +48,7 @@
           </li>
           <li>
             <router-link
-              to="/demo03-erp"
+              to="/infra/demo03-erp"
               active-class="sub-active"
               class="sub-item"
             >
@@ -57,7 +57,7 @@
           </li>
           <li>
             <router-link
-              to="/demo03-inner"
+              to="/infra/demo03-inner"
               active-class="sub-active"
               class="sub-item"
             >
@@ -68,17 +68,17 @@
       </li>
 
       <li>
-        <router-link to="/data-source-config" active-class="sub-active" class="sub-item">
+        <router-link to="/infra/data-source-config" active-class="sub-active" class="sub-item">
           <span class="menu-label">数据源配置</span>
         </router-link>
       </li>
       <li>
-        <router-link to="/build" active-class="sub-active" class="sub-item">
+        <router-link to="/infra/build" active-class="sub-active" class="sub-item">
           <span class="menu-label">表单构建</span>
         </router-link>
       </li>
       <li>
-        <router-link to="/swagger" active-class="sub-active" class="sub-item">
+        <router-link to="/infra/swagger" active-class="sub-active" class="sub-item">
           <span class="menu-label">API接口</span>
         </router-link>
       </li>
@@ -91,7 +91,7 @@
         <ul class="submenu">
           <li>
             <router-link
-              to="/api-access-log"
+              to="/infra/api-access-log"
               active-class="sub-active"
               class="sub-item"
             >
@@ -100,7 +100,7 @@
           </li>
           <li>
             <router-link
-              to="/api-error-log"
+              to="/infra/api-error-log"
               active-class="sub-active"
               class="sub-item"
             >
@@ -110,7 +110,7 @@
         </ul>
       </li>
       <li>
-        <router-link to="/websocket" active-class="sub-active" class="sub-item">
+        <router-link to="/infra/websocket" active-class="sub-active" class="sub-item">
           <span class="menu-label">WebSocket</span>
         </router-link>
       </li>
@@ -122,7 +122,7 @@
         <ul class="submenu">
           <li>
             <router-link
-              to="/file-config"
+              to="/infra/file-config"
               active-class="sub-active"
               class="sub-item"
             >
@@ -131,7 +131,7 @@
           </li>
           <li>
             <router-link
-              to="/file/file"
+              to="/infra/file/file"
               active-class="sub-active"
               class="sub-item"
             >
@@ -154,7 +154,7 @@
         <ul class="submenu">
           <li>
             <router-link
-              to="/monitors/druid"
+              to="/infra/monitors/druid"
               active-class="sub-active"
               class="sub-item"
             >
@@ -163,7 +163,7 @@
           </li>
           <li>
             <router-link
-              to="/monitors/redis"
+              to="/infra/monitors/redis"
               active-class="sub-active"
               class="sub-item"
             >
@@ -172,7 +172,7 @@
           </li>
           <li>
             <router-link
-              to="/admin-server"
+              to="/infra/admin-server"
               active-class="sub-active"
               class="sub-item"
             >
@@ -181,7 +181,7 @@
           </li>
           <li>
             <router-link
-              to="/skywalking"
+              to="/infra/skywalking"
               active-class="sub-active"
               class="sub-item"
             >
@@ -199,7 +199,7 @@
         <ul class="submenu">
           <li>
             <router-link
-              to="/job-ops"
+              to="/infra/job-ops"
               active-class="sub-active"
               class="sub-item"
             >

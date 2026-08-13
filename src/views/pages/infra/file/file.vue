@@ -3,17 +3,17 @@
     <div class="app">
       <div class="app-top">
         <div class="top-inp">
+            <div>
+              <span>文件路径</span>
+              <input type="text" placeholder="请输入文件路径" v-model="searchForm.path" />
+            </div>
+            <div>
+              <span>文件类型</span>
+              <input type="text" placeholder="请输入文件类型" v-model="searchForm.type" />
+            </div>
           <div>
-            <span>文件路径</span>
-            <input type="text" placeholder="请输入文件路径" />
-          </div>
-          <div>
-            <span>文件类型</span>
-            <input type="text" placeholder="请输入文件类型" />
-          </div>
-          <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,8 +22,7 @@
         <div class="main-top">
           <div>文件列表</div>
           <div>
-            <button>+上传文件</button>
-            <button disabled>批量删除</button>
+            <button @click="handleAdd">+新增</button>
             <button>🔍</button>
           </div>
           <div>
@@ -42,31 +41,39 @@
                 <th>URL</th>
                 <th>文件大小</th>
                 <th>文件类型</th>
-                <th>文件内容</th>
                 <th>上传时间</th>
                 <th class="ol-col">操作</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td><input type="checkbox" name="" id="" /></td>
-                <td>{{ item.fileName }}</td>
-                <td>{{ item.filePath }}</td>
-                <td>{{ item.fileUrl }}</td>
-                <td>{{ item.fileSize }}</td>
-                <td>{{ item.fileType }}</td>
-                <td>{{ item.fileContent }}</td>
-                <td>{{ item.uploadTime }}</td>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="8" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td><input type="checkbox" /></td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.path }}</td>
+                <td>{{ item.url }}</td>
+                <td>{{ item.size }}</td>
+                <td>{{ item.type }}</td>
+                <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>复制链接</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
-          共{{ tabValue.length }}条记录<span>20条/页</span>
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
         </div>
       </div>
     </div>
@@ -74,121 +81,66 @@
 </template>
 
 <script>
+// ========== 导入文件列表相关API ==========
+import { getFilePage, deleteFile } from '#/api/infra/file';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          fileName: "用户头像_张三.jpg",
-          filePath: "/uploads/avatar/2026/08/",
-          fileUrl:
-            "https://cdn.example.com/uploads/avatar/2026/08/avatar_zhangsan.jpg",
-          fileSize: "256.00 KB",
-          fileType: "jpg",
-          fileContent: "用户头像图片",
-          uploadTime: "2026-08-01 09:00:00",
-        },
-        {
-          id: 2,
-          fileName: "商品主图_华为Mate60.jpg",
-          filePath: "/uploads/product/2026/08/",
-          fileUrl:
-            "https://cdn.example.com/uploads/product/2026/08/product_huawei_mate60.jpg",
-          fileSize: "1.24 MB",
-          fileType: "jpg",
-          fileContent: "商品主图",
-          uploadTime: "2026-08-01 10:30:00",
-        },
-        {
-          id: 3,
-          fileName: "订单附件_ORD20260801001.pdf",
-          filePath: "/uploads/order/2026/08/",
-          fileUrl:
-            "https://cdn.example.com/uploads/order/2026/08/order_ORD20260801001.pdf",
-          fileSize: "456.78 KB",
-          fileType: "pdf",
-          fileContent: "订单附件",
-          uploadTime: "2026-07-31 14:20:00",
-        },
-        {
-          id: 4,
-          fileName: "系统日志_app.log",
-          filePath: "/uploads/log/2026/07/",
-          fileUrl:
-            "https://cdn.example.com/uploads/log/2026/07/app_20260731.log",
-          fileSize: "3.56 MB",
-          fileType: "log",
-          fileContent: "系统日志文件",
-          uploadTime: "2026-07-31 16:45:00",
-        },
-        {
-          id: 5,
-          fileName: "数据库备份_20260730.sql",
-          filePath: "/uploads/backup/2026/07/",
-          fileUrl:
-            "https://cdn.example.com/uploads/backup/2026/07/backup_20260730.sql",
-          fileSize: "125.80 MB",
-          fileType: "sql",
-          fileContent: "数据库备份",
-          uploadTime: "2026-07-30 11:00:00",
-        },
-        {
-          id: 6,
-          fileName: "教学视频_SpringBoot入门.mp4",
-          filePath: "/uploads/video/2026/07/",
-          fileUrl:
-            "https://cdn.example.com/uploads/video/2026/07/springboot_intro.mp4",
-          fileSize: "45.60 MB",
-          fileType: "mp4",
-          fileContent: "教学视频",
-          uploadTime: "2026-07-30 09:30:00",
-        },
-        {
-          id: 7,
-          fileName: "产品需求文档_v2.1.docx",
-          filePath: "/uploads/doc/2026/07/",
-          fileUrl: "https://cdn.example.com/uploads/doc/2026/07/prd_v2.1.docx",
-          fileSize: "2.34 MB",
-          fileType: "docx",
-          fileContent: "Word文档",
-          uploadTime: "2026-07-29 13:50:00",
-        },
-        {
-          id: 8,
-          fileName: "统计报表_2026Q2.xlsx",
-          filePath: "/uploads/report/2026/07/",
-          fileUrl:
-            "https://cdn.example.com/uploads/report/2026/07/report_2026Q2.xlsx",
-          fileSize: "567.89 KB",
-          fileType: "xlsx",
-          fileContent: "Excel报表",
-          uploadTime: "2026-07-29 15:10:00",
-        },
-        {
-          id: 9,
-          fileName: "API接口文档_v3.0.pdf",
-          filePath: "/uploads/doc/2026/07/",
-          fileUrl:
-            "https://cdn.example.com/uploads/doc/2026/07/api_doc_v3.0.pdf",
-          fileSize: "1.89 MB",
-          fileType: "pdf",
-          fileContent: "PDF文档",
-          uploadTime: "2026-07-28 10:00:00",
-        },
-        {
-          id: 10,
-          fileName: "temp_cache_20260728.tmp",
-          filePath: "/uploads/temp/2026/07/",
-          fileUrl:
-            "https://cdn.example.com/uploads/temp/2026/07/cache_20260728.tmp",
-          fileSize: "98.00 KB",
-          fileType: "tmp",
-          fileContent: "临时缓存文件",
-          uploadTime: "2026-07-28 08:20:00",
-        },
-      ],
+      searchForm: {
+        path: '',
+        type: '',
+      },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getFilePage(params);
+        this.tabValue = data.list.map((item) => ({
+          name: item.name || '',
+          path: item.path || '',
+          url: item.url || '',
+          size: item.size || '',
+          type: item.type || '',
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(row) { alert('编辑功能待实现'); },
+    async handleDelete(row) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteFile(row.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>
@@ -205,7 +157,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -264,7 +215,6 @@ export default {
   border: 0;
   color: #fff;
 }
-
 .app-main {
   width: 100%;
   height: 492px;
@@ -278,7 +228,7 @@ export default {
   display: flex;
 }
 .main-top div:first-child {
-  width: 60%;
+  width: 55%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -286,7 +236,7 @@ export default {
   font-weight: 600;
 }
 .main-top div:nth-child(2) {
-  width: 30%;
+  width: 35%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -294,18 +244,12 @@ export default {
   margin-right: 10px;
 }
 .main-top div:nth-child(2) button {
-  width: 134px;
+  width: 106px;
   height: 32px;
   background-color: #006be6;
   border: 0;
   color: #fff;
   border-radius: 10px;
-}
-.main-top div:nth-child(2) button:nth-child(2) {
-  width: 106px;
-  border: 1px solid #ccc;
-  background-color: #fff;
-  color: black;
 }
 .main-top div:nth-child(2) button:last-child {
   width: 30px;
@@ -337,7 +281,7 @@ export default {
 }
 .main-tab table {
   width: max-content;
-  min-width: 1250px;
+  min-width: 1200px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -356,25 +300,24 @@ export default {
   background-color: #fff;
   padding: 0 20px;
   border-right: 0;
-  max-width: 160px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+.empty-row {
+  color: #666;
 }
 .ol-col {
-  width: 160px;
+  width: 130px;
   position: sticky;
   right: 0;
+  border-left: 1px solid #ccc;
 }
 .ol-col button {
-  width: 80px;
+  width: 38px;
   height: 32px;
   border: 0;
   background-color: #fff;
   color: #006be6;
 }
-.ol-col button:last-child {
-  width: 38px;
+.ol-col button:nth-child(2) {
   color: red;
 }
 .main-floot {

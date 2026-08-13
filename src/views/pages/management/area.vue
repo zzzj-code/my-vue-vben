@@ -3,7 +3,7 @@
     <div class="app">
       <div class="app-main">
         <div class="main-top">
-          <div>菜单列表</div>
+          <div>地区列表</div>
           <div>
             <button style="background-color: #fff; border: 0"></button>
             <button>ip 查询</button>
@@ -24,9 +24,12 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td>{{ item.regionCode }}</td>
-                <td>{{ item.regionName }}</td>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="3" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td>{{ item.code }}</td>
+                <td>{{ item.name }}</td>
                 <td>{{ item.type }}</td>
               </tr>
             </tbody>
@@ -38,202 +41,45 @@
 </template>
 
 <script>
+// ========== 导入地区管理相关API ==========
+import { getAreaTree } from '#/api/system/area';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          regionCode: "110000",
-          regionName: "北京市",
-          type: "省级",
-        },
-        {
-          regionCode: "110100",
-          regionName: "北京市",
-          type: "市级",
-        },
-        {
-          regionCode: "110101",
-          regionName: "东城区",
-          type: "区县级",
-        },
-        {
-          regionCode: "110102",
-          regionName: "西城区",
-          type: "区县级",
-        },
-        {
-          regionCode: "110105",
-          regionName: "朝阳区",
-          type: "区县级",
-        },
-        {
-          regionCode: "110108",
-          regionName: "海淀区",
-          type: "区县级",
-        },
-        {
-          regionCode: "310000",
-          regionName: "上海市",
-          type: "省级",
-        },
-        {
-          regionCode: "310100",
-          regionName: "上海市",
-          type: "市级",
-        },
-        {
-          regionCode: "310101",
-          regionName: "黄浦区",
-          type: "区县级",
-        },
-        {
-          regionCode: "310105",
-          regionName: "长宁区",
-          type: "区县级",
-        },
-        {
-          regionCode: "310106",
-          regionName: "静安区",
-          type: "区县级",
-        },
-        {
-          regionCode: "310109",
-          regionName: "虹口区",
-          type: "区县级",
-        },
-        {
-          regionCode: "440000",
-          regionName: "广东省",
-          type: "省级",
-        },
-        {
-          regionCode: "440100",
-          regionName: "广州市",
-          type: "市级",
-        },
-        {
-          regionCode: "440103",
-          regionName: "荔湾区",
-          type: "区县级",
-        },
-        {
-          regionCode: "440104",
-          regionName: "越秀区",
-          type: "区县级",
-        },
-        {
-          regionCode: "440105",
-          regionName: "海珠区",
-          type: "区县级",
-        },
-        {
-          regionCode: "440106",
-          regionName: "天河区",
-          type: "区县级",
-        },
-        {
-          regionCode: "440300",
-          regionName: "深圳市",
-          type: "市级",
-        },
-        {
-          regionCode: "440303",
-          regionName: "罗湖区",
-          type: "区县级",
-        },
-        {
-          regionCode: "440304",
-          regionName: "福田区",
-          type: "区县级",
-        },
-        {
-          regionCode: "440305",
-          regionName: "南山区",
-          type: "区县级",
-        },
-        {
-          regionCode: "440306",
-          regionName: "宝安区",
-          type: "区县级",
-        },
-        {
-          regionCode: "440307",
-          regionName: "龙岗区",
-          type: "区县级",
-        },
-        {
-          regionCode: "320000",
-          regionName: "江苏省",
-          type: "省级",
-        },
-        {
-          regionCode: "320100",
-          regionName: "南京市",
-          type: "市级",
-        },
-        {
-          regionCode: "320102",
-          regionName: "玄武区",
-          type: "区县级",
-        },
-        {
-          regionCode: "320104",
-          regionName: "秦淮区",
-          type: "区县级",
-        },
-        {
-          regionCode: "320105",
-          regionName: "建邺区",
-          type: "区县级",
-        },
-        {
-          regionCode: "320500",
-          regionName: "苏州市",
-          type: "市级",
-        },
-        {
-          regionCode: "320505",
-          regionName: "虎丘区",
-          type: "区县级",
-        },
-        {
-          regionCode: "320506",
-          regionName: "吴中区",
-          type: "区县级",
-        },
-        {
-          regionCode: "320508",
-          regionName: "姑苏区",
-          type: "区县级",
-        },
-        {
-          regionCode: "330000",
-          regionName: "浙江省",
-          type: "省级",
-        },
-        {
-          regionCode: "330100",
-          regionName: "杭州市",
-          type: "市级",
-        },
-        {
-          regionCode: "330105",
-          regionName: "拱墅区",
-          type: "区县级",
-        },
-        {
-          regionCode: "330106",
-          regionName: "西湖区",
-          type: "区县级",
-        },
-        {
-          regionCode: "330108",
-          regionName: "滨江区",
-          type: "区县级",
-        },
-      ],
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadAreaList();
+  },
+  methods: {
+    // ========== 获取地区列表 ==========
+    async loadAreaList() {
+      try {
+        const data = await getAreaTree();
+        // 地区数据是树形结构，这里平铺显示所有地区
+        const flatList = [];
+        const flatten = (list, level) => {
+          list.forEach((item) => {
+            flatList.push({
+              id: item.id,
+              code: item.code || '',
+              name: item.name || '',
+              type: level === 0 ? '省级' : level === 1 ? '市级' : '区县级',
+            });
+            if (item.children && item.children.length) {
+              flatten(item.children, level + 1);
+            }
+          });
+        };
+        flatten(data, 0);
+        this.tabValue = flatList;
+      } catch (err) {
+        console.error('获取地区列表失败', err);
+      }
+    },
   },
 };
 </script>
@@ -346,6 +192,9 @@ export default {
   background-color: #fff;
   padding: 0 20px;
   border-right: 0;
+}
+.empty-row {
+  color: #666;
 }
 .ol-col {
   width: 220px;

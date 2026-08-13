@@ -1,12 +1,24 @@
 <template>
   <div class="page-wrapper">
     <div class="app">
+      <div class="app-top">
+        <div class="top-inp">
+            <div>
+              <span>数据源名称</span>
+              <input type="text" placeholder="请输入数据源名称" v-model="searchForm.name" />
+            </div>
+          <div>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
+            收起^
+          </div>
+        </div>
+      </div>
       <div class="app-main">
         <div class="main-top">
           <div>数据源列表</div>
           <div>
-            <button>+新增租户</button>
-            <button disabled>批量删除</button>
+            <button @click="handleAdd">+新增</button>
             <button>🔍</button>
           </div>
           <div>
@@ -29,20 +41,33 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in 1">
-                <td><input type="checkbox"></td>
-                <td>0</td>
-                <td>master</td>
-                <td>jdbc:mysql://192.168.30.130:3306/ruoyi-office?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true</td>
-                <td>root</td>
-                <td>-</td>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="7" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td><input type="checkbox" /></td>
+                <td>{{ item.id }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.url }}</td>
+                <td>{{ item.username }}</td>
+                <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
+        </div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
         </div>
       </div>
     </div>
@@ -50,13 +75,57 @@
 </template>
 
 <script>
+// ========== 导入数据源列表相关API ==========
+import { getDataSourceConfigList, deleteDataSourceConfig } from '#/api/infra/data-source-config';
+
 export default {
   data() {
     return {
-      tabValue: [
-        
-      ],
+      searchForm: {
+        name: '',
+      },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const data = await getDataSourceConfigList();
+        this.tabValue = data.map((item) => ({
+          id: item.id || '',
+          name: item.name || '',
+          url: item.url || '',
+          username: item.username || '',
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.length;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(row) { alert('编辑功能待实现'); },
+    async handleDelete(row) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteDataSourceConfig(row.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>
@@ -73,15 +142,69 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
+.app-top {
+  width: 100%;
+  height: 86px;
+  background-color: #fff;
+  border-radius: 10px 10px 0 0;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.top-inp {
+  width: 100%;
+  height: 42px;
+  display: flex;
+  justify-content: space-between;
+}
+.top-inp div {
+  width: 331px;
+  height: 42px;
+}
+.top-inp div span {
+  display: inline-block;
+  width: 100px;
+  height: 24px;
+  text-align: right;
+  margin-right: 8px;
+  font-size: 14px;
+}
+.top-inp div input {
+  width: 215px;
+  height: 32px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 10px;
+}
+.top-inp div:last-child {
+  font-size: 14px;
+  color: #006be6;
+  text-align: right;
+}
+.top-inp div button {
+  width: 63px;
+  height: 32px;
+  border-radius: 10px;
+  margin-right: 10px;
+}
+.top-inp div button:first-child {
+  border: 1px solid #ccc;
+  background-color: #fff;
+}
+.top-inp div button:last-child {
+  background-color: #006be6;
+  border: 0;
+  color: #fff;
+}
 .app-main {
   width: 100%;
-  height: 578px;
+  height: 492px;
   background-color: #fff;
-  border-radius: 10px;
+  border-radius: 0 0 10px 10px;
   padding: 10px;
 }
 .main-top {
@@ -90,7 +213,7 @@ export default {
   display: flex;
 }
 .main-top div:first-child {
-  width: 60%;
+  width: 55%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -98,7 +221,7 @@ export default {
   font-weight: 600;
 }
 .main-top div:nth-child(2) {
-  width: 30%;
+  width: 35%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -112,12 +235,6 @@ export default {
   border: 0;
   color: #fff;
   border-radius: 10px;
-}
-.main-top div:nth-child(2) button:nth-child(2) {
-  width: 106px;
-  border: 1px solid #ccc;
-  background-color: #fff;
-  color: black;
 }
 .main-top div:nth-child(2) button:last-child {
   width: 30px;
@@ -140,7 +257,7 @@ export default {
 }
 .main-tab {
   width: 100%;
-  height: 500px;
+  height: 400px;
   border-radius: 5px;
   border: 1px solid #ccc;
   display: flex;
@@ -148,7 +265,8 @@ export default {
   overflow: auto;
 }
 .main-tab table {
-  width: 100%;
+  width: max-content;
+  min-width: 1200px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -167,21 +285,40 @@ export default {
   background-color: #fff;
   padding: 0 20px;
   border-right: 0;
-  max-width: 160px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+.empty-row {
+  color: #666;
 }
 .ol-col {
-  width: 160px;
+  width: 130px;
   position: sticky;
   right: 0;
+  border-left: 1px solid #ccc;
 }
 .ol-col button {
   width: 38px;
   height: 32px;
   border: 0;
   background-color: #fff;
-  color: #ccc;
+  color: #006be6;
+}
+.ol-col button:nth-child(2) {
+  color: red;
+}
+.main-floot {
+  width: 100%;
+  height: 36px;
+  margin-top: 5px;
+  font-size: 12px;
+}
+.main-floot span {
+  display: inline-block;
+  width: 100px;
+  height: 24px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  text-align: center;
+  padding-top: 3px;
+  margin-left: 5px;
 }
 </style>

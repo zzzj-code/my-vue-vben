@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>角色名称</span>
-            <input type="text" placeholder="请输入角色名称" />
+            <input type="text" placeholder="请输入角色名称" v-model="searchForm.name" />
           </div>
           <div>
             <span>角色标识</span>
-            <input type="text" placeholder="请输入角色标识" />
+            <input type="text" placeholder="请输入角色标识" v-model="searchForm.code" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>角色列表</div>
           <div>
-            <button>+新增角色</button>
+            <button @click="handleAdd">+新增角色</button>
             <button>导出</button>
             <button disabled>批量删除</button>
             <button>🔍</button>
@@ -50,128 +50,135 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-if="tabValue.length === 0">
+                <td colspan="10" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
                 <td><input type="checkbox" /></td>
-                <td>{{ item.roleCode }}</td>
-                <td>{{ item.roleName }}</td>
-                <td>{{ item.roleType }}</td>
-                <td>{{ item.roleKey }}</td>
-                <td>{{ item.sortOrder }}</td>
+                <td>{{ item.id }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.type }}</td>
+                <td>{{ item.code }}</td>
+                <td>{{ item.sort }}</td>
                 <td>{{ item.remark }}</td>
-                <td>{{ item.status }}</td>
+                <td>{{ item.status === 0 ? '启用' : '停用' }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                   <button>更多</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共7条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入角色管理相关API ==========
+import { getRolePage, deleteRole } from '#/api/system/role';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          roleCode: "R20260801001",
-          roleName: "超级管理员",
-          roleType: "系统角色",
-          roleKey: "ROLE_SUPER_ADMIN",
-          sortOrder: 1,
-          remark: "拥有所有权限，不可删除",
-          status: "启用",
-          createTime: "2026-08-01 09:00:00",
-        },
-        {
-          roleCode: "R20260801002",
-          roleName: "系统管理员",
-          roleType: "系统角色",
-          roleKey: "ROLE_SYSTEM_ADMIN",
-          sortOrder: 2,
-          remark: "系统管理权限",
-          status: "启用",
-          createTime: "2026-08-01 10:30:00",
-        },
-        {
-          roleCode: "R20260731003",
-          roleName: "仓库管理员",
-          roleType: "业务角色",
-          roleKey: "ROLE_WAREHOUSE",
-          sortOrder: 1,
-          remark: "仓库进出库管理",
-          status: "启用",
-          createTime: "2026-07-31 14:20:00",
-        },
-        {
-          roleCode: "R20260731004",
-          roleName: "采购员",
-          roleType: "业务角色",
-          roleKey: "ROLE_PURCHASE",
-          sortOrder: 2,
-          remark: "采购订单管理",
-          status: "启用",
-          createTime: "2026-07-31 16:45:00",
-        },
-        {
-          roleCode: "R20260730005",
-          roleName: "销售员",
-          roleType: "业务角色",
-          roleKey: "ROLE_SALES",
-          sortOrder: 3,
-          remark: "销售订单管理",
-          status: "启用",
-          createTime: "2026-07-30 11:00:00",
-        },
-        {
-          roleCode: "R20260730006",
-          roleName: "财务人员",
-          roleType: "业务角色",
-          roleKey: "ROLE_FINANCE",
-          sortOrder: 4,
-          remark: "财务对账管理",
-          status: "停用",
-          createTime: "2026-07-30 09:30:00",
-        },
-        {
-          roleCode: "R20260729007",
-          roleName: "普通用户",
-          roleType: "业务角色",
-          roleKey: "ROLE_USER",
-          sortOrder: 5,
-          remark: "基础操作权限",
-          status: "启用",
-          createTime: "2026-07-29 13:50:00",
-        },
-        {
-          roleCode: "R20260729008",
-          roleName: "访客",
-          roleType: "业务角色",
-          roleKey: "ROLE_GUEST",
-          sortOrder: 6,
-          remark: "仅查看权限",
-          status: "启用",
-          createTime: "2026-07-29 15:10:00",
-        },
-        {
-          roleCode: "R20260728009",
-          roleName: "审计员",
-          roleType: "系统角色",
-          roleKey: "ROLE_AUDIT",
-          sortOrder: 3,
-          remark: "审计日志查看",
-          status: "停用",
-          createTime: "2026-07-28 10:00:00",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        name: '',  // 角色名称
+        code: '',  // 角色标识
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadRoleList();
+  },
+  methods: {
+    // ========== 获取角色列表 ==========
+    async loadRoleList() {
+      try {
+        const data = await getRolePage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          name: this.searchForm.name,
+          code: this.searchForm.code,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,                    // 角色编号
+          name: item.name || '',          // 角色名称
+          type: item.type || '',          // 角色类型
+          code: item.code || '',          // 角色标识
+          sort: item.sort || 0,           // 显示顺序
+          remark: item.remark || '',      // 角色备注
+          status: item.status,            // 角色状态（0=启用，1=停用）
+          createTime: this.formatTimestamp(item.createTime), // 创建时间
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取角色列表失败', err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return '';
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadRoleList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { name: '', code: '' };
+      this.pagination.pageNo = 1;
+      this.loadRoleList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadRoleList();
+    },
+    // ========== 新增角色 ==========
+    handleAdd() {
+      alert('新增角色功能待实现');
+    },
+    // ========== 编辑角色 ==========
+    handleEdit(row) {
+      alert(`编辑角色：${row.name}`);
+    },
+    // ========== 删除角色 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除角色「${row.name}」吗？`)) return;
+      try {
+        await deleteRole(row.id);
+        alert('删除成功');
+        this.loadRoleList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>
@@ -342,6 +349,9 @@ export default {
   background-color: #fff;
   padding: 0 20px;
   border-right: 0;
+}
+.empty-row {
+  color: #666;
 }
 .ol-col {
   width: 240px;

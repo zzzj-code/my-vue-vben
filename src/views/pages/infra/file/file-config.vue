@@ -3,17 +3,17 @@
     <div class="app">
       <div class="app-top">
         <div class="top-inp">
+            <div>
+              <span>配置名</span>
+              <input type="text" placeholder="请输入配置名" v-model="searchForm.name" />
+            </div>
+            <div>
+              <span>存储器</span>
+              <input type="text" placeholder="请输入存储器" v-model="searchForm.storage" />
+            </div>
           <div>
-            <span>配置名</span>
-            <input type="text" placeholder="请输入配置名" />
-          </div>
-          <div>
-            <span>存储器</span>
-            <input type="text" placeholder="请输入存储器" />
-          </div>
-          <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,8 +22,7 @@
         <div class="main-top">
           <div>文件配置列表</div>
           <div>
-            <button>+新增文件配置</button>
-            <button disabled>批量删除</button>
+            <button @click="handleAdd">+新增</button>
             <button>🔍</button>
           </div>
           <div>
@@ -47,26 +46,34 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td><input type="checkbox" name="" id="" /></td>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="8" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td><input type="checkbox" /></td>
                 <td>{{ item.id }}</td>
-                <td>{{ item.configName }}</td>
+                <td>{{ item.name }}</td>
                 <td>{{ item.storage }}</td>
                 <td>{{ item.remark }}</td>
-                <td>{{ item.isMain }}</td>
+                <td>{{ item.primary }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>测试</button>
-                  <button>主配置</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
-          共{{ tabValue.length }}条记录<span>20条/页</span>
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
         </div>
       </div>
     </div>
@@ -74,84 +81,66 @@
 </template>
 
 <script>
+// ========== 导入文件配置列表相关API ==========
+import { getFileConfigPage, deleteFileConfig } from '#/api/infra/file-config';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          configName: "用户头像存储配置",
-          storage: "阿里云OSS",
-          remark: "存储用户头像文件，支持jpg/png格式",
-          isMain: "是",
-          createTime: "2026-08-01 09:00:00",
-        },
-        {
-          id: 2,
-          configName: "商品图片存储配置",
-          storage: "腾讯云COS",
-          remark: "存储商品主图和详情图，支持jpg/png/webp格式",
-          isMain: "否",
-          createTime: "2026-08-01 10:30:00",
-        },
-        {
-          id: 3,
-          configName: "订单附件存储配置",
-          storage: "七牛云Kodo",
-          remark: "存储订单相关附件和凭证文件",
-          isMain: "否",
-          createTime: "2026-07-31 14:20:00",
-        },
-        {
-          id: 4,
-          configName: "系统日志存储配置",
-          storage: "阿里云OSS",
-          remark: "存储系统运行日志和应用日志",
-          isMain: "否",
-          createTime: "2026-07-31 16:45:00",
-        },
-        {
-          id: 5,
-          configName: "备份文件存储配置",
-          storage: "华为云OBS",
-          remark: "存储数据库备份文件，保留30天",
-          isMain: "否",
-          createTime: "2026-07-30 11:00:00",
-        },
-        {
-          id: 6,
-          configName: "视频文件存储配置",
-          storage: "腾讯云COS",
-          remark: "存储教学视频和培训视频文件",
-          isMain: "否",
-          createTime: "2026-07-30 09:30:00",
-        },
-        {
-          id: 7,
-          configName: "文档文件存储配置",
-          storage: "七牛云Kodo",
-          remark: "存储PDF、Word、Excel等文档文件",
-          isMain: "否",
-          createTime: "2026-07-29 13:50:00",
-        },
-        {
-          id: 8,
-          configName: "临时文件存储配置",
-          storage: "本地存储",
-          remark: "存储临时缓存文件和中间文件",
-          isMain: "否",
-          createTime: "2026-07-29 15:10:00",
-        },
-        {
-          id: 9,
-          configName: "报表文件存储配置",
-          storage: "阿里云OSS",
-          remark: "存储生成的各类报表和统计文件",
-          isMain: "否",
-          createTime: "2026-07-28 10:00:00",
-        },
-      ],
+      searchForm: {
+        name: '',
+        storage: '',
+      },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getFileConfigPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          name: item.name || '',
+          storage: item.storage || '',
+          remark: item.remark || '',
+          primary: item.primary || '',
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(row) { alert('编辑功能待实现'); },
+    async handleDelete(row) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteFileConfig(row.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>
@@ -168,7 +157,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -227,7 +215,6 @@ export default {
   border: 0;
   color: #fff;
 }
-
 .app-main {
   width: 100%;
   height: 492px;
@@ -241,7 +228,7 @@ export default {
   display: flex;
 }
 .main-top div:first-child {
-  width: 60%;
+  width: 55%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -249,7 +236,7 @@ export default {
   font-weight: 600;
 }
 .main-top div:nth-child(2) {
-  width: 30%;
+  width: 35%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -257,18 +244,12 @@ export default {
   margin-right: 10px;
 }
 .main-top div:nth-child(2) button {
-  width: 134px;
+  width: 106px;
   height: 32px;
   background-color: #006be6;
   border: 0;
   color: #fff;
   border-radius: 10px;
-}
-.main-top div:nth-child(2) button:nth-child(2) {
-  width: 106px;
-  border: 1px solid #ccc;
-  background-color: #fff;
-  color: black;
 }
 .main-top div:nth-child(2) button:last-child {
   width: 30px;
@@ -299,7 +280,8 @@ export default {
   overflow: auto;
 }
 .main-tab table {
-  width: 100%;
+  width: max-content;
+  min-width: 1200px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -318,27 +300,24 @@ export default {
   background-color: #fff;
   padding: 0 20px;
   border-right: 0;
-  max-width: 160px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+.empty-row {
+  color: #666;
 }
 .ol-col {
-  width: 240px;
+  width: 130px;
   position: sticky;
   right: 0;
+  border-left: 1px solid #ccc;
 }
 .ol-col button {
-  width: 46px;
+  width: 38px;
   height: 32px;
   border: 0;
   background-color: #fff;
   color: #006be6;
 }
-.ol-col button:nth-child(3) {
-  width: 60px;
-}
-.ol-col button:last-child {
+.ol-col button:nth-child(2) {
   color: red;
 }
 .main-floot {

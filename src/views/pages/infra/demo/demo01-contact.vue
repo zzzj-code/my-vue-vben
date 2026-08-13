@@ -3,17 +3,17 @@
     <div class="app">
       <div class="app-top">
         <div class="top-inp">
+            <div>
+              <span>名字</span>
+              <input type="text" placeholder="请输入名字" v-model="searchForm.name" />
+            </div>
+            <div>
+              <span>性别</span>
+              <input type="text" placeholder="请输入性别" v-model="searchForm.sex" />
+            </div>
           <div>
-            <span>名字</span>
-            <input type="text" placeholder="请输入名字" />
-          </div>
-          <div>
-            <span>性别</span>
-            <input type="text" placeholder="请输入性别" />
-          </div>
-          <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,9 +22,7 @@
         <div class="main-top">
           <div>示例联系人列表</div>
           <div>
-            <button>+新增示例联系人</button>
-            <button>导出</button>
-            <button disabled>批量删除</button>
+            <button @click="handleAdd">+新增</button>
             <button>🔍</button>
           </div>
           <div>
@@ -49,45 +47,103 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-if="tabValue.length === 0">
+                <td colspan="9" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
                 <td><input type="checkbox" /></td>
                 <td>{{ item.id }}</td>
                 <td>{{ item.name }}</td>
-                <td>{{ item.gender }}</td>
-                <td>{{ item.birthYear }}</td>
+                <td>{{ item.sex }}</td>
+                <td>{{ item.birthday }}</td>
                 <td>{{ item.description }}</td>
                 <td>{{ item.avatar }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共1条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入示例联系人列表相关API ==========
+import { getDemo01ContactPage, deleteDemo01Contact } from '#/api/infra/demo/demo01';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          name: "张三",
-          gender: "男",
-          birthYear: 1990,
-          description: "高级软件工程师，擅长Java和微服务架构",
-          avatar: "https://i.pravatar.cc/50?img=1",
-          createTime: "2026-08-01 09:00:00",
-        },
-      ],
+      searchForm: {
+        name: '',
+        sex: '',
+      },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getDemo01ContactPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          name: item.name || '',
+          sex: item.sex || '',
+          birthday: item.birthday || '',
+          description: item.description || '',
+          avatar: item.avatar || '',
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(row) { alert('编辑功能待实现'); },
+    async handleDelete(row) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteDemo01Contact(row.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>
@@ -104,7 +160,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -163,7 +218,6 @@ export default {
   border: 0;
   color: #fff;
 }
-
 .app-main {
   width: 100%;
   height: 492px;
@@ -193,21 +247,12 @@ export default {
   margin-right: 10px;
 }
 .main-top div:nth-child(2) button {
-  width: 134px;
+  width: 106px;
   height: 32px;
   background-color: #006be6;
   border: 0;
   color: #fff;
   border-radius: 10px;
-}
-.main-top div:nth-child(2) button:nth-child(2) {
-  width: 63px;
-}
-.main-top div:nth-child(2) button:nth-child(3) {
-  width: 106px;
-  border: 1px solid #ccc;
-  background-color: #fff;
-  color: black;
 }
 .main-top div:nth-child(2) button:last-child {
   width: 30px;
@@ -238,7 +283,8 @@ export default {
   overflow: auto;
 }
 .main-tab table {
-  width: 100%;
+  width: max-content;
+  min-width: 1200px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -257,13 +303,12 @@ export default {
   background-color: #fff;
   padding: 0 20px;
   border-right: 0;
-  max-width: 150px;
-  white-space: nowrap; 
-  overflow: hidden;          
-  text-overflow: ellipsis;
+}
+.empty-row {
+  color: #666;
 }
 .ol-col {
-  width: 160px;
+  width: 130px;
   position: sticky;
   right: 0;
   border-left: 1px solid #ccc;
@@ -278,7 +323,6 @@ export default {
 .ol-col button:nth-child(2) {
   color: red;
 }
-
 .main-floot {
   width: 100%;
   height: 36px;

@@ -3,17 +3,17 @@
     <div class="app">
       <div class="app-top">
         <div class="top-inp">
+            <div>
+              <span>模板名称</span>
+              <input type="text" placeholder="请输入模板名称" v-model="searchForm.name" />
+            </div>
+            <div>
+              <span>模板编码</span>
+              <input type="text" placeholder="请输入模板编码" v-model="searchForm.code" />
+            </div>
           <div>
-            <span>模板名称</span>
-            <input type="text" placeholder="请输入模板名称" />
-          </div>
-          <div>
-            <span>模板编码</span>
-            <input type="text" placeholder="请输入模板编码" />
-          </div>
-          <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,8 +22,7 @@
         <div class="main-top">
           <div>站内信模板列表</div>
           <div>
-            <button>+新增站内信模板</button>
-            <button disabled>批量删除</button>
+            <button @click="handleAdd">+新增</button>
             <button>🔍</button>
           </div>
           <div>
@@ -36,203 +35,116 @@
           <table>
             <thead>
               <tr>
-                <th><input type="checkbox" /></th>
                 <th>编号</th>
                 <th>模板名称</th>
                 <th>模板编码</th>
                 <th>发送人名称</th>
                 <th>模板内容</th>
-                <th>模板类型</th>
-                <th>状态</th>
-                <th>备注</th>
+                <th>类型</th>
+                <th>开启状态</th>
                 <th>创建时间</th>
                 <th class="ol-col">操作</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td><input type="checkbox" /></td>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="9" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
-                <td>{{ item.templateName }}</td>
-                <td>{{ item.templateCode }}</td>
-                <td>{{ item.senderName }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.code }}</td>
+                <td>{{ item.nickname }}</td>
                 <td>{{ item.content }}</td>
-                <td>{{ item.templateType }}</td>
-                <td>{{ item.status }}</td>
-                <td>{{ item.remark }}</td>
+                <td>{{ item.type }}</td>
+                <td>{{ item.status === 0 ? '启用' : '停用' }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>测试</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共13条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入站内信模板列表相关API ==========
+import { getNotifyTemplatePage, deleteNotifyTemplate } from '#/api/system/notify/template';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          templateName: "订单创建通知",
-          templateCode: "SITE_ORDER_CREATE",
-          senderName: "系统管理员",
-          content: "您的订单已创建成功，订单号：{orderNo}，金额：{amount}元。",
-          templateType: "通知",
-          status: "启用",
-          remark: "用户下单后自动发送",
-          createTime: "2026-08-01 09:00:00",
-        },
-        {
-          id: 2,
-          templateName: "订单支付成功通知",
-          templateCode: "SITE_ORDER_PAY",
-          senderName: "系统管理员",
-          content: "您的订单{orderNo}已支付成功，支付金额：{amount}元。",
-          templateType: "通知",
-          status: "启用",
-          remark: "支付成功后发送",
-          createTime: "2026-08-01 10:30:00",
-        },
-        {
-          id: 3,
-          templateName: "订单发货通知",
-          templateCode: "SITE_ORDER_SHIP",
-          senderName: "物流部",
-          content:
-            "您的订单{orderNo}已发货，快递单号：{trackingNo}，请注意查收。",
-          templateType: "通知",
-          status: "启用",
-          remark: "物流发货后发送",
-          createTime: "2026-07-31 14:20:00",
-        },
-        {
-          id: 4,
-          templateName: "库存预警通知",
-          templateCode: "SITE_INVENTORY_WARN",
-          senderName: "仓储部",
-          content:
-            "商品{productName}库存不足，当前库存：{stock}件，请及时补货。",
-          templateType: "通知",
-          status: "启用",
-          remark: "库存低于阈值时发送",
-          createTime: "2026-07-31 16:45:00",
-        },
-        {
-          id: 5,
-          templateName: "系统维护通知",
-          templateCode: "SITE_SYS_MAINTENANCE",
-          senderName: "技术部",
-          content:
-            "系统将于{maintenanceTime}进行维护，预计耗时{hours}小时，请提前保存数据。",
-          templateType: "公告",
-          status: "停用",
-          remark: "已废弃，不再使用",
-          createTime: "2026-07-30 11:00:00",
-        },
-        {
-          id: 6,
-          templateName: "密码重置通知",
-          templateCode: "SITE_PWD_RESET",
-          senderName: "安全中心",
-          content: "您已成功重置密码，新密码：{newPassword}，请及时登录修改。",
-          templateType: "通知",
-          status: "启用",
-          remark: "密码重置后发送",
-          createTime: "2026-07-30 09:30:00",
-        },
-        {
-          id: 7,
-          templateName: "会员权益提醒",
-          templateCode: "SITE_MEMBER_BENEFIT",
-          senderName: "运营部",
-          content: "尊敬的会员，您本月有{points}积分即将过期，请及时兑换。",
-          templateType: "营销",
-          status: "启用",
-          remark: "会员积分过期提醒",
-          createTime: "2026-07-29 13:50:00",
-        },
-        {
-          id: 8,
-          templateName: "新品上市通知",
-          templateCode: "SITE_NEW_PRODUCT",
-          senderName: "市场部",
-          content:
-            "新品{productName}已上市，限时优惠{price}元，点击查看：{link}",
-          templateType: "营销",
-          status: "停用",
-          remark: "新品推广模板（测试中）",
-          createTime: "2026-07-29 15:10:00",
-        },
-        {
-          id: 9,
-          templateName: "账单提醒",
-          templateCode: "SITE_BILL_REMIND",
-          senderName: "财务部",
-          content:
-            "您本月账单已生成，金额：{amount}元，请于{billDate}前完成支付。",
-          templateType: "通知",
-          status: "启用",
-          remark: "月度账单提醒",
-          createTime: "2026-07-28 10:00:00",
-        },
-        {
-          id: 10,
-          templateName: "会议通知",
-          templateCode: "SITE_MEETING_NOTICE",
-          senderName: "行政部",
-          content:
-            "会议提醒：{meetingName}将于{meetingTime}在{meetingPlace}召开，请准时参加。",
-          templateType: "通知",
-          status: "启用",
-          remark: "内部会议通知",
-          createTime: "2026-07-28 08:20:00",
-        },
-        {
-          id: 11,
-          templateName: "节日祝福",
-          templateCode: "SITE_HOLIDAY_GREET",
-          senderName: "人力资源部",
-          content: "祝您{holidayName}快乐！感谢您一直以来对公司的付出与支持。",
-          templateType: "营销",
-          status: "启用",
-          remark: "节日祝福模板",
-          createTime: "2026-07-27 14:00:00",
-        },
-        {
-          id: 12,
-          templateName: "绩效考核通知",
-          templateCode: "SITE_KPI_NOTICE",
-          senderName: "人力资源部",
-          content: "您好，{period}绩效考核结果已出炉，请登录系统查看详情。",
-          templateType: "通知",
-          status: "启用",
-          remark: "季度绩效考核",
-          createTime: "2026-07-27 11:30:00",
-        },
-        {
-          id: 13,
-          templateName: "请假审批通知",
-          templateCode: "SITE_LEAVE_APPROVE",
-          senderName: "人事部",
-          content:
-            "您的请假申请已{approveStatus}，请假时间：{leaveTime}，请知悉。",
-          templateType: "通知",
-          status: "启用",
-          remark: "请假审批结果通知",
-          createTime: "2026-07-26 09:00:00",
-        },
-      ],
+      searchForm: {
+        name: '',
+        code: '',
+      },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getNotifyTemplatePage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          name: item.name || '',
+          code: item.code || '',
+          nickname: item.nickname || '',
+          content: item.content || '',
+          type: item.type || '',
+          status: item.status || '',
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(row) { alert('编辑功能待实现'); },
+    async handleDelete(row) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteNotifyTemplate(row.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>
@@ -249,7 +161,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -308,7 +219,6 @@ export default {
   border: 0;
   color: #fff;
 }
-
 .app-main {
   width: 100%;
   height: 492px;
@@ -322,7 +232,7 @@ export default {
   display: flex;
 }
 .main-top div:first-child {
-  width: 60%;
+  width: 55%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -330,7 +240,7 @@ export default {
   font-weight: 600;
 }
 .main-top div:nth-child(2) {
-  width: 30%;
+  width: 35%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -338,18 +248,12 @@ export default {
   margin-right: 10px;
 }
 .main-top div:nth-child(2) button {
-  width: 134px;
+  width: 106px;
   height: 32px;
   background-color: #006be6;
   border: 0;
   color: #fff;
   border-radius: 10px;
-}
-.main-top div:nth-child(2) button:nth-child(2) {
-  width: 106px;
-  border: 1px solid #ccc;
-  background-color: #fff;
-  color: black;
 }
 .main-top div:nth-child(2) button:last-child {
   width: 30px;
@@ -381,7 +285,7 @@ export default {
 }
 .main-tab table {
   width: max-content;
-  min-width: 1440px;
+  min-width: 1200px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -401,8 +305,11 @@ export default {
   padding: 0 20px;
   border-right: 0;
 }
+.empty-row {
+  color: #666;
+}
 .ol-col {
-  width: 220px;
+  width: 130px;
   position: sticky;
   right: 0;
   border-left: 1px solid #ccc;
@@ -417,7 +324,6 @@ export default {
 .ol-col button:nth-child(2) {
   color: red;
 }
-
 .main-floot {
   width: 100%;
   height: 36px;

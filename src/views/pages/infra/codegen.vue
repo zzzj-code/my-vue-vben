@@ -3,17 +3,17 @@
     <div class="app">
       <div class="app-top">
         <div class="top-inp">
+            <div>
+              <span>表名称</span>
+              <input type="text" placeholder="请输入表名称" v-model="searchForm.tableName" />
+            </div>
+            <div>
+              <span>表描述</span>
+              <input type="text" placeholder="请输入表描述" v-model="searchForm.tableComment" />
+            </div>
           <div>
-            <span>表名称</span>
-            <input type="text" placeholder="请输入表名称" />
-          </div>
-          <div>
-            <span>表描述</span>
-            <input type="text" placeholder="请输入表描述" />
-          </div>
-          <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,9 +22,7 @@
         <div class="main-top">
           <div>代码生成列表</div>
           <div>
-            <button style="background-color: #fff">+新增角色</button>
-            <button>导入</button>
-            <button disabled>批量删除</button>
+            <button @click="handleAdd">+新增</button>
             <button>🔍</button>
           </div>
           <div>
@@ -48,216 +46,101 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-if="tabValue.length === 0">
+                <td colspan="8" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
                 <td><input type="checkbox" /></td>
-                <td>{{ item.dataSource }}</td>
+                <td>{{ item.dataSourceConfigId }}</td>
                 <td>{{ item.tableName }}</td>
-                <td>{{ item.tableDesc }}</td>
-                <td>{{ item.entity }}</td>
+                <td>{{ item.tableComment }}</td>
+                <td>{{ item.className }}</td>
                 <td>{{ item.createTime }}</td>
                 <td>{{ item.updateTime }}</td>
                 <td class="ol-col">
-                  <button>预览</button>
-                  <button>生成代码</button>
-                  <button>更多</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共20条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入代码生成列表相关API ==========
+import { getCodegenTablePage, deleteCodegenTable } from '#/api/infra/codegen';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          dataSource: "主库",
-          tableName: "sys_user",
-          tableDesc: "用户信息表",
-          entity: "SysUser",
-          createTime: "2026-08-01 09:00:00",
-          updateTime: "2026-08-01 09:00:00",
-        },
-        {
-          id: 2,
-          dataSource: "主库",
-          tableName: "sys_role",
-          tableDesc: "角色信息表",
-          entity: "SysRole",
-          createTime: "2026-08-01 10:30:00",
-          updateTime: "2026-08-01 10:30:00",
-        },
-        {
-          id: 3,
-          dataSource: "主库",
-          tableName: "sys_menu",
-          tableDesc: "菜单权限表",
-          entity: "SysMenu",
-          createTime: "2026-07-31 14:20:00",
-          updateTime: "2026-07-31 14:20:00",
-        },
-        {
-          id: 4,
-          dataSource: "主库",
-          tableName: "sys_dept",
-          tableDesc: "部门信息表",
-          entity: "SysDept",
-          createTime: "2026-07-31 16:45:00",
-          updateTime: "2026-07-31 16:45:00",
-        },
-        {
-          id: 5,
-          dataSource: "业务库",
-          tableName: "order_info",
-          tableDesc: "订单信息表",
-          entity: "OrderInfo",
-          createTime: "2026-07-30 11:00:00",
-          updateTime: "2026-07-30 14:30:00",
-        },
-        {
-          id: 6,
-          dataSource: "业务库",
-          tableName: "order_detail",
-          tableDesc: "订单明细表",
-          entity: "OrderDetail",
-          createTime: "2026-07-30 09:30:00",
-          updateTime: "2026-07-30 15:20:00",
-        },
-        {
-          id: 7,
-          dataSource: "业务库",
-          tableName: "product_info",
-          tableDesc: "商品信息表",
-          entity: "ProductInfo",
-          createTime: "2026-07-29 13:50:00",
-          updateTime: "2026-07-29 17:10:00",
-        },
-        {
-          id: 8,
-          dataSource: "业务库",
-          tableName: "product_category",
-          tableDesc: "商品分类表",
-          entity: "ProductCategory",
-          createTime: "2026-07-29 15:10:00",
-          updateTime: "2026-07-29 15:10:00",
-        },
-        {
-          id: 9,
-          dataSource: "主库",
-          tableName: "sys_dict",
-          tableDesc: "字典配置表",
-          entity: "SysDict",
-          createTime: "2026-07-28 10:00:00",
-          updateTime: "2026-07-28 10:00:00",
-        },
-        {
-          id: 10,
-          dataSource: "主库",
-          tableName: "sys_config",
-          tableDesc: "系统配置表",
-          entity: "SysConfig",
-          createTime: "2026-07-28 08:20:00",
-          updateTime: "2026-07-28 08:20:00",
-        },
-        {
-          id: 11,
-          dataSource: "业务库",
-          tableName: "warehouse_info",
-          tableDesc: "仓库信息表",
-          entity: "WarehouseInfo",
-          createTime: "2026-07-27 14:00:00",
-          updateTime: "2026-07-27 14:00:00",
-        },
-        {
-          id: 12,
-          dataSource: "业务库",
-          tableName: "stock_record",
-          tableDesc: "库存记录表",
-          entity: "StockRecord",
-          createTime: "2026-07-27 11:30:00",
-          updateTime: "2026-07-27 16:20:00",
-        },
-        {
-          id: 13,
-          dataSource: "业务库",
-          tableName: "supplier_info",
-          tableDesc: "供应商信息表",
-          entity: "SupplierInfo",
-          createTime: "2026-07-26 09:00:00",
-          updateTime: "2026-07-26 09:00:00",
-        },
-        {
-          id: 14,
-          dataSource: "主库",
-          tableName: "sys_log",
-          tableDesc: "操作日志表",
-          entity: "SysLog",
-          createTime: "2026-07-26 16:00:00",
-          updateTime: "2026-07-26 16:00:00",
-        },
-        {
-          id: 15,
-          dataSource: "业务库",
-          tableName: "customer_info",
-          tableDesc: "客户信息表",
-          entity: "CustomerInfo",
-          createTime: "2026-07-25 10:30:00",
-          updateTime: "2026-07-25 10:30:00",
-        },
-        {
-          id: 16,
-          dataSource: "业务库",
-          tableName: "invoice_info",
-          tableDesc: "发票信息表",
-          entity: "InvoiceInfo",
-          createTime: "2026-07-25 15:00:00",
-          updateTime: "2026-07-25 15:00:00",
-        },
-        {
-          id: 17,
-          dataSource: "主库",
-          tableName: "sys_notice",
-          tableDesc: "通知公告表",
-          entity: "SysNotice",
-          createTime: "2026-07-24 13:45:00",
-          updateTime: "2026-07-24 13:45:00",
-        },
-        {
-          id: 18,
-          dataSource: "业务库",
-          tableName: "payment_record",
-          tableDesc: "支付记录表",
-          entity: "PaymentRecord",
-          createTime: "2026-07-24 09:00:00",
-          updateTime: "2026-07-24 09:00:00",
-        },
-        {
-          id: 19,
-          dataSource: "业务库",
-          tableName: "logistics_info",
-          tableDesc: "物流信息表",
-          entity: "LogisticsInfo",
-          createTime: "2026-07-23 14:30:00",
-          updateTime: "2026-07-23 14:30:00",
-        },
-        {
-          id: 20,
-          dataSource: "主库",
-          tableName: "sys_tenant",
-          tableDesc: "租户信息表",
-          entity: "SysTenant",
-          createTime: "2026-07-23 02:00:00",
-          updateTime: "2026-07-23 02:00:00",
-        },
-      ],
+      searchForm: {
+        tableName: '',
+        tableComment: '',
+      },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getCodegenTablePage(params);
+        this.tabValue = data.list.map((item) => ({
+          dataSourceConfigId: item.dataSourceConfigId || '',
+          tableName: item.tableName || '',
+          tableComment: item.tableComment || '',
+          className: item.className || '',
+          createTime: item.createTime || '',
+          updateTime: item.updateTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(row) { alert('编辑功能待实现'); },
+    async handleDelete(row) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteCodegenTable(row.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>
@@ -274,7 +157,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -333,7 +215,6 @@ export default {
   border: 0;
   color: #fff;
 }
-
 .app-main {
   width: 100%;
   height: 492px;
@@ -363,21 +244,12 @@ export default {
   margin-right: 10px;
 }
 .main-top div:nth-child(2) button {
-  width: 134px;
+  width: 106px;
   height: 32px;
   background-color: #006be6;
   border: 0;
   color: #fff;
   border-radius: 10px;
-}
-.main-top div:nth-child(2) button:nth-child(2) {
-  width: 63px;
-}
-.main-top div:nth-child(2) button:nth-child(3) {
-  width: 106px;
-  border: 1px solid #ccc;
-  background-color: #fff;
-  color: black;
 }
 .main-top div:nth-child(2) button:last-child {
   width: 30px;
@@ -409,7 +281,7 @@ export default {
 }
 .main-tab table {
   width: max-content;
-  min-width: 1400px;
+  min-width: 1200px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -429,8 +301,11 @@ export default {
   padding: 0 20px;
   border-right: 0;
 }
+.empty-row {
+  color: #666;
+}
 .ol-col {
-  width: 280px;
+  width: 130px;
   position: sticky;
   right: 0;
   border-left: 1px solid #ccc;
@@ -443,9 +318,8 @@ export default {
   color: #006be6;
 }
 .ol-col button:nth-child(2) {
-  width: 84px;
+  color: red;
 }
-
 .main-floot {
   width: 100%;
   height: 36px;

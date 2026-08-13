@@ -3,17 +3,17 @@
     <div class="app">
       <div class="app-top">
         <div class="top-inp">
+            <div>
+              <span>名字</span>
+              <input type="text" placeholder="请输入名字" v-model="searchForm.name" />
+            </div>
+            <div>
+              <span>父级编号</span>
+              <input type="text" placeholder="请输入父级编号" v-model="searchForm.parentId" />
+            </div>
           <div>
-            <span>名字</span>
-            <input type="text" placeholder="请输入名字" />
-          </div>
-          <div>
-            <span>父级编号</span>
-            <input type="text" placeholder="请输入父级编号" />
-          </div>
-          <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,9 +22,7 @@
         <div class="main-top">
           <div>示例分类列表</div>
           <div>
-            <button>+新增示例分类</button>
-            <button>导入</button>
-            <button>导出</button>
+            <button @click="handleAdd">+新增</button>
             <button>🔍</button>
           </div>
           <div>
@@ -45,19 +43,31 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-if="tabValue.length === 0">
+                <td colspan="5" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.parentId }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>+新增下级</button>
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
+        </div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
         </div>
       </div>
     </div>
@@ -65,48 +75,57 @@
 </template>
 
 <script>
+// ========== 导入示例分类列表相关API ==========
+import { getDemo02CategoryList, deleteDemo02Category } from '#/api/infra/demo/demo02';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          name: "电子产品",
-          parentId: 0,
-          createTime: "2026-08-01 09:00:00",
-        },
-        {
-          id: 2,
-          name: "手机",
-          parentId: 1,
-          createTime: "2026-08-01 10:30:00",
-        },
-        {
-          id: 3,
-          name: "电脑",
-          parentId: 1,
-          createTime: "2026-07-31 14:20:00",
-        },
-        {
-          id: 4,
-          name: "华为手机",
-          parentId: 2,
-          createTime: "2026-07-31 16:45:00",
-        },
-        {
-          id: 5,
-          name: "小米手机",
-          parentId: 2,
-          createTime: "2026-07-30 11:00:00",
-        },
-        {
-          id: 6,
-          name: "苹果手机",
-          parentId: 2,
-          createTime: "2026-07-30 09:30:00",
-        },
-      ],
+      searchForm: {
+        name: '',
+        parentId: '',
+      },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const data = await getDemo02CategoryList();
+        this.tabValue = data.map((item) => ({
+          id: item.id || '',
+          name: item.name || '',
+          parentId: item.parentId || '',
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.length;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(row) { alert('编辑功能待实现'); },
+    async handleDelete(row) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteDemo02Category(row.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>
@@ -123,7 +142,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -182,7 +200,6 @@ export default {
   border: 0;
   color: #fff;
 }
-
 .app-main {
   width: 100%;
   height: 492px;
@@ -212,18 +229,12 @@ export default {
   margin-right: 10px;
 }
 .main-top div:nth-child(2) button {
-  width: 134px;
+  width: 106px;
   height: 32px;
   background-color: #006be6;
   border: 0;
   color: #fff;
   border-radius: 10px;
-}
-.main-top div:nth-child(2) button:nth-child(2) {
-  width: 63px;
-}
-.main-top div:nth-child(2) button:nth-child(3) {
-  width: 63px;
 }
 .main-top div:nth-child(2) button:last-child {
   width: 30px;
@@ -246,7 +257,7 @@ export default {
 }
 .main-tab {
   width: 100%;
-  height: 425px;
+  height: 400px;
   border-radius: 5px;
   border: 1px solid #ccc;
   display: flex;
@@ -254,7 +265,8 @@ export default {
   overflow: auto;
 }
 .main-tab table {
-  width: 100%;
+  width: max-content;
+  min-width: 1200px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -274,10 +286,14 @@ export default {
   padding: 0 20px;
   border-right: 0;
 }
+.empty-row {
+  color: #666;
+}
 .ol-col {
-  width: 220px;
+  width: 130px;
   position: sticky;
   right: 0;
+  border-left: 1px solid #ccc;
 }
 .ol-col button {
   width: 38px;
@@ -286,10 +302,23 @@ export default {
   background-color: #fff;
   color: #006be6;
 }
-.ol-col button:nth-child(1) {
-  width: 84px;
-}
-.ol-col button:last-child {
+.ol-col button:nth-child(2) {
   color: red;
+}
+.main-floot {
+  width: 100%;
+  height: 36px;
+  margin-top: 5px;
+  font-size: 12px;
+}
+.main-floot span {
+  display: inline-block;
+  width: 100px;
+  height: 24px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  text-align: center;
+  padding-top: 3px;
+  margin-left: 5px;
 }
 </style>

@@ -3,17 +3,17 @@
     <div class="app">
       <div class="app-top">
         <div class="top-inp">
+            <div>
+              <span>短信签名</span>
+              <input type="text" placeholder="请输入短信签名" v-model="searchForm.signature" />
+            </div>
+            <div>
+              <span>渠道编码</span>
+              <input type="text" placeholder="请输入渠道编码" v-model="searchForm.code" />
+            </div>
           <div>
-            <span>短信签名</span>
-            <input type="text" placeholder="请输入短信签名" />
-          </div>
-          <div>
-            <span>渠道编码</span>
-            <input type="text" placeholder="请输入渠道编码" />
-          </div>
-          <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,8 +22,7 @@
         <div class="main-top">
           <div>短信渠道列表</div>
           <div>
-            <button>+新增短信渠道</button>
-            <button disabled>批量删除</button>
+            <button @click="handleAdd">+新增</button>
             <button>🔍</button>
           </div>
           <div>
@@ -36,85 +35,110 @@
           <table>
             <thead>
               <tr>
-                <th><input type="checkbox" /></th>
                 <th>编号</th>
                 <th>短信签名</th>
                 <th>渠道编码</th>
                 <th>启用状态</th>
-                <th>短信 API 的账号</th>
-                <th>短信 API 的密钥</th>
-                <th>短信发送回调 URL</th>
-                <th>创建时间</th>
                 <th>备注</th>
+                <th>创建时间</th>
                 <th class="ol-col">操作</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td><input type="checkbox" /></td>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="7" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
                 <td>{{ item.signature }}</td>
-                <td>{{ item.channelCode }}</td>
-                <td>{{ item.enableStatus }}</td>
-                <td>{{ item.apiAccount }}</td>
-                <td>{{ item.apiSecret }}</td>
-                <td>{{ item.callbackUrl }}</td>
-                <td>{{ item.createTime }}</td>
+                <td>{{ item.code }}</td>
+                <td>{{ item.status === 0 ? '启用' : '停用' }}</td>
                 <td>{{ item.remark }}</td>
+                <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共3条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入短信渠道列表相关API ==========
+import { getSmsChannelPage, deleteSmsChannel } from '#/api/system/sms/channel';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          signature: "【XX科技】",
-          channelCode: "ALIYUN_SMS",
-          enableStatus: "启用",
-          apiAccount: "aliyun_sms_001",
-          apiSecret: "Abc123***",
-          callbackUrl: "https://api.example.com/sms/callback",
-          createTime: "2026-08-01 09:00:00",
-          remark: "阿里云短信服务主渠道",
-        },
-        {
-          id: 2,
-          signature: "【XX商城】",
-          channelCode: "TENCENT_SMS",
-          enableStatus: "启用",
-          apiAccount: "tencent_sms_002",
-          apiSecret: "Xyz789***",
-          callbackUrl: "https://api.example.com/sms/callback/v2",
-          createTime: "2026-08-01 10:30:00",
-          remark: "腾讯云短信服务",
-        },
-        {
-          id: 3,
-          signature: "【XX平台】",
-          channelCode: "HUAWEI_SMS",
-          enableStatus: "停用",
-          apiAccount: "huawei_sms_003",
-          apiSecret: "Def456***",
-          callbackUrl: "https://api.example.com/sms/huawei/callback",
-          createTime: "2026-07-31 14:20:00",
-          remark: "华为云短信服务（测试中）",
-        },
-      ],
+      searchForm: {
+        signature: '',
+        code: '',
+      },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getSmsChannelPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          signature: item.signature || '',
+          code: item.code || '',
+          status: item.status || '',
+          remark: item.remark || '',
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(row) { alert('编辑功能待实现'); },
+    async handleDelete(row) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteSmsChannel(row.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>
@@ -131,7 +155,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -190,7 +213,6 @@ export default {
   border: 0;
   color: #fff;
 }
-
 .app-main {
   width: 100%;
   height: 492px;
@@ -204,7 +226,7 @@ export default {
   display: flex;
 }
 .main-top div:first-child {
-  width: 60%;
+  width: 55%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -212,7 +234,7 @@ export default {
   font-weight: 600;
 }
 .main-top div:nth-child(2) {
-  width: 30%;
+  width: 35%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -220,18 +242,12 @@ export default {
   margin-right: 10px;
 }
 .main-top div:nth-child(2) button {
-  width: 134px;
+  width: 106px;
   height: 32px;
   background-color: #006be6;
   border: 0;
   color: #fff;
   border-radius: 10px;
-}
-.main-top div:nth-child(2) button:nth-child(2) {
-  width: 106px;
-  border: 1px solid #ccc;
-  background-color: #fff;
-  color: black;
 }
 .main-top div:nth-child(2) button:last-child {
   width: 30px;
@@ -263,7 +279,7 @@ export default {
 }
 .main-tab table {
   width: max-content;
-  min-width: 1540px;
+  min-width: 1200px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -283,8 +299,11 @@ export default {
   padding: 0 20px;
   border-right: 0;
 }
+.empty-row {
+  color: #666;
+}
 .ol-col {
-  width: 220px;
+  width: 130px;
   position: sticky;
   right: 0;
   border-left: 1px solid #ccc;
@@ -296,10 +315,9 @@ export default {
   background-color: #fff;
   color: #006be6;
 }
-.ol-col button:last-child {
+.ol-col button:nth-child(2) {
   color: red;
 }
-
 .main-floot {
   width: 100%;
   height: 36px;

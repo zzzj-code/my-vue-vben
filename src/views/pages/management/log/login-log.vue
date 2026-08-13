@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>用户名称</span>
-            <input type="text" placeholder="请输入用户名称" />
+            <input type="text" placeholder="请输入用户名称" v-model="searchForm.username" />
           </div>
           <div>
             <span>登录状态</span>
-            <input type="text" placeholder="全部" />
+            <input type="text" placeholder="全部" v-model="searchForm.status" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -46,214 +46,114 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-if="tabValue.length === 0">
+                <td colspan="8" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
-                <td>{{ item.loginType }}</td>
-                <td>{{ item.userName }}</td>
-                <td>{{ item.loginAddress }}</td>
-                <td>{{ item.browser }}</td>
-                <td>{{ item.loginResult }}</td>
-                <td>{{ item.loginDate }}</td>
+                <td>{{ item.logType }}</td>
+                <td>{{ item.username }}</td>
+                <td>{{ item.userIp }}</td>
+                <td>{{ item.userAgent }}</td>
+                <td>{{ item.result === 0 ? '成功' : '失败' }}</td>
+                <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>详情</button>
+                  <button @click="handleDetail(item)">详情</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共20条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入登录日志相关API ==========
+import { getLoginLogPage } from '#/api/system/login-log';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: "LOGIN20260801001",
-          loginType: "账号密码",
-          userName: "张三",
-          loginAddress: "192.168.1.100 (北京)",
-          browser: "Chrome 120.0",
-          loginResult: "成功",
-          loginDate: "2026-08-01 09:00:00",
-        },
-        {
-          id: "LOGIN20260801002",
-          loginType: "账号密码",
-          userName: "李四",
-          loginAddress: "192.168.1.101 (上海)",
-          browser: "Edge 118.0",
-          loginResult: "成功",
-          loginDate: "2026-08-01 10:30:00",
-        },
-        {
-          id: "LOGIN20260801003",
-          loginType: "扫码登录",
-          userName: "王五",
-          loginAddress: "192.168.1.102 (深圳)",
-          browser: "Chrome 120.0",
-          loginResult: "成功",
-          loginDate: "2026-08-01 14:20:00",
-        },
-        {
-          id: "LOGIN20260731004",
-          loginType: "账号密码",
-          userName: "赵六",
-          loginAddress: "192.168.1.103 (广州)",
-          browser: "Firefox 115.0",
-          loginResult: "失败",
-          loginDate: "2026-07-31 16:45:00",
-        },
-        {
-          id: "LOGIN20260731005",
-          loginType: "短信验证",
-          userName: "孙七",
-          loginAddress: "192.168.1.104 (杭州)",
-          browser: "Safari 16.5",
-          loginResult: "成功",
-          loginDate: "2026-07-31 11:30:00",
-        },
-        {
-          id: "LOGIN20260730006",
-          loginType: "账号密码",
-          userName: "周八",
-          loginAddress: "192.168.1.105 (成都)",
-          browser: "Chrome 119.0",
-          loginResult: "失败",
-          loginDate: "2026-07-30 09:30:00",
-        },
-        {
-          id: "LOGIN20260730007",
-          loginType: "扫码登录",
-          userName: "吴九",
-          loginAddress: "192.168.1.106 (武汉)",
-          browser: "Edge 117.0",
-          loginResult: "成功",
-          loginDate: "2026-07-30 14:00:00",
-        },
-        {
-          id: "LOGIN20260729008",
-          loginType: "账号密码",
-          userName: "郑十",
-          loginAddress: "192.168.1.107 (南京)",
-          browser: "Chrome 120.0",
-          loginResult: "成功",
-          loginDate: "2026-07-29 10:15:00",
-        },
-        {
-          id: "LOGIN20260729009",
-          loginType: "短信验证",
-          userName: "张三",
-          loginAddress: "192.168.1.108 (北京)",
-          browser: "Firefox 114.0",
-          loginResult: "成功",
-          loginDate: "2026-07-29 15:30:00",
-        },
-        {
-          id: "LOGIN20260728010",
-          loginType: "账号密码",
-          userName: "李四",
-          loginAddress: "192.168.1.109 (上海)",
-          browser: "Chrome 118.0",
-          loginResult: "成功",
-          loginDate: "2026-07-28 08:30:00",
-        },
-        {
-          id: "LOGIN20260728011",
-          loginType: "账号密码",
-          userName: "王五",
-          loginAddress: "192.168.1.110 (深圳)",
-          browser: "Edge 118.0",
-          loginResult: "失败",
-          loginDate: "2026-07-28 10:45:00",
-        },
-        {
-          id: "LOGIN20260727012",
-          loginType: "扫码登录",
-          userName: "赵六",
-          loginAddress: "192.168.1.111 (广州)",
-          browser: "Chrome 120.0",
-          loginResult: "成功",
-          loginDate: "2026-07-27 11:20:00",
-        },
-        {
-          id: "LOGIN20260727013",
-          loginType: "账号密码",
-          userName: "孙七",
-          loginAddress: "192.168.1.112 (杭州)",
-          browser: "Safari 16.4",
-          loginResult: "成功",
-          loginDate: "2026-07-27 16:00:00",
-        },
-        {
-          id: "LOGIN20260726014",
-          loginType: "短信验证",
-          userName: "周八",
-          loginAddress: "192.168.1.113 (成都)",
-          browser: "Chrome 119.0",
-          loginResult: "失败",
-          loginDate: "2026-07-26 14:30:00",
-        },
-        {
-          id: "LOGIN20260726015",
-          loginType: "账号密码",
-          userName: "吴九",
-          loginAddress: "192.168.1.114 (武汉)",
-          browser: "Firefox 115.0",
-          loginResult: "成功",
-          loginDate: "2026-07-26 09:15:00",
-        },
-        {
-          id: "LOGIN20260725016",
-          loginType: "账号密码",
-          userName: "郑十",
-          loginAddress: "192.168.1.115 (南京)",
-          browser: "Edge 117.0",
-          loginResult: "成功",
-          loginDate: "2026-07-25 15:00:00",
-        },
-        {
-          id: "LOGIN20260725017",
-          loginType: "扫码登录",
-          userName: "张三",
-          loginAddress: "192.168.1.116 (北京)",
-          browser: "Chrome 118.0",
-          loginResult: "成功",
-          loginDate: "2026-07-25 10:30:00",
-        },
-        {
-          id: "LOGIN20260724018",
-          loginType: "账号密码",
-          userName: "李四",
-          loginAddress: "192.168.1.117 (上海)",
-          browser: "Safari 16.5",
-          loginResult: "失败",
-          loginDate: "2026-07-24 13:45:00",
-        },
-        {
-          id: "LOGIN20260724019",
-          loginType: "短信验证",
-          userName: "王五",
-          loginAddress: "192.168.1.118 (深圳)",
-          browser: "Chrome 120.0",
-          loginResult: "成功",
-          loginDate: "2026-07-24 09:00:00",
-        },
-        {
-          id: "LOGIN20260723020",
-          loginType: "账号密码",
-          userName: "赵六",
-          loginAddress: "192.168.1.119 (广州)",
-          browser: "Firefox 114.0",
-          loginResult: "成功",
-          loginDate: "2026-07-23 02:00:00",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        username: '',  // 用户名称
+        status: '',    // 登录状态
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadLoginLogList();
+  },
+  methods: {
+    // ========== 获取登录日志列表 ==========
+    async loadLoginLogList() {
+      try {
+        const data = await getLoginLogPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          username: this.searchForm.username,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,                          // 日志编号
+          logType: item.logType || '',          // 登录类型
+          username: item.username || '',        // 用户名称
+          userIp: item.userIp || '',            // 登录地址
+          userAgent: item.userAgent || '',      // 浏览器
+          result: item.result,                  // 登录结果（0=成功，1=失败）
+          createTime: this.formatTimestamp(item.createTime), // 登录日期
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取登录日志列表失败', err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return '';
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadLoginLogList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { username: '', status: '' };
+      this.pagination.pageNo = 1;
+      this.loadLoginLogList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadLoginLogList();
+    },
+    // ========== 详情 ==========
+    handleDetail(row) {
+      alert(`登录日志详情：${row.username}`);
+    },
   },
 };
 </script>
@@ -415,6 +315,9 @@ export default {
   background-color: #fff;
   padding: 0 20px;
   border-right: 0;
+}
+.empty-row {
+  color: #666;
 }
 .ol-col {
   width: 80px;

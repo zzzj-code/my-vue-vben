@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>岗位名称</span>
-            <input type="text" placeholder="请输入岗位名称" />
+            <input type="text" placeholder="请输入岗位名称" v-model="searchForm.name" />
           </div>
           <div>
             <span>岗位编码</span>
-            <input type="text" placeholder="请输入岗位编码" />
+            <input type="text" placeholder="请输入岗位编码" v-model="searchForm.code" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>岗位列表</div>
           <div>
-            <button>+新增岗位</button>
+            <button @click="handleAdd">+新增岗位</button>
             <button>导出</button>
             <button disabled>批量删除</button>
             <button>🔍</button>
@@ -49,162 +49,132 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-if="tabValue.length === 0">
+                <td colspan="9" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
                 <td><input type="checkbox" /></td>
-                <td>{{ item.positionCode }}</td>
-                <td>{{ item.positionName}}</td>
-                <td>{{ item.positionKey }}</td>
-                <td>{{ item.sortOrder }}</td>
+                <td>{{ item.id }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.code }}</td>
+                <td>{{ item.sort }}</td>
                 <td>{{ item.remark }}</td>
-                <td>{{ item.status }}</td>
+                <td>{{ item.status === 0 ? '启用' : '停用' }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共14条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入岗位管理相关API ==========
+import { getPostPage, deletePost } from '#/api/system/post';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          positionCode: "P20260801001",
-          positionName: "总经理",
-          positionKey: "GM",
-          sortOrder: 1,
-          remark: "公司最高管理者",
-          status: "启用",
-          createTime: "2026-08-01 09:00:00",
-        },
-        {
-          positionCode: "P20260801002",
-          positionName: "副总经理",
-          positionKey: "DGM",
-          sortOrder: 2,
-          remark: "协助总经理管理",
-          status: "启用",
-          createTime: "2026-08-01 10:30:00",
-        },
-        {
-          positionCode: "P20260731003",
-          positionName: "技术总监",
-          positionKey: "CTO",
-          sortOrder: 3,
-          remark: "技术部门负责人",
-          status: "启用",
-          createTime: "2026-07-31 14:20:00",
-        },
-        {
-          positionCode: "P20260731004",
-          positionName: "财务总监",
-          positionKey: "CFO",
-          sortOrder: 4,
-          remark: "财务部门负责人",
-          status: "启用",
-          createTime: "2026-07-31 16:45:00",
-        },
-        {
-          positionCode: "P20260730005",
-          positionName: "人力资源经理",
-          positionKey: "HRM",
-          sortOrder: 5,
-          remark: "人力资源部门负责人",
-          status: "启用",
-          createTime: "2026-07-30 11:00:00",
-        },
-        {
-          positionCode: "P20260730006",
-          positionName: "项目经理",
-          positionKey: "PM",
-          sortOrder: 6,
-          remark: "项目管理负责人",
-          status: "启用",
-          createTime: "2026-07-30 09:30:00",
-        },
-        {
-          positionCode: "P20260729007",
-          positionName: "开发工程师",
-          positionKey: "DEV",
-          sortOrder: 7,
-          remark: "软件研发",
-          status: "启用",
-          createTime: "2026-07-29 13:50:00",
-        },
-        {
-          positionCode: "P20260729008",
-          positionName: "测试工程师",
-          positionKey: "QA",
-          sortOrder: 8,
-          remark: "软件测试",
-          status: "停用",
-          createTime: "2026-07-29 15:10:00",
-        },
-        {
-          positionCode: "P20260728009",
-          positionName: "产品经理",
-          positionKey: "PDM",
-          sortOrder: 9,
-          remark: "产品策划与管理",
-          status: "启用",
-          createTime: "2026-07-28 10:00:00",
-        },
-        {
-          positionCode: "P20260728010",
-          positionName: "运维工程师",
-          positionKey: "OPS",
-          sortOrder: 10,
-          remark: "系统运维与支持",
-          status: "启用",
-          createTime: "2026-07-28 08:20:00",
-        },
-        {
-          positionCode: "P20260727011",
-          positionName: "设计师",
-          positionKey: "UI",
-          sortOrder: 11,
-          remark: "UI/UX设计",
-          status: "停用",
-          createTime: "2026-07-27 14:00:00",
-        },
-        {
-          positionCode: "P20260727012",
-          positionName: "销售经理",
-          positionKey: "SM",
-          sortOrder: 12,
-          remark: "销售团队管理",
-          status: "启用",
-          createTime: "2026-07-27 11:30:00",
-        },
-        {
-          positionCode: "P20260726013",
-          positionName: "客服专员",
-          positionKey: "CS",
-          sortOrder: 13,
-          remark: "客户服务支持",
-          status: "启用",
-          createTime: "2026-07-26 09:00:00",
-        },
-        {
-          positionCode: "P20260726014",
-          positionName: "行政专员",
-          positionKey: "ADMIN",
-          sortOrder: 14,
-          remark: "行政管理事务",
-          status: "启用",
-          createTime: "2026-07-26 16:00:00",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        name: '',  // 岗位名称
+        code: '',  // 岗位编码
+      },
+      // 分页信息
+      pagination: {
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+      },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadPostList();
+  },
+  methods: {
+    // ========== 获取岗位列表 ==========
+    async loadPostList() {
+      try {
+        const data = await getPostPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          name: this.searchForm.name,
+          code: this.searchForm.code,
+        });
+        // 字段映射，适配页面表格
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,                    // 岗位编号
+          name: item.name || '',          // 岗位名称
+          code: item.code || '',          // 岗位编码
+          sort: item.sort || 0,           // 显示顺序
+          remark: item.remark || '',      // 岗位备注
+          status: item.status,            // 岗位状态（0=启用，1=停用）
+          createTime: this.formatTimestamp(item.createTime), // 创建时间
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取岗位列表失败', err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return '';
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+    },
+    // ========== 搜索 ==========
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadPostList();
+    },
+    // ========== 重置 ==========
+    handleReset() {
+      this.searchForm = { name: '', code: '' };
+      this.pagination.pageNo = 1;
+      this.loadPostList();
+    },
+    // ========== 分页切换 ==========
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadPostList();
+    },
+    // ========== 新增岗位 ==========
+    handleAdd() {
+      alert('新增岗位功能待实现');
+    },
+    // ========== 编辑岗位 ==========
+    handleEdit(row) {
+      alert(`编辑岗位：${row.name}`);
+    },
+    // ========== 删除岗位 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除岗位「${row.name}」吗？`)) return;
+      try {
+        await deletePost(row.id);
+        alert('删除成功');
+        this.loadPostList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>
@@ -375,6 +345,9 @@ export default {
   background-color: #fff;
   padding: 0 20px;
   border-right: 0;
+}
+.empty-row {
+  color: #666;
 }
 .ol-col {
   width: 130px;

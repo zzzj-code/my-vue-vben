@@ -3,17 +3,17 @@
     <div class="app">
       <div class="app-top">
         <div class="top-inp">
+            <div>
+              <span>用户编号</span>
+              <input type="text" placeholder="请输入用户编号" v-model="searchForm.userId" />
+            </div>
+            <div>
+              <span>用户类型</span>
+              <input type="text" placeholder="请输入用户类型" v-model="searchForm.userType" />
+            </div>
           <div>
-            <span>用户编号</span>
-            <input type="text" placeholder="请输入用户编号" />
-          </div>
-          <div>
-            <span>用户类型</span>
-            <input type="text" placeholder="请输入用户类型" />
-          </div>
-          <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>API 访问日志列表</div>
           <div>
-            <button>导出</button>
+            
             <button>🔍</button>
           </div>
           <div>
@@ -51,28 +51,39 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-if="tabValue.length === 0">
+                <td colspan="13" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
                 <td>{{ item.userId }}</td>
                 <td>{{ item.userType }}</td>
-                <td>{{ item.appName }}</td>
-                <td>{{ item.method }}</td>
-                <td>{{ item.url }}</td>
-                <td>{{ item.requestTime }}</td>
+                <td>{{ item.applicationName }}</td>
+                <td>{{ item.requestMethod }}</td>
+                <td>{{ item.requestUrl }}</td>
+                <td>{{ item.beginTime }}</td>
                 <td>{{ item.duration }}</td>
-                <td>{{ item.result }}</td>
-                <td>{{ item.module }}</td>
-                <td>{{ item.action }}</td>
-                <td>{{ item.actionType }}</td>
+                <td>{{ item.resultCode }}</td>
+                <td>{{ item.operateModule }}</td>
+                <td>{{ item.operateName }}</td>
+                <td>{{ item.operateType }}</td>
                 <td class="ol-col">
-                  <button>详情</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
-          共{{ tabValue.length }}条记录<span>20条/页</span>
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
         </div>
       </div>
     </div>
@@ -80,180 +91,62 @@
 </template>
 
 <script>
+// ========== 导入API 访问日志列表相关API ==========
+import { getApiAccessLogPage } from '#/api/infra/api-access-log';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: "API20260801001",
-          userId: "USER_001",
-          userType: "管理员",
-          appName: "后台管理系统",
-          method: "GET",
-          url: "/api/users/list",
-          requestTime: "2026-08-01 09:00:00",
-          duration: 156,
-          result: "成功",
-          module: "用户管理",
-          action: "查询用户列表",
-          actionType: "查询",
-        },
-        {
-          id: "API20260801002",
-          userId: "USER_002",
-          userType: "普通用户",
-          appName: "移动端APP",
-          method: "POST",
-          url: "/api/orders/create",
-          requestTime: "2026-08-01 10:30:00",
-          duration: 234,
-          result: "成功",
-          module: "订单管理",
-          action: "创建订单",
-          actionType: "新增",
-        },
-        {
-          id: "API20260801003",
-          userId: "USER_001",
-          userType: "管理员",
-          appName: "后台管理系统",
-          method: "PUT",
-          url: "/api/users/update/1",
-          requestTime: "2026-08-01 14:20:00",
-          duration: 189,
-          result: "成功",
-          module: "用户管理",
-          action: "更新用户信息",
-          actionType: "修改",
-        },
-        {
-          id: "API20260731004",
-          userId: "USER_003",
-          userType: "访客",
-          appName: "门户网站",
-          method: "GET",
-          url: "/api/products/list",
-          requestTime: "2026-07-31 16:45:00",
-          duration: 89,
-          result: "成功",
-          module: "商品管理",
-          action: "查询商品列表",
-          actionType: "查询",
-        },
-        {
-          id: "API20260731005",
-          userId: "USER_002",
-          userType: "普通用户",
-          appName: "移动端APP",
-          method: "POST",
-          url: "/api/orders/pay",
-          requestTime: "2026-07-31 11:30:00",
-          duration: 456,
-          result: "失败",
-          module: "订单管理",
-          action: "订单支付",
-          actionType: "支付",
-        },
-        {
-          id: "API20260730006",
-          userId: "USER_004",
-          userType: "管理员",
-          appName: "后台管理系统",
-          method: "DELETE",
-          url: "/api/users/delete/5",
-          requestTime: "2026-07-30 09:30:00",
-          duration: 123,
-          result: "成功",
-          module: "用户管理",
-          action: "删除用户",
-          actionType: "删除",
-        },
-        {
-          id: "API20260730007",
-          userId: "USER_005",
-          userType: "普通用户",
-          appName: "移动端APP",
-          method: "GET",
-          url: "/api/orders/detail/1001",
-          requestTime: "2026-07-30 14:00:00",
-          duration: 67,
-          result: "成功",
-          module: "订单管理",
-          action: "查询订单详情",
-          actionType: "查询",
-        },
-        {
-          id: "API20260729008",
-          userId: "USER_001",
-          userType: "管理员",
-          appName: "后台管理系统",
-          method: "POST",
-          url: "/api/roles/assign",
-          requestTime: "2026-07-29 10:15:00",
-          duration: 312,
-          result: "成功",
-          module: "权限管理",
-          action: "分配角色",
-          actionType: "授权",
-        },
-        {
-          id: "API20260729009",
-          userId: "USER_006",
-          userType: "访客",
-          appName: "门户网站",
-          method: "GET",
-          url: "/api/news/latest",
-          requestTime: "2026-07-29 15:30:00",
-          duration: 45,
-          result: "成功",
-          module: "内容管理",
-          action: "查询最新资讯",
-          actionType: "查询",
-        },
-        {
-          id: "API20260728010",
-          userId: "USER_002",
-          userType: "普通用户",
-          appName: "移动端APP",
-          method: "PUT",
-          url: "/api/users/profile",
-          requestTime: "2026-07-28 08:30:00",
-          duration: 178,
-          result: "成功",
-          module: "用户管理",
-          action: "更新个人资料",
-          actionType: "修改",
-        },
-        {
-          id: "API20260728011",
-          userId: "USER_007",
-          userType: "管理员",
-          appName: "后台管理系统",
-          method: "GET",
-          url: "/api/statistics/dashboard",
-          requestTime: "2026-07-28 10:45:00",
-          duration: 567,
-          result: "成功",
-          module: "数据统计",
-          action: "查询仪表盘数据",
-          actionType: "查询",
-        },
-        {
-          id: "API20260727012",
-          userId: "USER_003",
-          userType: "访客",
-          appName: "门户网站",
-          method: "POST",
-          url: "/api/feedback/submit",
-          requestTime: "2026-07-27 11:20:00",
-          duration: 234,
-          result: "失败",
-          module: "反馈管理",
-          action: "提交反馈",
-          actionType: "新增",
-        },
-      ],
+      searchForm: {
+        userId: '',
+        userType: '',
+      },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getApiAccessLogPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          userId: item.userId || '',
+          userType: item.userType || '',
+          applicationName: item.applicationName || '',
+          requestMethod: item.requestMethod || '',
+          requestUrl: item.requestUrl || '',
+          beginTime: item.beginTime || '',
+          duration: item.duration || '',
+          resultCode: item.resultCode || '',
+          operateModule: item.operateModule || '',
+          operateName: item.operateName || '',
+          operateType: item.operateType || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(row) { alert('编辑功能待实现'); },
   },
 };
 </script>
@@ -270,7 +163,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -329,7 +221,6 @@ export default {
   border: 0;
   color: #fff;
 }
-
 .app-main {
   width: 100%;
   height: 492px;
@@ -343,7 +234,7 @@ export default {
   display: flex;
 }
 .main-top div:first-child {
-  width: 80%;
+  width: 55%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -351,7 +242,7 @@ export default {
   font-weight: 600;
 }
 .main-top div:nth-child(2) {
-  width: 10%;
+  width: 35%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -359,7 +250,7 @@ export default {
   margin-right: 10px;
 }
 .main-top div:nth-child(2) button {
-  width: 63px;
+  width: 106px;
   height: 32px;
   background-color: #006be6;
   border: 0;
@@ -396,7 +287,7 @@ export default {
 }
 .main-tab table {
   width: max-content;
-  min-width: 1870px;
+  min-width: 1200px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -416,8 +307,11 @@ export default {
   padding: 0 20px;
   border-right: 0;
 }
+.empty-row {
+  color: #666;
+}
 .ol-col {
-  width: 80px;
+  width: 130px;
   position: sticky;
   right: 0;
   border-left: 1px solid #ccc;
@@ -429,7 +323,9 @@ export default {
   background-color: #fff;
   color: #006be6;
 }
-
+.ol-col button:nth-child(2) {
+  color: red;
+}
 .main-floot {
   width: 100%;
   height: 36px;

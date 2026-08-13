@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>应用编号</span>
-            <input type="text" placeholder="请输入应用编号" />
+            <input type="text" placeholder="请输入应用编号" v-model="searchForm.appId" />
           </div>
           <div>
             <span>退款渠道</span>
-            <input type="text" placeholder="请输入退款渠道" />
+            <input type="text" placeholder="请输入退款渠道" v-model="searchForm.channelCode" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>支付退款列表</div>
           <div>
-            <button>导出</button>
+            <button @click="handleExport">导出</button>
             <button>🔍</button>
           </div>
           <div>
@@ -93,13 +93,15 @@
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ totalRecords }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
           </div>
-          <div class="pagination">
-            <button @click="prevPage" :disabled="currentPage === 1">上一页</button>
-            <span>{{ currentPage }} / {{ totalPages }}</span>
-            <button @click="nextPage" :disabled="currentPage === totalPages">下一页</button>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -108,143 +110,100 @@
 </template>
 
 <script>
+// ========== 导入退款订单相关API ==========
+import { getRefundPage, exportRefund } from '#/api/pay/refund';
+
 export default {
   data() {
     return {
-      currentPage: 1,
-      pageSize: 20,
-      allData: [],
+      // 搜索表单
+      searchForm: {
+        appId: '',
+        channelCode: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
       tabValue: [],
     };
   },
-  computed: {
-    totalPages() {
-      return Math.ceil(this.allData.length / this.pageSize);
-    },
-    totalRecords() {
-      return this.allData.length;
-    },
-  },
   mounted() {
-    this.generateData();
-    this.updatePage();
+    this.loadList();
   },
   methods: {
-    generateData() {
-      const channels = ["支付宝", "微信支付", "银联", "钱包支付"];
-      const statuses = ["退款成功", "退款中", "退款失败", "已拒绝"];
-      const reasons = [
-        "商品质量问题",
-        "未收到货",
-        "不喜欢/不想要",
-        "发错货",
-        "价格变动",
-        "重复支付",
-        "虚假交易",
-        "物流太慢",
-        "与描述不符",
-        "其他原因",
-      ];
-      const appNames = [
-        "电商平台",
-        "生活服务",
-        "教育平台",
-        "医疗健康",
-        "餐饮外卖",
-      ];
-
-      this.allData = [];
-      for (let i = 1; i <= 50; i++) {
-        const payAmount = +(Math.random() * 5000 + 10).toFixed(2);
-        const refundAmount = +(payAmount * (Math.random() * 0.9 + 0.1)).toFixed(
-          2,
-        );
-        const status = statuses[Math.floor(Math.random() * statuses.length)];
-        const channel = channels[Math.floor(Math.random() * channels.length)];
-
-        // 退款时间在创建时间之后
-        const createDate = this.generateRandomTime();
-        const refundDate = this.addMinutes(
-          createDate,
-          Math.floor(Math.random() * 120) + 5,
-        );
-
-        this.allData.push({
-          id: i,
-          payAmount: payAmount,
-          refundAmount: refundAmount,
-          refundNo: `RFN${String(i).padStart(6, "0")}${Date.now().toString().slice(-6)}`,
-          status: status,
-          channel: channel,
-          refundTime: refundDate,
-          createTime: createDate,
-          reason: reasons[Math.floor(Math.random() * reasons.length)],
-          appName: appNames[Math.floor(Math.random() * appNames.length)],
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
         });
+        const data = await getRefundPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          payAmount: item.payPrice / 100 || 0,
+          refundAmount: item.refundPrice / 100 || 0,
+          refundNo: item.no || '',
+          status: this.getStatusName(item.status),
+          channel: item.channelCode || '',
+          refundTime: item.successTime || '',
+          createTime: item.createTime || '',
+          reason: item.reason || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
       }
     },
-    generateRandomTime() {
-      const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, "0");
-      const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, "0");
-      const hour = String(Math.floor(Math.random() * 24)).padStart(2, "0");
-      const minute = String(Math.floor(Math.random() * 60)).padStart(2, "0");
-      const second = String(Math.floor(Math.random() * 60)).padStart(2, "0");
-      return `2026-${month}-${day} ${hour}:${minute}:${second}`;
+    // 状态转换
+    getStatusName(status) {
+      const map = { 0: '退款中', 1: '退款成功', 2: '退款失败', 3: '已拒绝' };
+      return map[status] || '未知';
     },
-    addMinutes(timeStr, minutes) {
-      const date = new Date(`2026-01-01 ${timeStr.split(" ")[1]}`);
-      date.setMinutes(date.getMinutes() + minutes);
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      const hour = String(date.getHours()).padStart(2, "0");
-      const min = String(date.getMinutes()).padStart(2, "0");
-      const sec = String(date.getSeconds()).padStart(2, "0");
-      return `2026-${month}-${day} ${hour}:${min}:${sec}`;
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
     },
-    updatePage() {
-      const start = (this.currentPage - 1) * this.pageSize;
-      const end = start + this.pageSize;
-      this.tabValue = this.allData.slice(start, end);
-    },
-    prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-        this.updatePage();
-      }
-    },
-    nextPage() {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++;
-        this.updatePage();
-      }
-    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 导出
+    handleExport() { alert('导出功能待实现'); },
+    // 状态颜色
     getStatusColor(status) {
       const map = {
-        退款成功: "#52c41a",
-        退款中: "#faad14",
-        退款失败: "#ff4d4f",
-        已拒绝: "#8c8c8c",
+        '退款成功': '#52c41a',
+        '退款中': '#faad14',
+        '退款失败': '#ff4d4f',
+        '已拒绝': '#8c8c8c',
       };
-      return map[status] || "#333";
+      return map[status] || '#333';
     },
     getStatusBg(status) {
       const map = {
-        退款成功: "#f6ffed",
-        退款中: "#fffbe6",
-        退款失败: "#fff2f0",
-        已拒绝: "#f5f5f5",
+        '退款成功': '#f6ffed',
+        '退款中': '#fffbe6',
+        '退款失败': '#fff2f0',
+        '已拒绝': '#f5f5f5',
       };
-      return map[status] || "#fff";
+      return map[status] || '#fff';
     },
     getChannelBg(channel) {
       const map = {
-        支付宝: "#e8f0fe",
-        微信支付: "#e8f5e9",
-        银联: "#fff3e0",
-        钱包支付: "#f3e5f5",
+        'alipay': '#e8f0fe', '支付宝': '#e8f0fe',
+        'wechat': '#e8f5e9', '微信支付': '#e8f5e9',
+        'union': '#fff3e0', '银联': '#fff3e0',
+        'wallet': '#f3e5f5', '钱包支付': '#f3e5f5',
       };
-      return map[channel] || "#f5f5f5";
+      return map[channel] || '#f5f5f5';
     },
+    // 详情
     handleDetail(item) {
       alert(`退款详情：
 退款单号：${item.refundNo}

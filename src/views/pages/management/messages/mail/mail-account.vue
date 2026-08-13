@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>邮箱</span>
-            <input type="text" placeholder="请输入邮箱" />
+            <input type="text" placeholder="请输入邮箱" v-model="searchForm.mail" />
           </div>
           <div>
             <span>用户名</span>
-            <input type="text" placeholder="请输入用户名" />
+            <input type="text" placeholder="请输入用户名" v-model="searchForm.username" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>邮箱账号列表</div>
           <div>
-            <button>+新增邮箱账号</button>
+            <button @click="handleAdd">+新增邮箱账号</button>
             <button disabled>批量删除</button>
             <button>🔍</button>
           </div>
@@ -49,24 +49,96 @@
               </tr>
             </thead>
             <tbody>
-              <div class="asd">暂无数据</div>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="10" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td><input type="checkbox" /></td>
+                <td>{{ item.id }}</td>
+                <td>{{ item.mail }}</td>
+                <td>{{ item.username }}</td>
+                <td>{{ item.host }}</td>
+                <td>{{ item.port }}</td>
+                <td>{{ item.sslEnable ? '是' : '否' }}</td>
+                <td>{{ item.starttlsEnable ? '是' : '否' }}</td>
+                <td>{{ item.createTime }}</td>
+                <td class="ol-col">
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共0条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入邮箱账号相关API ==========
+import { getMailAccountPage, deleteMailAccount } from '#/api/system/mail/account';
+
 export default {
   data() {
     return {
-      tabValue: [
-        
-      ],
+      searchForm: { mail: '', username: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const data = await getMailAccountPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          mail: this.searchForm.mail,
+          username: this.searchForm.username,
+        });
+        this.tabValue = data.list.map((item) => ({
+          id: item.id,
+          mail: item.mail || '',
+          username: item.username || '',
+          host: item.host || '',
+          port: item.port || 0,
+          sslEnable: item.sslEnable,
+          starttlsEnable: item.starttlsEnable,
+          createTime: this.formatTimestamp(item.createTime),
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取邮箱账号列表失败', err);
+      }
+    },
+    formatTimestamp(timestamp) {
+      if (!timestamp) return '';
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() { this.searchForm = { mail: '', username: '' }; this.pagination.pageNo = 1; this.loadList(); },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增邮箱账号功能待实现'); },
+    handleEdit(row) { alert(`编辑邮箱账号：${row.mail}`); },
+    async handleDelete(row) {
+      if (!confirm(`确定要删除邮箱账号「${row.mail}」吗？`)) return;
+      try { await deleteMailAccount(row.id); alert('删除成功'); this.loadList(); }
+      catch (err) { console.error('删除失败', err); }
+    },
   },
 };
 </script>
@@ -161,7 +233,7 @@ export default {
   display: flex;
 }
 .main-top div:first-child {
-  width: 60%;
+  width: 55%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -169,7 +241,7 @@ export default {
   font-weight: 600;
 }
 .main-top div:nth-child(2) {
-  width: 30%;
+  width: 35%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -220,7 +292,7 @@ export default {
 }
 .main-tab table {
   width: max-content;
-  min-width: 1315px;
+  min-width: 1350px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -239,6 +311,9 @@ export default {
   background-color: #fff;
   padding: 0 20px;
   border-right: 0;
+}
+.empty-row {
+  color: #666;
 }
 .ol-col {
   width: 130px;

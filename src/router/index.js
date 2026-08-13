@@ -1317,55 +1317,55 @@ const router = createRouter({
               component: () => import('@/views/pages/infra/codegen.vue')//代码生成
             },
             {
-              path: '/demo01-contact',
+              path: '/infra/demo01-contact',
               component: () => import('@/views/pages/infra/demo/demo01-contact.vue')//单表(增删改查)
             },
             {
-              path: '/demo02-category',
+              path: '/infra/demo02-category',
               component: () => import('@/views/pages/infra/demo/demo02-category.vue')//树表(增删改查)
             },
             {
-              path: '/demo03-normal',
+              path: '/infra/demo03-normal',
               component: () => import('@/views/pages/infra/demo/demo03-normal.vue')//主子表(标准)
             },
             {
-              path: '/demo03-erp',
+              path: '/infra/demo03-erp',
               component: () => import('@/views/pages/infra/demo/demo03-erp.vue')//主子表(ERP)
             },
             {
-              path: '/demo03-inner',
+              path: '/infra/demo03-inner',
               component: () => import('@/views/pages/infra/demo/demo03-inner.vue')//主子表(内嵌)
             },
             {
-              path: '/data-source-config',
+              path: '/infra/data-source-config',
               component: () => import('@/views/pages/infra/data-source-config.vue')//数据源配置
             },
             {
-              path: '/build',
+              path: '/infra/build',
               component: () => import('@/views/pages/infra/build.vue')//表单构建
             },
             {
-              path: '/swagger',
+              path: '/infra/swagger',
               component: () => import('@/views/pages/infra/swagger.vue')//API接口
             },
             {
-              path: '/api-access-log',
+              path: '/infra/api-access-log',
               component: () => import('@/views/pages/infra/log/api-access-log.vue')//访问日志
             },
             {
-              path: '/api-error-log',
+              path: '/infra/api-error-log',
               component: () => import('@/views/pages/infra/log/api-error-log.vue')//错误日志
             },
             {
-              path: '/websocket',
+              path: '/infra/websocket',
               component: () => import('@/views/pages/infra/websocket.vue')//websocket
             },
             {
-              path: '/file-config',
+              path: '/infra/file-config',
               component: () => import('@/views/pages/infra/file/file-config.vue')//文件配置
             },
             {
-              path: '/file/file',
+              path: '/infra/file/file',
               component: () => import('@/views/pages/infra/file/file.vue')//文件列表
             },
             {
@@ -1373,23 +1373,23 @@ const router = createRouter({
               component: () => import('@/views/pages/infra/config.vue')//配置管理
             },
             {
-              path: '/monitors/druid',
+              path: '/infra/monitors/druid',
               component: () => import('@/views/pages/infra/monitors/druid.vue')//mysql监控
             },
             {
-              path: '/monitors/redis',
+              path: '/infra/monitors/redis',
               component: () => import('@/views/pages/infra/monitors/redis.vue')//redis监控
             },
             {
-              path: '/admin-server',
+              path: '/infra/admin-server',
               component: () => import('@/views/pages/infra/monitors/admin-server.vue')//java监控
             },
             {
-              path: '/skywalking',
+              path: '/infra/skywalking',
               component: () => import('@/views/pages/infra/monitors/skywalking.vue')//链路监控
             },
             {
-              path: '/job-ops',
+              path: '/infra/job-ops',
               component: () => import('@/views/pages/infra/operation/job-ops.vue')//定时任务运维
             }
           ]

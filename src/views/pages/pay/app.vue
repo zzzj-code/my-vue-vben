@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>应用名</span>
-            <input type="text" placeholder="请输入应用名" />
+            <input type="text" placeholder="请输入应用名" v-model="searchForm.name" />
           </div>
           <div>
             <span>开启状态</span>
-            <input type="text" placeholder="开启状态" />
+            <input type="text" placeholder="开启状态" v-model="searchForm.status" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>应用列表</div>
           <div>
-            <button>+新增应用</button>
+            <button @click="handleAdd">+新增应用</button>
             <button>🔍</button>
           </div>
           <div>
@@ -97,7 +97,14 @@
           </table>
         </div>
         <div class="main-floot">
-          共{{ tabValue.length }}条记录<span>20条/页</span>
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
         </div>
       </div>
     </div>
@@ -105,91 +112,78 @@
 </template>
 
 <script>
+// ========== 导入应用信息相关API ==========
+import { getAppPage, deleteApp } from '#/api/pay/app';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          appId: 'APP001',
-          appName: '电商平台',
-          status: '启用',
-          alipay: {
-            app: true,
-            pc: true,
-            wap: false,
-            scan: true,
-            barcode: false
-          },
-          wechat: {
-            miniProgram: true,
-            jsapi: true,
-            app: false,
-            native: true,
-            wap: false,
-            barcode: false
-          },
-          walletPay: true,
-          simulatePay: false
-        },
-        {
-          id: 2,
-          appId: 'APP002',
-          appName: '生活服务',
-          status: '启用',
-          alipay: {
-            app: false,
-            pc: true,
-            wap: true,
-            scan: false,
-            barcode: true
-          },
-          wechat: {
-            miniProgram: false,
-            jsapi: true,
-            app: true,
-            native: false,
-            wap: true,
-            barcode: false
-          },
-          walletPay: false,
-          simulatePay: true
-        },
-        {
-          id: 3,
-          appId: 'APP003',
-          appName: '教育平台',
-          status: '启用',
-          alipay: {
-            app: true,
-            pc: false,
-            wap: true,
-            scan: true,
-            barcode: false
-          },
-          wechat: {
-            miniProgram: true,
-            jsapi: false,
-            app: true,
-            native: false,
-            wap: true,
-            barcode: true
-          },
-          walletPay: true,
-          simulatePay: true
-        }
-      ],
+      // 搜索表单
+      searchForm: {
+        name: '',
+        status: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
-    handleDetail(item) {
-      alert(`查看详情：${item.appName}`);
-    },
-    handleDelete(item) {
-      if (confirm(`确定要删除应用"${item.appName}"吗？`)) {
-        this.tabValue = this.tabValue.filter(i => i.id !== item.id);
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getAppPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          appId: item.appId || '',
+          appName: item.name || '',
+          status: item.status === 0 ? '启用' : '停用',
+          alipay: item.alipayConfig || { app: false, pc: false, wap: false, scan: false, barcode: false },
+          wechat: item.wechatConfig || { miniProgram: false, jsapi: false, app: false, native: false, wap: false, barcode: false },
+          walletPay: item.walletPayConfig || false,
+          simulatePay: item.simulatePayConfig || false,
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
       }
-    }
+    },
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 新增
+    handleAdd() { alert('新增功能待实现'); },
+    // 详情
+    handleDetail(item) { alert(`查看详情：${item.appName}`); },
+    // 删除
+    async handleDelete(item) {
+      if (!confirm(`确定要删除应用"${item.appName}"吗？`)) return;
+      try {
+        await deleteApp(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   }
 };
 </script>

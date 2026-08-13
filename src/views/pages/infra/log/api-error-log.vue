@@ -3,17 +3,17 @@
     <div class="app">
       <div class="app-top">
         <div class="top-inp">
+            <div>
+              <span>用户编号</span>
+              <input type="text" placeholder="请输入用户编号" v-model="searchForm.userId" />
+            </div>
+            <div>
+              <span>用户类型</span>
+              <input type="text" placeholder="请输入用户类型" v-model="searchForm.userType" />
+            </div>
           <div>
-            <span>用户编号</span>
-            <input type="text" placeholder="请输入用户编号" />
-          </div>
-          <div>
-            <span>用户类型</span>
-            <input type="text" placeholder="请输入用户类型" />
-          </div>
-          <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>API 错误日志列表</div>
           <div>
-            <button>导出</button>
+            
             <button>🔍</button>
           </div>
           <div>
@@ -48,27 +48,36 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-if="tabValue.length === 0">
+                <td colspan="10" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
                 <td>{{ item.userId }}</td>
                 <td>{{ item.userType }}</td>
-                <td>{{ item.appName }}</td>
-                <td>{{ item.method }}</td>
-                <td>{{ item.url }}</td>
-                <td>{{ item.errorTime }}</td>
-                <td>{{ item.errorName }}</td>
-                <td>{{ item.status }}</td>
+                <td>{{ item.applicationName }}</td>
+                <td>{{ item.requestMethod }}</td>
+                <td>{{ item.requestUrl }}</td>
+                <td>{{ item.exceptionTime }}</td>
+                <td>{{ item.exceptionName }}</td>
+                <td>{{ item.processStatus }}</td>
                 <td class="ol-col">
-                  <button>详情</button>
-                  <button>已处理</button>
-                  <button>已忽略</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
-          共{{ tabValue.length }}条记录<span>20条/页</span>
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
         </div>
       </div>
     </div>
@@ -76,122 +85,59 @@
 </template>
 
 <script>
+// ========== 导入API 错误日志列表相关API ==========
+import { getApiErrorLogPage } from '#/api/infra/api-error-log';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: "ERR20260801001",
-          userId: "USER_001",
-          userType: "管理员",
-          appName: "后台管理系统",
-          method: "POST",
-          url: "/api/orders/create",
-          errorTime: "2026-08-01 09:15:00",
-          errorName: "参数校验失败",
-          status: "待处理",
-        },
-        {
-          id: "ERR20260801002",
-          userId: "USER_002",
-          userType: "普通用户",
-          appName: "移动端APP",
-          method: "GET",
-          url: "/api/users/profile",
-          errorTime: "2026-08-01 10:45:00",
-          errorName: "Token已过期",
-          status: "已处理",
-        },
-        {
-          id: "ERR20260731003",
-          userId: "USER_003",
-          userType: "访客",
-          appName: "门户网站",
-          method: "POST",
-          url: "/api/feedback/submit",
-          errorTime: "2026-07-31 16:50:00",
-          errorName: "数据库连接超时",
-          status: "待处理",
-        },
-        {
-          id: "ERR20260731004",
-          userId: "USER_001",
-          userType: "管理员",
-          appName: "后台管理系统",
-          method: "PUT",
-          url: "/api/users/update/1",
-          errorTime: "2026-07-31 14:30:00",
-          errorName: "字段长度超出限制",
-          status: "已忽略",
-        },
-        {
-          id: "ERR20260730005",
-          userId: "USER_004",
-          userType: "管理员",
-          appName: "后台管理系统",
-          method: "DELETE",
-          url: "/api/users/delete/5",
-          errorTime: "2026-07-30 09:35:00",
-          errorName: "权限不足",
-          status: "已处理",
-        },
-        {
-          id: "ERR20260730006",
-          userId: "USER_005",
-          userType: "普通用户",
-          appName: "移动端APP",
-          method: "POST",
-          url: "/api/orders/pay",
-          errorTime: "2026-07-30 14:10:00",
-          errorName: "支付接口异常",
-          status: "待处理",
-        },
-        {
-          id: "ERR20260729007",
-          userId: "USER_002",
-          userType: "普通用户",
-          appName: "移动端APP",
-          method: "GET",
-          url: "/api/orders/detail/1001",
-          errorTime: "2026-07-29 11:45:00",
-          errorName: "订单不存在",
-          status: "已忽略",
-        },
-        {
-          id: "ERR20260729008",
-          userId: "USER_006",
-          userType: "访客",
-          appName: "门户网站",
-          method: "POST",
-          url: "/api/news/comment",
-          errorTime: "2026-07-29 15:40:00",
-          errorName: "内容包含敏感词",
-          status: "已处理",
-        },
-        {
-          id: "ERR20260728009",
-          userId: "USER_007",
-          userType: "管理员",
-          appName: "后台管理系统",
-          method: "GET",
-          url: "/api/statistics/dashboard",
-          errorTime: "2026-07-28 10:50:00",
-          errorName: "缓存服务不可用",
-          status: "待处理",
-        },
-        {
-          id: "ERR20260727010",
-          userId: "USER_003",
-          userType: "访客",
-          appName: "门户网站",
-          method: "GET",
-          url: "/api/products/detail/2001",
-          errorTime: "2026-07-27 11:30:00",
-          errorName: "商品已下架",
-          status: "已忽略",
-        },
-      ],
+      searchForm: {
+        userId: '',
+        userType: '',
+      },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getApiErrorLogPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          userId: item.userId || '',
+          userType: item.userType || '',
+          applicationName: item.applicationName || '',
+          requestMethod: item.requestMethod || '',
+          requestUrl: item.requestUrl || '',
+          exceptionTime: item.exceptionTime || '',
+          exceptionName: item.exceptionName || '',
+          processStatus: item.processStatus || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(row) { alert('编辑功能待实现'); },
   },
 };
 </script>
@@ -208,7 +154,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -267,7 +212,6 @@ export default {
   border: 0;
   color: #fff;
 }
-
 .app-main {
   width: 100%;
   height: 492px;
@@ -281,7 +225,7 @@ export default {
   display: flex;
 }
 .main-top div:first-child {
-  width: 80%;
+  width: 55%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -289,7 +233,7 @@ export default {
   font-weight: 600;
 }
 .main-top div:nth-child(2) {
-  width: 10%;
+  width: 35%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -297,7 +241,7 @@ export default {
   margin-right: 10px;
 }
 .main-top div:nth-child(2) button {
-  width: 63px;
+  width: 106px;
   height: 32px;
   background-color: #006be6;
   border: 0;
@@ -334,7 +278,7 @@ export default {
 }
 .main-tab table {
   width: max-content;
-  min-width: 1450px;
+  min-width: 1200px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -354,20 +298,25 @@ export default {
   padding: 0 20px;
   border-right: 0;
 }
+.empty-row {
+  color: #666;
+}
 .ol-col {
-  width: 220px;
+  width: 130px;
   position: sticky;
   right: 0;
   border-left: 1px solid #ccc;
 }
 .ol-col button {
-  width: 56px;
+  width: 38px;
   height: 32px;
   border: 0;
   background-color: #fff;
   color: #006be6;
 }
-
+.ol-col button:nth-child(2) {
+  color: red;
+}
 .main-floot {
   width: 100%;
   height: 36px;

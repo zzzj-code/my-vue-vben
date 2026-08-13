@@ -5,7 +5,7 @@
         <div class="main-top">
           <div>示例提现单列表</div>
           <div>
-            <button>+新增示例提现单</button>
+            <button @click="handleAdd">+新增示例提现单</button>
             <button style="background-color: #fff"></button>
           </div>
           <div>
@@ -46,14 +46,22 @@
                 <td>{{ item.transferTime }}</td>
                 <td>{{ item.failReason }}</td>
                 <td class="ol-col">
-                  <button>重新转账</button>
+                  <button @click="handleTransfer(item)" v-if="item.withdrawStatus === '提现失败'">重新转账</button>
+                  <span v-else>-</span>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
-          共{{ tabValue.length }}条记录<span>20条/页</span>
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
         </div>
       </div>
     </div>
@@ -61,292 +69,74 @@
 </template>
 
 <script>
+// ========== 导入示例提现相关API ==========
+import { getDemoWithdrawPage, createDemoWithdraw, transferDemoWithdraw } from '#/api/pay/demo/withdraw';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          withdrawNo: "WD2026001",
-          withdrawTitle: "工资提现",
-          withdrawType: "银行卡提现",
-          withdrawAmount: 3500.0,
-          receiverName: "张伟",
-          receiverAccount: "6222 **** **** 1234",
-          withdrawStatus: "提现成功",
-          transferNo: "TRF20260115001",
-          transferChannel: "支付宝",
-          transferTime: "2026-01-15 14:30:00",
-          failReason: "-",
-        },
-        {
-          id: 2,
-          withdrawNo: "WD2026002",
-          withdrawTitle: "佣金提现",
-          withdrawType: "微信提现",
-          withdrawAmount: 2680.5,
-          receiverName: "李娜",
-          receiverAccount: "wx_****5678",
-          withdrawStatus: "提现成功",
-          transferNo: "TRF20260116002",
-          transferChannel: "微信支付",
-          transferTime: "2026-01-16 10:20:00",
-          failReason: "-",
-        },
-        {
-          id: 3,
-          withdrawNo: "WD2026003",
-          withdrawTitle: "货款提现",
-          withdrawType: "银行卡提现",
-          withdrawAmount: 12000.0,
-          receiverName: "王强",
-          receiverAccount: "6226 **** **** 5678",
-          withdrawStatus: "审核中",
-          transferNo: "-",
-          transferChannel: "-",
-          transferTime: "-",
-          failReason: "-",
-        },
-        {
-          id: 4,
-          withdrawNo: "WD2026004",
-          withdrawTitle: "合作分成",
-          withdrawType: "支付宝提现",
-          withdrawAmount: 8000.0,
-          receiverName: "刘洋",
-          receiverAccount: "ali_****9012",
-          withdrawStatus: "提现失败",
-          transferNo: "TRF20260118004",
-          transferChannel: "支付宝",
-          transferTime: "2026-01-18 16:45:00",
-          failReason: "银行卡信息错误",
-        },
-        {
-          id: 5,
-          withdrawNo: "WD2026005",
-          withdrawTitle: "报销费用",
-          withdrawType: "银行卡提现",
-          withdrawAmount: 1560.0,
-          receiverName: "陈静",
-          receiverAccount: "6228 **** **** 9012",
-          withdrawStatus: "提现成功",
-          transferNo: "TRF20260119005",
-          transferChannel: "银联",
-          transferTime: "2026-01-19 09:30:00",
-          failReason: "-",
-        },
-        {
-          id: 6,
-          withdrawNo: "WD2026006",
-          withdrawTitle: "项目奖金",
-          withdrawType: "微信提现",
-          withdrawAmount: 5000.0,
-          receiverName: "杨帆",
-          receiverAccount: "wx_****2345",
-          withdrawStatus: "提现成功",
-          transferNo: "TRF20260120006",
-          transferChannel: "微信支付",
-          transferTime: "2026-01-20 11:00:00",
-          failReason: "-",
-        },
-        {
-          id: 7,
-          withdrawNo: "WD2026007",
-          withdrawTitle: "预付款退回",
-          withdrawType: "支付宝提现",
-          withdrawAmount: 3000.0,
-          receiverName: "赵磊",
-          receiverAccount: "ali_****6789",
-          withdrawStatus: "提现失败",
-          transferNo: "TRF20260121007",
-          transferChannel: "支付宝",
-          transferTime: "2026-01-21 14:20:00",
-          failReason: "账户余额不足",
-        },
-        {
-          id: 8,
-          withdrawNo: "WD2026008",
-          withdrawTitle: "服务费提现",
-          withdrawType: "银行卡提现",
-          withdrawAmount: 4200.0,
-          receiverName: "黄丽",
-          receiverAccount: "6225 **** **** 3456",
-          withdrawStatus: "提现成功",
-          transferNo: "TRF20260122008",
-          transferChannel: "银联",
-          transferTime: "2026-01-22 15:40:00",
-          failReason: "-",
-        },
-        {
-          id: 9,
-          withdrawNo: "WD2026009",
-          withdrawTitle: "尾款结算",
-          withdrawType: "微信提现",
-          withdrawAmount: 15000.0,
-          receiverName: "周婷",
-          receiverAccount: "wx_****7890",
-          withdrawStatus: "待处理",
-          transferNo: "-",
-          transferChannel: "-",
-          transferTime: "-",
-          failReason: "-",
-        },
-        {
-          id: 10,
-          withdrawNo: "WD2026010",
-          withdrawTitle: "活动经费",
-          withdrawType: "银行卡提现",
-          withdrawAmount: 2500.0,
-          receiverName: "吴刚",
-          receiverAccount: "6229 **** **** 6789",
-          withdrawStatus: "提现成功",
-          transferNo: "TRF20260124010",
-          transferChannel: "银联",
-          transferTime: "2026-01-24 10:15:00",
-          failReason: "-",
-        },
-        {
-          id: 11,
-          withdrawNo: "WD2026011",
-          withdrawTitle: "培训费提现",
-          withdrawType: "支付宝提现",
-          withdrawAmount: 1800.0,
-          receiverName: "郑爽",
-          receiverAccount: "ali_****3456",
-          withdrawStatus: "提现成功",
-          transferNo: "TRF20260125011",
-          transferChannel: "支付宝",
-          transferTime: "2026-01-25 13:30:00",
-          failReason: "-",
-        },
-        {
-          id: 12,
-          withdrawNo: "WD2026012",
-          withdrawTitle: "咨询费提现",
-          withdrawType: "微信提现",
-          withdrawAmount: 6800.0,
-          receiverName: "孙阳",
-          receiverAccount: "wx_****8901",
-          withdrawStatus: "提现失败",
-          transferNo: "TRF20260126012",
-          transferChannel: "微信支付",
-          transferTime: "2026-01-26 09:50:00",
-          failReason: "账户已冻结",
-        },
-        {
-          id: 13,
-          withdrawNo: "WD2026013",
-          withdrawTitle: "采购款提现",
-          withdrawType: "银行卡提现",
-          withdrawAmount: 20000.0,
-          receiverName: "林芳",
-          receiverAccount: "6212 **** **** 5678",
-          withdrawStatus: "审核中",
-          transferNo: "-",
-          transferChannel: "-",
-          transferTime: "-",
-          failReason: "-",
-        },
-        {
-          id: 14,
-          withdrawNo: "WD2026014",
-          withdrawTitle: "押金退还",
-          withdrawType: "支付宝提现",
-          withdrawAmount: 1500.0,
-          receiverName: "郭强",
-          receiverAccount: "ali_****1234",
-          withdrawStatus: "提现成功",
-          transferNo: "TRF20260128014",
-          transferChannel: "支付宝",
-          transferTime: "2026-01-28 16:20:00",
-          failReason: "-",
-        },
-        {
-          id: 15,
-          withdrawNo: "WD2026015",
-          withdrawTitle: "退款处理",
-          withdrawType: "微信提现",
-          withdrawAmount: 3200.0,
-          receiverName: "唐丽",
-          receiverAccount: "wx_****5678",
-          withdrawStatus: "提现失败",
-          transferNo: "TRF20260129015",
-          transferChannel: "微信支付",
-          transferTime: "2026-01-29 11:40:00",
-          failReason: "收款账号不存在",
-        },
-        {
-          id: 16,
-          withdrawNo: "WD2026016",
-          withdrawTitle: "分成款提现",
-          withdrawType: "银行卡提现",
-          withdrawAmount: 4500.0,
-          receiverName: "顾刚",
-          receiverAccount: "6223 **** **** 7890",
-          withdrawStatus: "提现成功",
-          transferNo: "TRF20260201016",
-          transferChannel: "银联",
-          transferTime: "2026-02-01 08:30:00",
-          failReason: "-",
-        },
-        {
-          id: 17,
-          withdrawNo: "WD2026017",
-          withdrawTitle: "补贴提现",
-          withdrawType: "支付宝提现",
-          withdrawAmount: 2300.0,
-          receiverName: "沈静",
-          receiverAccount: "ali_****9012",
-          withdrawStatus: "待处理",
-          transferNo: "-",
-          transferChannel: "-",
-          transferTime: "-",
-          failReason: "-",
-        },
-        {
-          id: 18,
-          withdrawNo: "WD2026018",
-          withdrawTitle: "薪资补发",
-          withdrawType: "银行卡提现",
-          withdrawAmount: 6800.0,
-          receiverName: "贺军",
-          receiverAccount: "6217 **** **** 2345",
-          withdrawStatus: "提现成功",
-          transferNo: "TRF20260203018",
-          transferChannel: "银联",
-          transferTime: "2026-02-03 14:10:00",
-          failReason: "-",
-        },
-        {
-          id: 19,
-          withdrawNo: "WD2026019",
-          withdrawTitle: "绩效奖金",
-          withdrawType: "微信提现",
-          withdrawAmount: 12000.0,
-          receiverName: "陶云",
-          receiverAccount: "wx_****4567",
-          withdrawStatus: "提现失败",
-          transferNo: "TRF20260204019",
-          transferChannel: "微信支付",
-          transferTime: "2026-02-04 10:30:00",
-          failReason: "账户实名认证不通过",
-        },
-        {
-          id: 20,
-          withdrawNo: "WD2026020",
-          withdrawTitle: "年终分红",
-          withdrawType: "银行卡提现",
-          withdrawAmount: 50000.0,
-          receiverName: "苏磊",
-          receiverAccount: "6220 **** **** 8901",
-          withdrawStatus: "提现成功",
-          transferNo: "TRF20260205020",
-          transferChannel: "支付宝",
-          transferTime: "2026-02-05 16:00:00",
-          failReason: "-",
-        },
-      ],
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        const data = await getDemoWithdrawPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          withdrawNo: item.no || '',
+          withdrawTitle: item.subject || '',
+          withdrawType: this.getTypeName(item.type),
+          withdrawAmount: item.price / 100 || 0,
+          receiverName: item.receiverName || '',
+          receiverAccount: item.receiverAccount || '',
+          withdrawStatus: this.getStatusName(item.status),
+          transferNo: item.transferNo || '-',
+          transferChannel: item.channelCode || '-',
+          transferTime: item.transferTime || '-',
+          failReason: item.failReason || '-',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 提现类型转换
+    getTypeName(type) {
+      const map = { 1: '银行卡提现', 2: '支付宝提现', 3: '微信提现' };
+      return map[type] || '未知';
+    },
+    // 状态转换
+    getStatusName(status) {
+      const map = { 0: '待处理', 1: '审核中', 2: '提现成功', 3: '提现失败' };
+      return map[status] || '未知';
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 新增
+    handleAdd() { alert('新增提现单功能待实现'); },
+    // 重新转账
+    async handleTransfer(item) {
+      if (!confirm(`确定要重新转账"${item.withdrawNo}"吗？`)) return;
+      try {
+        await transferDemoWithdraw({ id: item.id });
+        alert('转账成功');
+        this.loadList();
+      } catch (err) {
+        console.error('转账失败', err);
+      }
+    },
   },
 };
 </script>

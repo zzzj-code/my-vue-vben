@@ -3,9 +3,9 @@
     <div class="app">
       <div class="app-main">
         <div class="main-top">
-          <div>租户套餐列表</div>
+          <div>部门列表</div>
           <div>
-            <button>+新增租户</button>
+            <button @click="handleAdd">+新增部门</button>
             <button>收缩</button>
             <button>导出</button>
             <button disabled>批量删除</button>
@@ -22,30 +22,33 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>组织名称</th>
+                <th>部门名称</th>
                 <th><input type="checkbox" /></th>
-                <th>组织类型</th>
+                <th>部门类型</th>
                 <th>负责人</th>
                 <th>显示顺序</th>
-                <th>组织状态</th>
+                <th>部门状态</th>
                 <th>创建时间</th>
                 <th class="ol-col">操作</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-if="tabValue.length === 0">
+                <td colspan="9" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
-                <td>{{ item.orgName }}</td>
+                <td>{{ item.name }}</td>
                 <td><input type="checkbox" /></td>
-                <td>{{ item.orgType }}</td>
-                <td>{{ item.leader }}</td>
-                <td>{{ item.sortOrder }}</td>
-                <td>{{ item.status }}</td>
+                <td>{{ item.type }}</td>
+                <td>{{ item.leaderUserId }}</td>
+                <td>{{ item.sort }}</td>
+                <td>{{ item.status === 0 ? '启用' : '停用' }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>+新增下级</button>
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleAddChild(item)">+新增下级</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
@@ -57,112 +60,67 @@
 </template>
 
 <script>
+// ========== 导入部门管理相关API ==========
+import { getDeptList, deleteDept } from '#/api/system/dept';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          orgName: "华为技术有限公司",
-          orgType: "集团公司",
-          leader: "张伟",
-          sortOrder: 1,
-          status: "启用",
-          createTime: "2026-01-10 09:00:00",
-          parentId: 0,
-        },
-        {
-          id: 2,
-          orgName: "华为云事业部",
-          orgType: "事业部",
-          leader: "李娜",
-          sortOrder: 1,
-          status: "启用",
-          createTime: "2026-01-15 10:30:00",
-          parentId: 1,
-        },
-        {
-          id: 3,
-          orgName: "华为消费者业务",
-          orgType: "事业部",
-          leader: "王强",
-          sortOrder: 2,
-          status: "启用",
-          createTime: "2026-01-20 14:20:00",
-          parentId: 1,
-        },
-        {
-          id: 4,
-          orgName: "华为云北京研发中心",
-          orgType: "部门",
-          leader: "刘洋",
-          sortOrder: 1,
-          status: "启用",
-          createTime: "2026-02-01 11:00:00",
-          parentId: 2,
-        },
-        {
-          id: 5,
-          orgName: "华为云上海研发中心",
-          orgType: "部门",
-          leader: "陈静",
-          sortOrder: 2,
-          status: "启用",
-          createTime: "2026-02-10 16:45:00",
-          parentId: 2,
-        },
-        {
-          id: 6,
-          orgName: "华为手机产品线",
-          orgType: "部门",
-          leader: "赵敏",
-          sortOrder: 1,
-          status: "启用",
-          createTime: "2026-02-20 09:30:00",
-          parentId: 3,
-        },
-        {
-          id: 7,
-          orgName: "华为平板产品线",
-          orgType: "部门",
-          leader: "孙浩",
-          sortOrder: 2,
-          status: "停用",
-          createTime: "2026-03-01 13:50:00",
-          parentId: 3,
-        },
-        {
-          id: 8,
-          orgName: "华为云深圳研发中心",
-          orgType: "部门",
-          leader: "周婷",
-          sortOrder: 3,
-          status: "启用",
-          createTime: "2026-03-10 08:40:00",
-          parentId: 2,
-        },
-        {
-          id: 9,
-          orgName: "华为穿戴产品线",
-          orgType: "部门",
-          leader: "吴刚",
-          sortOrder: 3,
-          status: "启用",
-          createTime: "2026-03-20 15:10:00",
-          parentId: 3,
-        },
-        {
-          id: 10,
-          orgName: "华为云杭州研发中心",
-          orgType: "部门",
-          leader: "郑丽",
-          sortOrder: 4,
-          status: "停用",
-          createTime: "2026-04-01 10:00:00",
-          parentId: 2,
-        },
-      ],
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadDeptList();
+  },
+  methods: {
+    // ========== 获取部门列表 ==========
+    async loadDeptList() {
+      try {
+        const data = await getDeptList();
+        // 字段映射，适配页面表格（部门列表是树形结构，这里平铺显示）
+        this.tabValue = data.map((item) => ({
+          id: item.id,                          // 部门ID
+          name: item.name || '',                // 部门名称
+          type: item.type || '',                // 部门类型
+          leaderUserId: item.leaderUserId || '', // 负责人
+          sort: item.sort || 0,                 // 显示顺序
+          status: item.status,                  // 部门状态（0=启用，1=停用）
+          createTime: this.formatTimestamp(item.createTime), // 创建时间
+        }));
+      } catch (err) {
+        console.error('获取部门列表失败', err);
+      }
+    },
+    // ========== 时间戳格式化 ==========
+    formatTimestamp(timestamp) {
+      if (!timestamp) return '';
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+    },
+    // ========== 新增部门 ==========
+    handleAdd() {
+      alert('新增部门功能待实现');
+    },
+    // ========== 新增下级部门 ==========
+    handleAddChild(row) {
+      alert(`新增下级部门：${row.name}`);
+    },
+    // ========== 编辑部门 ==========
+    handleEdit(row) {
+      alert(`编辑部门：${row.name}`);
+    },
+    // ========== 删除部门 ==========
+    async handleDelete(row) {
+      if (!confirm(`确定要删除部门「${row.name}」吗？`)) return;
+      try {
+        await deleteDept(row.id);
+        alert('删除成功');
+        this.loadDeptList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>
@@ -278,6 +236,9 @@ export default {
   background-color: #fff;
   padding: 0 20px;
   border-right: 0;
+}
+.empty-row {
+  color: #666;
 }
 .ol-col {
   width: 220px;

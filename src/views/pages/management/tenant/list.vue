@@ -3,17 +3,17 @@
     <div class="app">
       <div class="app-top">
         <div class="top-inp">
+            <div>
+              <span>租户名称</span>
+              <input type="text" placeholder="请输入租户名称" v-model="searchForm.name" />
+            </div>
+            <div>
+              <span>联系人</span>
+              <input type="text" placeholder="请输入联系人" v-model="searchForm.contactName" />
+            </div>
           <div>
-            <span>租户名</span>
-            <input type="text" placeholder="请输入租户名" />
-          </div>
-          <div>
-            <span>联系人</span>
-            <input type="text" placeholder="请输入联系人" />
-          </div>
-          <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,8 +22,7 @@
         <div class="main-top">
           <div>租户列表</div>
           <div>
-            <button>+新增租户</button>
-            <button>导出</button>
+            <button @click="handleAdd">+新增</button>
             <button>🔍</button>
           </div>
           <div>
@@ -36,87 +35,119 @@
           <table>
             <thead>
               <tr>
-                <th><input type="checkbox" /></th>
-                <th>租户编号</th>
-                <th>租户名</th>
-                <th>系统显示名</th>
-                <th>租户套餐</th>
+                <th>编号</th>
+                <th>租户名称</th>
                 <th>联系人</th>
                 <th>联系手机</th>
-                <th>账号额度</th>
+                <th>租户套餐编号</th>
                 <th>过期时间</th>
-                <th>绑定域名</th>
-                <th>租户状态</th>
-                <th>演示保护</th>
+                <th>账号数量</th>
+                <th>状态</th>
                 <th>创建时间</th>
                 <th class="ol-col">操作</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
-                <td><input type="checkbox" /></td>
-                <td>{{ item.tenantCode }}</td>
-                <td>{{ item.tenantName }}</td>
-                <td>{{ item.displayName }}</td>
-                <td>{{ item.package }}</td>
-                <td>{{ item.contact }}</td>
-                <td>{{ item.phone }}</td>
-                <td>{{ item.accountQuota }}</td>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="10" class="empty-row">暂无数据</td>
+              </tr>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td>{{ item.id }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.contactName }}</td>
+                <td>{{ item.contactMobile }}</td>
+                <td>{{ item.packageId }}</td>
                 <td>{{ item.expireTime }}</td>
-                <td>{{ item.domain }}</td>
-                <td>{{ item.status }}</td>
-                <td>{{ item.demoProtection }}</td>
+                <td>{{ item.accountCount }}</td>
+                <td>{{ item.status === 0 ? '启用' : '停用' }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>导出数据</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共2条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">&gt;</button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入租户列表相关API ==========
+import { getTenantPage, deleteTenant } from '#/api/system/tenant';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          tenantCode: "T20260801001",
-          tenantName: "华为技术有限公司",
-          displayName: "华为科技",
-          package: "企业旗舰版",
-          contact: "张伟",
-          phone: "13800138001",
-          accountQuota: 50,
-          expireTime: "2027-08-01 23:59:59",
-          domain: "huawei.erp.com",
-          status: "正常",
-          demoProtection: "开启",
-          createTime: "2026-08-01 09:00:00",
-        },
-        {
-          tenantCode: "T20260731002",
-          tenantName: "阿里巴巴集团",
-          displayName: "阿里云",
-          package: "企业标准版",
-          contact: "李娜",
-          phone: "13800138002",
-          accountQuota: 30,
-          expireTime: "2027-07-31 23:59:59",
-          domain: "alibaba.erp.com",
-          status: "正常",
-          demoProtection: "关闭",
-          createTime: "2026-07-31 14:30:00",
-        },
-      ],
+      searchForm: {
+        name: '',
+        contactName: '',
+      },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getTenantPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          name: item.name || '',
+          contactName: item.contactName || '',
+          contactMobile: item.contactMobile || '',
+          packageId: item.packageId || '',
+          expireTime: item.expireTime || '',
+          accountCount: item.accountCount || '',
+          status: item.status || '',
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(row) { alert('编辑功能待实现'); },
+    async handleDelete(row) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteTenant(row.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>
@@ -133,7 +164,6 @@ export default {
   width: 1006px;
   height: 590px;
   background-color: #ecebeb;
-  /* border: 1px solid red; */
   position: absolute;
   top: -375px;
 }
@@ -192,7 +222,6 @@ export default {
   border: 0;
   color: #fff;
 }
-
 .app-main {
   width: 100%;
   height: 492px;
@@ -206,7 +235,7 @@ export default {
   display: flex;
 }
 .main-top div:first-child {
-  width: 65%;
+  width: 55%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -214,7 +243,7 @@ export default {
   font-weight: 600;
 }
 .main-top div:nth-child(2) {
-  width: 25%;
+  width: 35%;
   height: 100%;
   display: flex;
   align-items: center;
@@ -222,15 +251,12 @@ export default {
   margin-right: 10px;
 }
 .main-top div:nth-child(2) button {
-  width: 134px;
+  width: 106px;
   height: 32px;
   background-color: #006be6;
   border: 0;
   color: #fff;
   border-radius: 10px;
-}
-.main-top div:nth-child(2) button:nth-child(2) {
-  width: 63px;
 }
 .main-top div:nth-child(2) button:last-child {
   width: 30px;
@@ -262,7 +288,7 @@ export default {
 }
 .main-tab table {
   width: max-content;
-  min-width: 2060px;
+  min-width: 1200px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
@@ -282,8 +308,11 @@ export default {
   padding: 0 20px;
   border-right: 0;
 }
+.empty-row {
+  color: #666;
+}
 .ol-col {
-  width: 280px;
+  width: 130px;
   position: sticky;
   right: 0;
   border-left: 1px solid #ccc;
@@ -296,12 +325,8 @@ export default {
   color: #006be6;
 }
 .ol-col button:nth-child(2) {
-  width: 80px;
-}
-.ol-col button:last-child {
   color: red;
 }
-
 .main-floot {
   width: 100%;
   height: 36px;

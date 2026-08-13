@@ -13,13 +13,13 @@
             </svg>
           </div>
           <div class="search-box">
-            <input type="text" placeholder="搜索任务名称 / Handler / 类名" />
+            <input type="text" placeholder="搜索任务名称 / Handler / 类名" v-model="searchForm.keyword" @keyup.enter="handleSearch" />
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"/>
               <line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
           </div>
-          <button class="btn-refresh">
+          <button class="btn-refresh" @click="loadTaskList">
             <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="23 4 23 10 17 10"/>
               <polyline points="1 20 1 14 7 14"/>
@@ -27,7 +27,7 @@
             </svg>
             刷新
           </button>
-          <span class="task-count">显示 40 / 40 个任务</span>
+          <span class="task-count">显示 {{ taskList.length }} / {{ pagination.total }} 个任务</span>
         </div>
 
         <!-- 卡片网格 -->
@@ -63,7 +63,7 @@
 
             <!-- 立即执行按钮 -->
             <div class="card-footer">
-              <button class="btn-exec">立即执行</button>
+              <button class="btn-exec" @click="handleRun(task)">立即执行</button>
             </div>
           </div>
         </div>
@@ -73,58 +73,70 @@
 </template>
 
 <script>
+// 导入定时任务API
+import { getJobPage, runJob } from '#/api/infra/job';
+
 export default {
   name: 'TaskOperation',
   data() {
     return {
-      taskList: this.generateTasks()
+      // 搜索表单
+      searchForm: {
+        keyword: ''
+      },
+      // 分页数据
+      pagination: {
+        pageNo: 1,
+        pageSize: 40,
+        total: 0
+      },
+      // 任务列表
+      taskList: []
     }
   },
+  mounted() {
+    // 页面加载时获取任务列表
+    this.loadTaskList();
+  },
   methods: {
-    generateTasks() {
-      const tasks = [
-        { tag: 'AI 大模型', tagClass: 'tag-purple', name: 'AiMidjourneySync', desc: '定时同步 AI 绘画（Midjourney）生成任务状态并回写结果', handler: 'aiMidjourneySyncJob', className: 'AiMidjourneySyncJob' },
-        { tag: 'AI 大模型', tagClass: 'tag-purple', name: 'AiSunoSync', desc: '定时同步 AI 音乐（Suno）生成任务状态并回写结果', handler: 'aiSunoSyncJob', className: 'AiSunoSyncJob' },
-        { tag: 'asset', tagClass: 'tag-gray', name: 'AssetBorrowOverdue', desc: '扫描借用超过预计归还日期仍未还的资产，标记逾期并提醒借用人', handler: 'assetBorrowOverdueJob', className: 'AssetBorrowOverdueJob' },
-        { tag: 'asset', tagClass: 'tag-gray', name: 'AssetInspectionGenerate', desc: '按周期生成资产巡检保养任务，并标记逾期任务', handler: 'assetInspectionGenerateJob', className: 'AssetInspectionGenerateJob' },
-        { tag: 'asset', tagClass: 'tag-gray', name: 'AssetWarrantyNotify', desc: '扫描保修即将到期的资产，提醒相关人员', handler: 'assetWarrantyNotifyJob', className: 'AssetWarrantyNotifyJob' },
-        { tag: 'contract', tagClass: 'tag-gray', name: 'ContractExpireNotify', desc: '扫描即将到期的合同，站内信提醒合同负责人', handler: 'contractExpireNotifyJob', className: 'ContractExpireNotifyJob' },
-        { tag: 'system', tagClass: 'tag-gray', name: 'SystemLogCleanup', desc: '定期清理系统过期日志，释放存储空间', handler: 'systemLogCleanupJob', className: 'SystemLogCleanupJob' },
-        { tag: 'system', tagClass: 'tag-gray', name: 'SystemCacheRefresh', desc: '定时刷新系统缓存数据，保证数据一致性', handler: 'systemCacheRefreshJob', className: 'SystemCacheRefreshJob' },
-        { tag: 'user', tagClass: 'tag-gray', name: 'UserStatusSync', desc: '同步用户状态变更，更新相关权限和缓存', handler: 'userStatusSyncJob', className: 'UserStatusSyncJob' },
-        { tag: 'user', tagClass: 'tag-gray', name: 'UserPasswordExpire', desc: '扫描即将过期的用户密码，发送提醒通知', handler: 'userPasswordExpireJob', className: 'UserPasswordExpireJob' },
-        { tag: 'AI 大模型', tagClass: 'tag-purple', name: 'AiChatCleanup', desc: '清理过期的 AI 对话记录，优化数据库性能', handler: 'aiChatCleanupJob', className: 'AiChatCleanupJob' },
-        { tag: 'AI 大模型', tagClass: 'tag-purple', name: 'AiTokenStatistic', desc: '统计 AI 模型 Token 使用量，生成日报数据', handler: 'aiTokenStatisticJob', className: 'AiTokenStatisticJob' },
-        { tag: 'finance', tagClass: 'tag-gray', name: 'FinanceBillGenerate', desc: '按周期生成财务账单数据，推送至财务系统', handler: 'financeBillGenerateJob', className: 'FinanceBillGenerateJob' },
-        { tag: 'finance', tagClass: 'tag-gray', name: 'FinanceReconciliation', desc: '每日执行财务对账，标记异常交易记录', handler: 'financeReconciliationJob', className: 'FinanceReconciliationJob' },
-        { tag: 'report', tagClass: 'tag-gray', name: 'ReportDailyGenerate', desc: '生成每日运营数据报表，发送给相关人员', handler: 'reportDailyGenerateJob', className: 'ReportDailyGenerateJob' },
-        { tag: 'report', tagClass: 'tag-gray', name: 'ReportWeeklyGenerate', desc: '生成每周运营数据汇总报表', handler: 'reportWeeklyGenerateJob', className: 'ReportWeeklyGenerateJob' },
-        { tag: 'monitor', tagClass: 'tag-gray', name: 'MonitorHealthCheck', desc: '定时检查系统各服务健康状态，异常告警', handler: 'monitorHealthCheckJob', className: 'MonitorHealthCheckJob' },
-        { tag: 'monitor', tagClass: 'tag-gray', name: 'MonitorPerformance', desc: '采集系统性能指标，存入时序数据库', handler: 'monitorPerformanceJob', className: 'MonitorPerformanceJob' },
-        { tag: 'backup', tagClass: 'tag-gray', name: 'BackupDatabase', desc: '定时备份数据库，上传至对象存储', handler: 'backupDatabaseJob', className: 'BackupDatabaseJob' },
-        { tag: 'backup', tagClass: 'tag-gray', name: 'BackupFileCleanup', desc: '清理过期备份文件，保留最近N份', handler: 'backupFileCleanupJob', className: 'BackupFileCleanupJob' },
-        { tag: 'message', tagClass: 'tag-gray', name: 'MessagePushRetry', desc: '重试推送失败的消息，确保消息送达', handler: 'messagePushRetryJob', className: 'MessagePushRetryJob' },
-        { tag: 'message', tagClass: 'tag-gray', name: 'MessageCleanup', desc: '清理已读且过期的消息记录', handler: 'messageCleanupJob', className: 'MessageCleanupJob' },
-        { tag: 'order', tagClass: 'tag-gray', name: 'OrderTimeoutCancel', desc: '自动取消超时未支付的订单', handler: 'orderTimeoutCancelJob', className: 'OrderTimeoutCancelJob' },
-        { tag: 'order', tagClass: 'tag-gray', name: 'OrderCompleteCheck', desc: '检查已发货订单是否已完成，自动确认收货', handler: 'orderCompleteCheckJob', className: 'OrderCompleteCheckJob' },
-        { tag: 'inventory', tagClass: 'tag-gray', name: 'InventoryStockAlert', desc: '扫描库存预警阈值，发送补货提醒', handler: 'inventoryStockAlertJob', className: 'InventoryStockAlertJob' },
-        { tag: 'inventory', tagClass: 'tag-gray', name: 'InventoryCountSync', desc: '同步各仓库库存数据，保证一致性', handler: 'inventoryCountSyncJob', className: 'InventoryCountSyncJob' },
-        { tag: 'hr', tagClass: 'tag-gray', name: 'HrAttendanceCalc', desc: '计算员工考勤数据，生成月度报表', handler: 'hrAttendanceCalcJob', className: 'HrAttendanceCalcJob' },
-        { tag: 'hr', tagClass: 'tag-gray', name: 'HrBirthdayNotify', desc: '扫描当日生日员工，发送祝福通知', handler: 'hrBirthdayNotifyJob', className: 'HrBirthdayNotifyJob' },
-        { tag: 'crm', tagClass: 'tag-gray', name: 'CrmCustomerFollow', desc: '提醒销售跟进即将到期的客户回访', handler: 'crmCustomerFollowJob', className: 'CrmCustomerFollowJob' },
-        { tag: 'crm', tagClass: 'tag-gray', name: 'CrmLeadAssign', desc: '自动分配新线索给销售人员', handler: 'crmLeadAssignJob', className: 'CrmLeadAssignJob' },
-        { tag: 'project', tagClass: 'tag-gray', name: 'ProjectMilestoneNotify', desc: '项目里程碑即将到期提醒', handler: 'projectMilestoneNotifyJob', className: 'ProjectMilestoneNotifyJob' },
-        { tag: 'project', tagClass: 'tag-gray', name: 'ProjectProgressSync', desc: '同步项目进度数据，更新项目看板', handler: 'projectProgressSyncJob', className: 'ProjectProgressSyncJob' },
-        { tag: 'doc', tagClass: 'tag-gray', name: 'DocExpireNotify', desc: '文档即将到期提醒，通知文档负责人', handler: 'docExpireNotifyJob', className: 'DocExpireNotifyJob' },
-        { tag: 'doc', tagClass: 'tag-gray', name: 'DocIndexRebuild', desc: '重建文档全文索引，提升搜索效率', handler: 'docIndexRebuildJob', className: 'DocIndexRebuildJob' },
-        { tag: 'AI 大模型', tagClass: 'tag-purple', name: 'AiImageCleanup', desc: '清理过期的 AI 生成图片文件', handler: 'aiImageCleanupJob', className: 'AiImageCleanupJob' },
-        { tag: 'AI 大模型', tagClass: 'tag-purple', name: 'AiEmbeddingUpdate', desc: '更新知识库向量嵌入数据', handler: 'aiEmbeddingUpdateJob', className: 'AiEmbeddingUpdateJob' },
-        { tag: 'system', tagClass: 'tag-gray', name: 'SystemSessionCleanup', desc: '清理过期的用户会话数据', handler: 'systemSessionCleanupJob', className: 'SystemSessionCleanupJob' },
-        { tag: 'system', tagClass: 'tag-gray', name: 'SystemConfigSync', desc: '同步系统配置到各服务节点', handler: 'systemConfigSyncJob', className: 'SystemConfigSyncJob' },
-        { tag: 'asset', tagClass: 'tag-gray', name: 'AssetInventoryCheck', desc: '定期生成资产盘点任务', handler: 'assetInventoryCheckJob', className: 'AssetInventoryCheckJob' },
-        { tag: 'contract', tagClass: 'tag-gray', name: 'ContractRenewalRemind', desc: '合同到期前提醒续签', handler: 'contractRenewalRemindJob', className: 'ContractRenewalRemindJob' }
-      ]
-      return tasks.map((t, i) => ({ ...t, id: i + 1 }))
+    // 加载任务列表
+    async loadTaskList() {
+      try {
+        const res = await getJobPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          name: this.searchForm.keyword
+        });
+        // 将API返回的数据转换为卡片需要的格式
+        this.taskList = res.list.map((item) => ({
+          id: item.id,
+          tag: item.status === 0 ? '运行中' : '已暂停',
+          tagClass: item.status === 0 ? 'tag-purple' : 'tag-gray',
+          name: item.name,
+          desc: item.remark || '暂无描述',
+          handler: item.handlerName,
+          className: item.handlerName
+        }));
+        this.pagination.total = res.total;
+      } catch (error) {
+        console.error('加载任务列表失败:', error);
+      }
+    },
+    // 搜索
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadTaskList();
+    },
+    // 立即执行任务
+    async handleRun(task) {
+      if (!confirm(`确定要立即执行任务【${task.name}】吗？`)) return;
+      try {
+        await runJob(task.id);
+        alert('任务执行成功');
+      } catch (error) {
+        console.error('执行任务失败:', error);
+        alert('任务执行失败');
+      }
     }
   }
 }
