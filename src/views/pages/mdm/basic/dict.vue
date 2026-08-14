@@ -8,22 +8,24 @@
             <div class="search-row">
               <div class="search-item">
                 <label>字典名称</label>
-                <input type="text" placeholder="请输入" />
+                <input type="text" placeholder="请输入" v-model="dictTypeSearch.name" />
               </div>
               <div class="search-item">
                 <label>字典类型</label>
-                <input type="text" placeholder="请输入" />
+                <input type="text" placeholder="请输入" v-model="dictTypeSearch.type" />
               </div>
               <div class="search-item">
                 <label>状态</label>
-                <select>
+                <select v-model="dictTypeSearch.status">
                   <option value="">请选择</option>
+                  <option value="0">正常</option>
+                  <option value="1">停用</option>
                 </select>
               </div>
             </div>
             <div class="search-btns">
-              <button class="btn-reset">重置</button>
-              <button class="btn-search">搜索</button>
+              <button class="btn-reset" @click="handleDictTypeReset">重置</button>
+              <button class="btn-search" @click="handleDictTypeSearch">搜索</button>
               <span class="collapse-text">收起 △</span>
             </div>
           </div>
@@ -31,7 +33,7 @@
             <div class="content-header">
               <div class="header-left">
                 <span class="title">字典类型列表</span>
-                <button class="btn-primary">+ 新增字典类型</button>
+                <button class="btn-primary" @click="handleAddDictType">+ 新增字典类型</button>
                 <button class="btn-primary">导出</button>
                 <button class="btn-outline">批量删除</button>
                 <button class="btn-icon-circle blue">🔍</button>
@@ -66,8 +68,8 @@
                     <td>{{ row.remark }}</td>
                     <td>{{ row.createTime }}</td>
                     <td class="op-col op-fixed">
-                      <button class="op-edit">编辑</button>
-                      <button class="op-del">删除</button>
+                      <button class="op-edit" @click="handleEditDictType(row)">编辑</button>
+                      <button class="op-del" @click="handleDeleteDictType(row)">删除</button>
                     </td>
                   </tr>
                 </tbody>
@@ -88,18 +90,20 @@
             <div class="search-row">
               <div class="search-item">
                 <label>字典标签</label>
-                <input type="text" placeholder="请输入" />
+                <input type="text" placeholder="请输入" v-model="dictDataSearch.label" />
               </div>
               <div class="search-item">
                 <label>状态</label>
-                <select>
+                <select v-model="dictDataSearch.status">
                   <option value="">请选择</option>
+                  <option value="0">正常</option>
+                  <option value="1">停用</option>
                 </select>
               </div>
             </div>
             <div class="search-btns">
-              <button class="btn-reset">重置</button>
-              <button class="btn-search">搜索</button>
+              <button class="btn-reset" @click="handleDictDataReset">重置</button>
+              <button class="btn-search" @click="handleDictDataSearch">搜索</button>
               <span class="collapse-text">收起 △</span>
             </div>
           </div>
@@ -107,7 +111,7 @@
             <div class="content-header">
               <div class="header-left">
                 <span class="title">字典数据列表</span>
-                <button class="btn-primary">+新增字典数据</button>
+                <button class="btn-primary" @click="handleAddDictData">+新增字典数据</button>
                 <button class="btn-primary">导出</button>
                 <button class="btn-outline">批量删除</button>
                 <button class="btn-icon-circle blue">🔍</button>
@@ -146,8 +150,8 @@
                     <td>{{ row.cssClass }}</td>
                     <td>{{ row.createTime }}</td>
                     <td class="op-col op-fixed">
-                      <button class="op-edit">编辑</button>
-                      <button class="op-del">删除</button>
+                      <button class="op-edit" @click="handleEditDictData(row)">编辑</button>
+                      <button class="op-del" @click="handleDeleteDictData(row)">删除</button>
                     </td>
                   </tr>
                 </tbody>
@@ -167,46 +171,151 @@
 </template>
 
 <script>
+// ========== 导入字典相关API ==========
+import { getDictTypePage, deleteDictType, getDictDataPage, deleteDictData } from '#/api/mdm/basic/dict';
+
 export default {
   name: 'DictManagement',
   data() {
     return {
-      dictTypeTotal: 361,
-      dictDataTotal: 1729,
-      dictTypeList: [
-        { code: '1061127', name: '资产折旧单据类型', type: '', status: '正常', remark: '资产折旧相关单据', createTime: '2026-05-12 14:20:11' },
-        { code: '1061126', name: '资产折旧财务推送状态', type: 'asset', status: '正常', remark: '财务推送状态字典', createTime: '2026-05-11 09:15:33' },
-        { code: '1061125', name: '资产折旧过账状态', type: 'as', status: '停用', remark: '', createTime: '2026-05-10 16:40:22' },
-        { code: '1061124', name: '盘点差异处理类型', type: '', status: '正常', remark: '盘点差异处理', createTime: '2026-05-09 11:22:45' },
-        { code: '1061123', name: '资产自定义字段类型', type: '', status: '正常', remark: '', createTime: '2026-05-08 10:33:17' },
-        { code: '1061122', name: '盘点分派状态', type: '', status: '停用', remark: '盘点任务分派', createTime: '2026-05-07 15:10:08' },
-        { code: '1061116', name: '巡检记录状态', type: '', status: '正常', remark: '设备巡检状态', createTime: '2026-05-06 08:55:36' },
-        { code: '1061116', name: '巡检记录状态', type: '', status: '正常', remark: '设备巡检状态', createTime: '2026-05-06 08:55:36' },
-        { code: '1061116', name: '巡检记录状态', type: '', status: '正常', remark: '设备巡检状态', createTime: '2026-05-06 08:55:36' },
-        { code: '1061116', name: '巡检记录状态', type: '', status: '正常', remark: '设备巡检状态', createTime: '2026-05-06 08:55:36' },
-        { code: '1061116', name: '巡检记录状态', type: '', status: '正常', remark: '设备巡检状态', createTime: '2026-05-06 08:55:36' },
-        { code: '1061116', name: '巡检记录状态', type: '', status: '正常', remark: '设备巡检状态', createTime: '2026-05-06 08:55:36' },
-        { code: '1061116', name: '巡检记录状态', type: '', status: '正常', remark: '设备巡检状态', createTime: '2026-05-06 08:55:36' },
-      ],
-      dictDataList: [
-        { code: '4175', label: '生产出库', value: '202', sort: 1, status: '正常', colorType: 'primary', cssClass: 'tag-primary', createTime: '2026-06-01 10:11:22' },
-        { code: '4174', label: '销售出库', value: '201', sort: 2, status: '正常', colorType: 'success', cssClass: 'tag-success', createTime: '2026-06-01 10:10:15' },
-        { code: '4173', label: '退货出库', value: '200', sort: 3, status: '正常', colorType: 'warning', cssClass: 'tag-warning', createTime: '2026-06-01 10:09:33' },
-        { code: '4172', label: '归还入库', value: '103', sort: 4, status: '停用', colorType: 'info', cssClass: 'tag-info', createTime: '2026-06-01 10:08:44' },
-        { code: '4171', label: '退货入库', value: '102', sort: 5, status: '正常', colorType: 'danger', cssClass: 'tag-danger', createTime: '2026-06-01 10:07:21' },
-        { code: '4170', label: '采购入库', value: '101', sort: 6, status: '正常', colorType: 'primary', cssClass: 'tag-primary', createTime: '2026-06-01 10:06:18' },
-        { code: '4169', label: '生产入库', value: '100', sort: 7, status: '正常', colorType: 'success', cssClass: 'tag-success', createTime: '2026-06-01 10:05:09' },
-        { code: '4165', label: '盘库单', value: '4', sort: 8, status: '正常', colorType: 'warning', cssClass: 'tag-warning', createTime: '2026-06-01 10:04:32' },
-        { code: '4165', label: '盘库单', value: '4', sort: 8, status: '正常', colorType: 'warning', cssClass: 'tag-warning', createTime: '2026-06-01 10:04:32' },
-        { code: '4165', label: '盘库单', value: '4', sort: 8, status: '正常', colorType: 'warning', cssClass: 'tag-warning', createTime: '2026-06-01 10:04:32' },
-        { code: '4165', label: '盘库单', value: '4', sort: 8, status: '正常', colorType: 'warning', cssClass: 'tag-warning', createTime: '2026-06-01 10:04:32' },
-        { code: '4165', label: '盘库单', value: '4', sort: 8, status: '正常', colorType: 'warning', cssClass: 'tag-warning', createTime: '2026-06-01 10:04:32' },
-        { code: '4165', label: '盘库单', value: '4', sort: 8, status: '正常', colorType: 'warning', cssClass: 'tag-warning', createTime: '2026-06-01 10:04:32' },
-        { code: '4165', label: '盘库单', value: '4', sort: 8, status: '正常', colorType: 'warning', cssClass: 'tag-warning', createTime: '2026-06-01 10:04:32' },
-      ],
-    }
-  }
-}
+      // 字典类型搜索
+      dictTypeSearch: { name: '', type: '', status: '' },
+      // 字典类型分页
+      dictTypePagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 字典类型列表
+      dictTypeList: [],
+      // 字典类型总数
+      dictTypeTotal: 0,
+      // 选中的字典类型
+      selectedDictType: null,
+      // 字典数据搜索
+      dictDataSearch: { label: '', status: '' },
+      // 字典数据分页
+      dictDataPagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 字典数据列表
+      dictDataList: [],
+      // 字典数据总数
+      dictDataTotal: 0,
+    };
+  },
+  mounted() {
+    this.loadDictTypeList();
+  },
+  methods: {
+    // 加载字典类型列表
+    async loadDictTypeList() {
+      try {
+        const params = {
+          pageNo: this.dictTypePagination.pageNo,
+          pageSize: this.dictTypePagination.pageSize,
+        };
+        Object.keys(this.dictTypeSearch).forEach((key) => {
+          if (this.dictTypeSearch[key]) params[key] = this.dictTypeSearch[key];
+        });
+        const data = await getDictTypePage(params);
+        this.dictTypeList = data.list.map((item) => ({
+          id: item.id,
+          code: item.code || '',
+          name: item.name || '',
+          type: item.type || '',
+          status: item.status === 0 ? '正常' : '停用',
+          remark: item.remark || '',
+          createTime: item.createTime || '',
+        }));
+        this.dictTypeTotal = data.total;
+        this.dictTypePagination.total = data.total;
+      } catch (err) {
+        console.error('获取字典类型列表失败', err);
+      }
+    },
+    // 字典类型搜索
+    handleDictTypeSearch() {
+      this.dictTypePagination.pageNo = 1;
+      this.loadDictTypeList();
+    },
+    // 字典类型重置
+    handleDictTypeReset() {
+      this.dictTypeSearch = { name: '', type: '', status: '' };
+      this.dictTypePagination.pageNo = 1;
+      this.loadDictTypeList();
+    },
+    // 新增字典类型
+    handleAddDictType() { alert('新增字典类型功能待实现'); },
+    // 编辑字典类型
+    handleEditDictType(row) {
+      this.selectedDictType = row;
+      this.loadDictDataList();
+      alert('编辑字典类型功能待实现');
+    },
+    // 删除字典类型
+    async handleDeleteDictType(row) {
+      if (!confirm(`确定要删除字典类型"${row.name}"吗？`)) return;
+      try {
+        await deleteDictType(row.id);
+        alert('删除成功');
+        this.loadDictTypeList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
+    // 加载字典数据列表
+    async loadDictDataList() {
+      if (!this.selectedDictType) return;
+      try {
+        const params = {
+          pageNo: this.dictDataPagination.pageNo,
+          pageSize: this.dictDataPagination.pageSize,
+          dictType: this.selectedDictType.type,
+        };
+        Object.keys(this.dictDataSearch).forEach((key) => {
+          if (this.dictDataSearch[key]) params[key] = this.dictDataSearch[key];
+        });
+        const data = await getDictDataPage(params);
+        this.dictDataList = data.list.map((item) => ({
+          id: item.id,
+          code: item.code || '',
+          label: item.label || '',
+          value: item.value || '',
+          sort: item.sort || 0,
+          status: item.status === 0 ? '正常' : '停用',
+          colorType: item.colorType || '',
+          cssClass: item.cssClass || '',
+          createTime: item.createTime || '',
+        }));
+        this.dictDataTotal = data.total;
+        this.dictDataPagination.total = data.total;
+      } catch (err) {
+        console.error('获取字典数据列表失败', err);
+      }
+    },
+    // 字典数据搜索
+    handleDictDataSearch() {
+      this.dictDataPagination.pageNo = 1;
+      this.loadDictDataList();
+    },
+    // 字典数据重置
+    handleDictDataReset() {
+      this.dictDataSearch = { label: '', status: '' };
+      this.dictDataPagination.pageNo = 1;
+      this.loadDictDataList();
+    },
+    // 新增字典数据
+    handleAddDictData() { alert('新增字典数据功能待实现'); },
+    // 编辑字典数据
+    handleEditDictData(row) { alert('编辑字典数据功能待实现'); },
+    // 删除字典数据
+    async handleDeleteDictData(row) {
+      if (!confirm(`确定要删除字典数据"${row.label}"吗？`)) return;
+      try {
+        await deleteDictData(row.id);
+        alert('删除成功');
+        this.loadDictDataList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
+  },
+};
 </script>
 
 <style scoped>

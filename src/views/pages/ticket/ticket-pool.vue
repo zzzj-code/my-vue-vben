@@ -16,19 +16,19 @@
       <div class="app-top">
         <div>
           <span>工单编号</span>
-          <input type="text" placeholder="请输入工单编号" />
+          <input type="text" placeholder="请输入工单编号" v-model="searchForm.no" />
         </div>
         <div>
           <span>工单标题</span>
-          <input type="text" placeholder="请输入工单标题" />
+          <input type="text" placeholder="请输入工单标题" v-model="searchForm.title" />
         </div>
         <div>
           <span>工单分类</span>
-          <input type="text" placeholder="请输入工单分类" />
+          <input type="text" placeholder="请输入工单分类" v-model="searchForm.category" />
         </div>
         <div>
-          <button>重置</button>
-          <button>搜索</button>
+          <button @click="handleReset">重置</button>
+          <button @click="handleSearch">搜索</button>
           展开▽
         </div>
       </div>
@@ -82,23 +82,60 @@
               </tr>
             </thead>
             <tbody>
-              <div class="asd">暂无数据</div>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td style="color: #006be6">{{ item.no }}</td>
+                <td>{{ item.title }}</td>
+                <td>{{ item.status }}</td>
+                <td>{{ item.categoryName }}</td>
+                <td>{{ item.priority }}</td>
+                <td>{{ item.slaResponseTime }}</td>
+                <td>{{ item.slaSolveTime }}</td>
+                <td>{{ item.handlerName }}</td>
+                <td>{{ item.applicantName }}</td>
+                <td>{{ item.createTime }}</td>
+                <td class="ol-col">
+                  <button v-if="currentTab === 'aaf'" @click="handleReceive(item)">领取</button>
+                  <button v-else @click="handleEdit(item)">详情</button>
+                </td>
+              </tr>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="11"><div class="asd">暂无数据</div></td>
+              </tr>
             </tbody>
           </table>
         </div>
-        <div class="main-floot">共{{tabValue.length}}条记录<span>20条/页</span></div>
+        <div class="main-floot">
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入工单相关API ==========
+import { getTicketPoolPage, receiveTicket } from '#/api/ticket/ticket';
+
 export default {
   data() {
     return {
-      tabValue: [
-        
-      ],
+      // 搜索表单
+      searchForm: {
+        no: '',
+        title: '',
+        category: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
       // 当前选中的 tab
       currentTab: "aaf",
       // tab 列表
@@ -109,10 +146,68 @@ export default {
       ],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
     switchTab(key) {
       this.currentTab = key;
+      this.pagination.pageNo = 1;
+      this.loadList();
     },
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          status: this.currentTab,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getTicketPoolPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          no: item.no || '',
+          title: item.title || '',
+          status: item.status || '',
+          categoryName: item.categoryName || '',
+          priority: item.priority || '',
+          slaResponseTime: item.slaResponseTime || '',
+          slaSolveTime: item.slaSolveTime || '',
+          handlerName: item.handlerName || '',
+          applicantName: item.applicantName || '',
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 领取工单
+    async handleReceive(item) {
+      if (!confirm(`确定要领取工单"${item.title}"吗？`)) return;
+      try {
+        await receiveTicket(item.id);
+        alert('领取成功');
+        this.loadList();
+      } catch (err) {
+        console.error('领取失败', err);
+      }
+    },
+    // 详情
+    handleEdit(item) { alert('详情功能待实现'); },
   },
 };
 </script>

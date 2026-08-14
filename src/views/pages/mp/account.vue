@@ -5,14 +5,14 @@
         <div class="top-inp">
           <div>
             <span>名称</span>
-            <input type="text" placeholder="请输入名称" />
+            <input type="text" placeholder="请输入名称" v-model="searchForm.name" />
           </div>
           <div>
             
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -21,7 +21,7 @@
         <div class="main-top">
           <div>公众号账号列表</div>
           <div>
-            <button>+新增公众号账号</button>
+            <button @click="handleAdd">+新增公众号账号</button>
             <button>🔍</button>
           </div>
           <div>
@@ -44,14 +44,35 @@
               </tr>
             </thead>
             <tbody>
-              <div class="asd">暂无数据</div>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td>{{ item.name }}</td>
+                <td>{{ item.account }}</td>
+                <td>{{ item.appId }}</td>
+                <td>{{ item.url }}</td>
+                <td><img :src="item.qrCodeUrl" style="width:40px;height:40px" v-if="item.qrCodeUrl" /></td>
+                <td>{{ item.remark }}</td>
+                <td class="ol-col">
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
+                </td>
+              </tr>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="7"><div class="asd">暂无数据</div></td>
+              </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -60,13 +81,76 @@
 </template>
 
 <script>
+// ========== 导入公众号账号相关API ==========
+import { getAccountPage, deleteAccount } from '#/api/mp/account';
+
 export default {
   data() {
     return {
-      tabValue: [
-        
-      ],
+      // 搜索表单
+      searchForm: {
+        name: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getAccountPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          name: item.name || '',
+          account: item.account || '',
+          appId: item.appId || '',
+          url: item.url || '',
+          qrCodeUrl: item.qrCodeUrl || '',
+          remark: item.remark || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 新增
+    handleAdd() { alert('新增功能待实现'); },
+    // 编辑
+    handleEdit(item) { alert('编辑功能待实现'); },
+    // 删除
+    async handleDelete(item) {
+      if (!confirm(`确定要删除公众号"${item.name}"吗？`)) return;
+      try {
+        await deleteAccount(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>

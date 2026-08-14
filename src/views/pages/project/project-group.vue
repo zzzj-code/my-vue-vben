@@ -5,18 +5,18 @@
         <div class="top-inp">
           <div class="inp-1">
             <span>项目集名称</span>
-            <input type="text" placeholder="请输入项目集名称" />
+            <input type="text" placeholder="请输入项目集名称"  v-model="searchForm.groupName" />
           </div>
           <div class="inp-1">
             <span>状态</span>
-            <input type="text" placeholder="全部" />
+            <input type="text" placeholder="全部"  v-model="searchForm.status" />
           </div>
           <div class="inp-1">
             
           </div>
           <div class="inp-1">
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -25,7 +25,7 @@
         <div class="main-top">
           <div class="top-1">项目集列表</div>
           <div class="top-2">
-            <button>+新增项目集</button>
+            <button @click="handleAdd">+新增项目集</button>
             <button>🔍</button>
           </div>
           <div class="top-3">
@@ -73,7 +73,7 @@
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
                   <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleDelete(item.id)">删除</button>
                 </td>
               </tr>
             </tbody>
@@ -86,77 +86,55 @@
 </template>
 
 <script>
+import { getProjectGroupPage, deleteProjectGroup } from '#/api/project/project-group';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          name: "研发项目集",
-          code: "YF001",
-          leader: "张伟",
-          status: "进行中",
-          description: "公司年度研发项目集",
-          createTime: "2026-06-06 21:30:06",
-        },
-        {
-          id: 2,
-          name: "数字化转型项目集",
-          code: "SZ002",
-          leader: "李芳",
-          status: "规划中",
-          description: "企业数字化转型整体项目集",
-          createTime: "2026-06-10 14:20:00",
-        },
-        {
-          id: 3,
-          name: "市场拓展项目集",
-          code: "SC003",
-          leader: "王磊",
-          status: "进行中",
-          description: "市场拓展与客户增长项目集",
-          createTime: "2026-06-15 09:10:00",
-        },
-        {
-          id: 4,
-          name: "产品创新项目集",
-          code: "CP004",
-          leader: "陈静",
-          status: "已暂停",
-          description: "新产品创新与研发项目集",
-          createTime: "2026-06-20 16:45:00",
-        },
-        {
-          id: 5,
-          name: "基础建设项目集",
-          code: "JC005",
-          leader: "赵明",
-          status: "已完成",
-          description: "基础设施建设与升级项目集",
-          createTime: "2026-06-25 11:30:00",
-        },
-      ],
+      searchForm: { groupName: '', status: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: []
     };
   },
+  created() {
+    this.loadData();
+  },
   methods: {
-    getStatusColor(status) {
-      const map = {
-        '规划中': '#1890ff',
-        '进行中': '#52c41a',
-        '已暂停': '#faad14',
-        '已完成': '#8c8c8c'
-      };
-      return map[status] || '#333';
+    async loadData() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm
+        };
+        const res = await getProjectGroupPage(params);
+        this.tabValue = res.list || res.records || [];
+        this.pagination.total = res.total || 0;
+      } catch (e) {
+        console.error('加载数据失败', e);
+      }
     },
-    getStatusBg(status) {
-      const map = {
-        '规划中': '#e6f7ff',
-        '进行中': '#f6ffed',
-        '已暂停': '#fffbe6',
-        '已完成': '#f5f5f5'
-      };
-      return map[status] || '#fff';
-    }
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleReset() {
+      this.searchForm = { groupName: '', status: '' };
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleAdd() {
+      alert('新增功能');
+    },
+    async handleDelete(id) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteProjectGroup(id);
+        this.loadData();
+      } catch (e) {
+        console.error('删除失败', e);
+      }
+    },
   }
 };
 </script>
@@ -311,7 +289,7 @@ export default {
 }
 .main-tab table {
   width: max-content;
-  min-width: 800px;
+  min-width: 1200px;
   table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;

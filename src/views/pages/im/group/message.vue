@@ -4,25 +4,25 @@
       <div class="app-top">
         <div class="top-inp">
           <div>
-            <span>群</span>
-            <input type="text" placeholder="" />
+            <span>群ID</span>
+            <input type="text" placeholder="请输入群ID" v-model="searchForm.groupId" />
           </div>
           <div>
             <span>发送人</span>
-            <input type="text" placeholder="" />
+            <input type="text" placeholder="请输入发送人" v-model="searchForm.sender" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
       </div>
       <div class="app-main">
         <div class="main-top">
-          <div>群聊消息列表</div>
+          <div>列表</div>
           <div>
-            <button style="background-color: #fff">+新增工具</button>
+            <button @click="handleAdd">+新增</button>
             <button>🔍</button>
           </div>
           <div>
@@ -36,13 +36,11 @@
             <thead>
               <tr>
                 <th><div class="th-cell">编号</div></th>
-                <th><div class="th-cell">群</div></th>
+                <th><div class="th-cell">群ID</div></th>
                 <th><div class="th-cell">发送人</div></th>
                 <th><div class="th-cell">类型</div></th>
-                <th><div class="th-cell">@用户</div></th>
-                <th><div class="th-cell">内容预览</div></th>
+                <th><div class="th-cell">内容</div></th>
                 <th><div class="th-cell">状态</div></th>
-                <th><div class="th-cell">回执</div></th>
                 <th><div class="th-cell">发送时间</div></th>
                 <th class="ol-col"><div class="th-cell">操作</div></th>
               </tr>
@@ -50,25 +48,34 @@
             <tbody>
               <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
-                <td>{{ item.group }}</td>
+                <td>{{ item.groupId }}</td>
                 <td>{{ item.sender }}</td>
                 <td>{{ item.type }}</td>
-                <td>{{ item.atUsers }}</td>
-                <td>{{ item.preview }}</td>
+                <td>{{ item.content }}</td>
                 <td>{{ item.status }}</td>
-                <td>{{ item.receipt }}</td>
                 <td>{{ item.sendTime }}</td>
                 <td class="ol-col">
-                  <button>详情</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
+              </tr>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="8"><div class="asd">暂无数据</div></td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -77,101 +84,75 @@
 </template>
 
 <script>
+import { getGroupMessagePage, deleteGroupMessage } from '#/api/im/group/group-message';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          group: "前端技术交流群",
-          sender: "张三",
-          type: "文本",
-          atUsers: "@李四",
-          preview: "这个API怎么调用？",
-          status: "已读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 10:30:00",
-        },
-        {
-          id: 2,
-          group: "前端技术交流群",
-          sender: "李四",
-          type: "图片",
-          atUsers: "-",
-          preview: "[图片] 代码截图",
-          status: "未读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 10:45:00",
-        },
-        {
-          id: 3,
-          group: "项目开发组",
-          sender: "王五",
-          type: "文本",
-          atUsers: "@全体成员",
-          preview: "明天下午3点开会",
-          status: "已读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 11:00:00",
-        },
-        {
-          id: 4,
-          group: "项目开发组",
-          sender: "赵六",
-          type: "文件",
-          atUsers: "-",
-          preview: "[文件] 需求文档V2.0.pdf",
-          status: "已读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 11:30:00",
-        },
-        {
-          id: 5,
-          group: "闲聊茶馆",
-          sender: "孙七",
-          type: "语音",
-          atUsers: "-",
-          preview: "[语音] 10秒",
-          status: "未读",
-          receipt: "发送中",
-          sendTime: "2026-08-09 12:15:00",
-        },
-        {
-          id: 6,
-          group: "前端技术交流群",
-          sender: "周八",
-          type: "文本",
-          atUsers: "@张三",
-          preview: "用axios就可以了",
-          status: "已读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 13:00:00",
-        },
-        {
-          id: 7,
-          group: "项目开发组",
-          sender: "张三",
-          type: "文本",
-          atUsers: "-",
-          preview: "收到，已确认需求",
-          status: "已读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 14:20:00",
-        },
-        {
-          id: 8,
-          group: "闲聊茶馆",
-          sender: "李四",
-          type: "文本",
-          atUsers: "@孙七",
-          preview: "哈哈，你太逗了",
-          status: "未读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 15:00:00",
-        },
-      ],
+      searchForm: { groupId: '', sender: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: []
     };
   },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = { pageNo: this.pagination.pageNo, pageSize: this.pagination.pageSize };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getGroupMessagePage(params);
+        this.tabValue = data.list.map((item) => {
+          const obj = {};
+          obj.id = item.id || '';
+          obj.groupId = item.groupId || '';
+          obj.sender = item.sender || '';
+          obj.type = item.type || '';
+          obj.content = item.content || '';
+          obj.status = item.status || '';
+          obj.sendTime = item.sendTime || '';
+          return obj;
+        });
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => {
+        this.searchForm[key] = '';
+      });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    handleAdd() {
+      alert('新增功能待实现');
+    },
+    handleEdit(item) {
+      alert('编辑功能待实现');
+    },
+    async handleDelete(item) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteGroupMessage(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    }
+  }
 };
 </script>
 

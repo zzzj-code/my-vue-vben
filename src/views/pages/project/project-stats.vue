@@ -6,19 +6,19 @@
         <div class="top-box">
           <div class="box1">
             <div>项目总数</div>
-            <div>4</div>
+            <div>{{ summary.totalCount || 0 }}</div>
           </div>
           <div class="box1">
             <div>进行中</div>
-            <div style="color: greenyellow">0</div>
+            <div style="color: greenyellow">{{ summary.inProgressCount || 0 }}</div>
           </div>
           <div class="box1">
             <div>已完成</div>
-            <div style="color: blue">0</div>
+            <div style="color: blue">{{ summary.completedCount || 0 }}</div>
           </div>
           <div class="box1">
             <div>逾期项目</div>
-            <div style="color: red">0</div>
+            <div style="color: red">{{ summary.overdueCount || 0 }}</div>
           </div>
         </div>
         <div class="top-cen">
@@ -28,11 +28,11 @@
               <div class="left-main-1">
                 <div class="progress-ring">
                   <div class="progress-circle">
-                    <span>9%</span>
+                    <span>{{ summary.taskCompletionRate || 0 }}%</span>
                   </div>
                 </div>
               </div>
-              <div class="left-main-2">4 / 46 个任务已完成，逾期 30 个</div>
+              <div class="left-main-2">{{ summary.completedTaskCount || 0 }} / {{ summary.totalTaskCount || 0 }} 个任务已完成，逾期 {{ summary.overdueTaskCount || 0 }} 个</div>
             </div>
           </div>
           <div class="cen-right">
@@ -41,12 +41,12 @@
               <div class="right-main-1">
                 <div class="progress-ring1">
                   <div class="progress-circle">
-                    <span>28%</span>
+                    <span>{{ summary.budgetUsageRate || 0 }}%</span>
                   </div>
                 </div>
               </div>
               <div class="right-main-2">
-                ¥450,000 / ¥1,625,000 （预算明细汇总）
+                ¥{{ (summary.usedBudget || 0).toLocaleString() }} / ¥{{ (summary.totalBudget || 0).toLocaleString() }} （预算明细汇总）
               </div>
             </div>
           </div>
@@ -59,7 +59,42 @@
   </div>
 </template>
 
-<script></script>
+<script>
+import { getProjectStatsSummary } from '#/api/project/project-stats';
+
+export default {
+  data() {
+    return {
+      summary: {
+        totalCount: 0,
+        inProgressCount: 0,
+        completedCount: 0,
+        overdueCount: 0,
+        taskCompletionRate: 0,
+        completedTaskCount: 0,
+        totalTaskCount: 0,
+        overdueTaskCount: 0,
+        budgetUsageRate: 0,
+        usedBudget: 0,
+        totalBudget: 0
+      }
+    };
+  },
+  created() {
+    this.loadSummary();
+  },
+  methods: {
+    async loadSummary() {
+      try {
+        const res = await getProjectStatsSummary();
+        this.summary = { ...this.summary, ...res };
+      } catch (e) {
+        console.error('加载统计失败', e);
+      }
+    }
+  }
+};
+</script>
 
 <style scoped>
 .title {

@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>模型名字</span>
-            <input type="text" placeholder="请输入模型名字" />
+            <input type="text" placeholder="请输入模型名字" v-model="searchForm.name" />
           </div>
           <div>
             <span>模型标识</span>
-            <input type="text" placeholder="请输入模型标识" />
+            <input type="text" placeholder="请输入模型标识" v-model="searchForm.model" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>模型配置列表</div>
           <div>
-            <button>+新增模型配置</button>
+            <button @click="handleAdd">+新增模型配置</button>
             <button>🔍</button>
           </div>
           <div>
@@ -49,29 +49,39 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.platform }}</td>
                 <td>{{ item.type }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.model }}</td>
-                <td>{{ item.apiKey }}</td>
+                <td>{{ item.apiKeyId }}</td>
                 <td>{{ item.sort }}</td>
-                <td>{{ item.status }}</td>
-                <td>{{ item.temp }}</td>
-                <td>{{ item.tokens }}</td>
-                <td>{{ item.context }}</td>
+                <td>{{ item.status === 0 ? '启用' : '禁用' }}</td>
+                <td>{{ item.temperature }}</td>
+                <td>{{ item.maxTokens }}</td>
+                <td>{{ item.contextCount }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
+              </tr>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="11"><div class="asd">暂无数据</div></td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -79,256 +89,45 @@
   </div>
 </template>
 
+
 <script>
+// ========== 导入AI模型相关API ==========
+import { getModelPage, deleteModel } from '#/api/ai/model/model';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          platform: "OpenAI",
-          type: "大语言模型",
-          name: "GPT-4 Turbo",
-          model: "gpt-4-turbo",
-          apiKey: "sk-****8x7f",
-          sort: 1,
-          status: "启用",
-          temp: 0.7,
-          tokens: 4096,
-          context: 128000,
-        },
-        {
-          platform: "OpenAI",
-          type: "大语言模型",
-          name: "GPT-4o",
-          model: "gpt-4o",
-          apiKey: "sk-****9d8c",
-          sort: 2,
-          status: "启用",
-          temp: 0.8,
-          tokens: 4096,
-          context: 128000,
-        },
-        {
-          platform: "OpenAI",
-          type: "大语言模型",
-          name: "GPT-3.5 Turbo",
-          model: "gpt-3.5-turbo",
-          apiKey: "sk-****1a2b",
-          sort: 3,
-          status: "启用",
-          temp: 0.5,
-          tokens: 4096,
-          context: 16384,
-        },
-        {
-          platform: "Azure",
-          type: "大语言模型",
-          name: "Azure GPT-4",
-          model: "azure-gpt-4",
-          apiKey: "az-****9i8j",
-          sort: 4,
-          status: "启用",
-          temp: 0.7,
-          tokens: 4096,
-          context: 128000,
-        },
-        {
-          platform: "Azure",
-          type: "大语言模型",
-          name: "Azure GPT-3.5",
-          model: "azure-gpt-35",
-          apiKey: "az-****2c3d",
-          sort: 5,
-          status: "禁用",
-          temp: 0.6,
-          tokens: 4096,
-          context: 16384,
-        },
-        {
-          platform: "Anthropic",
-          type: "大语言模型",
-          name: "Claude 3.5 Sonnet",
-          model: "claude-3-5-sonnet",
-          apiKey: "sk-ant-****1a2b",
-          sort: 6,
-          status: "启用",
-          temp: 0.7,
-          tokens: 4096,
-          context: 200000,
-        },
-        {
-          platform: "Anthropic",
-          type: "大语言模型",
-          name: "Claude 3 Opus",
-          model: "claude-3-opus",
-          apiKey: "sk-ant-****3d4e",
-          sort: 7,
-          status: "启用",
-          temp: 0.5,
-          tokens: 4096,
-          context: 200000,
-        },
-        {
-          platform: "Google",
-          type: "大语言模型",
-          name: "Gemini 1.5 Pro",
-          model: "gemini-1.5-pro",
-          apiKey: "gl-****4e5f",
-          sort: 8,
-          status: "启用",
-          temp: 0.8,
-          tokens: 8192,
-          context: 2000000,
-        },
-        {
-          platform: "Google",
-          type: "大语言模型",
-          name: "Gemini 1.5 Flash",
-          model: "gemini-1.5-flash",
-          apiKey: "gl-****5f6g",
-          sort: 9,
-          status: "禁用",
-          temp: 0.6,
-          tokens: 8192,
-          context: 1000000,
-        },
-        {
-          platform: "智谱AI",
-          type: "大语言模型",
-          name: "GLM-4 Plus",
-          model: "glm-4-plus",
-          apiKey: "zhipu-****6g7h",
-          sort: 10,
-          status: "启用",
-          temp: 0.7,
-          tokens: 4096,
-          context: 128000,
-        },
-        {
-          platform: "智谱AI",
-          type: "大语言模型",
-          name: "GLM-4 Air",
-          model: "glm-4-air",
-          apiKey: "zhipu-****7h8i",
-          sort: 11,
-          status: "启用",
-          temp: 0.5,
-          tokens: 4096,
-          context: 128000,
-        },
-        {
-          platform: "百度",
-          type: "大语言模型",
-          name: "ERNIE 4.0",
-          model: "ernie-4.0",
-          apiKey: "baidu-****8i9j",
-          sort: 12,
-          status: "启用",
-          temp: 0.7,
-          tokens: 4096,
-          context: 8192,
-        },
-        {
-          platform: "百度",
-          type: "大语言模型",
-          name: "ERNIE 3.5",
-          model: "ernie-3.5",
-          apiKey: "baidu-****9j0k",
-          sort: 13,
-          status: "禁用",
-          temp: 0.6,
-          tokens: 4096,
-          context: 4096,
-        },
-        {
-          platform: "阿里",
-          type: "大语言模型",
-          name: "Qwen-Max",
-          model: "qwen-max",
-          apiKey: "ali-****0k1l",
-          sort: 14,
-          status: "启用",
-          temp: 0.8,
-          tokens: 4096,
-          context: 32768,
-        },
-        {
-          platform: "阿里",
-          type: "大语言模型",
-          name: "Qwen-Plus",
-          model: "qwen-plus",
-          apiKey: "ali-****1l2m",
-          sort: 15,
-          status: "启用",
-          temp: 0.7,
-          tokens: 4096,
-          context: 32768,
-        },
-        {
-          platform: "腾讯",
-          type: "大语言模型",
-          name: "混元 Pro",
-          model: "hunyuan-pro",
-          apiKey: "tencent-****2m3n",
-          sort: 16,
-          status: "启用",
-          temp: 0.7,
-          tokens: 4096,
-          context: 8192,
-        },
-        {
-          platform: "腾讯",
-          type: "大语言模型",
-          name: "混元 Standard",
-          model: "hunyuan-standard",
-          apiKey: "tencent-****3n4o",
-          sort: 17,
-          status: "禁用",
-          temp: 0.5,
-          tokens: 4096,
-          context: 4096,
-        },
-        {
-          platform: "OpenAI",
-          type: "embedding模型",
-          name: "text-embedding-3-large",
-          model: "text-embedding-3-large",
-          apiKey: "sk-****4o5p",
-          sort: 18,
-          status: "启用",
-          temp: 0,
-          tokens: 8192,
-          context: 8192,
-        },
-        {
-          platform: "OpenAI",
-          type: "embedding模型",
-          name: "text-embedding-ada-002",
-          model: "text-embedding-ada-002",
-          apiKey: "sk-****5p6q",
-          sort: 19,
-          status: "启用",
-          temp: 0,
-          tokens: 8192,
-          context: 8192,
-        },
-        {
-          platform: "Azure",
-          type: "embedding模型",
-          name: "Azure Embedding",
-          model: "azure-embedding",
-          apiKey: "az-****6q7r",
-          sort: 20,
-          status: "启用",
-          temp: 0,
-          tokens: 8192,
-          context: 8192,
-        },
-      ],
+      searchForm: { name: '', model: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() { this.loadList(); },
+  methods: {
+    async loadList() {
+      try {
+        const params = { pageNo: this.pagination.pageNo, pageSize: this.pagination.pageSize };
+        Object.keys(this.searchForm).forEach((key) => { if (this.searchForm[key]) params[key] = this.searchForm[key]; });
+        const data = await getModelPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '', platform: item.platform || '', type: item.type || '',
+          name: item.name || '', model: item.model || '', apiKeyId: item.apiKeyId || '',
+          sort: item.sort || 0, status: item.status || 0, temperature: item.temperature || 0,
+          maxTokens: item.maxTokens || 0, contextCount: item.contextCount || 0,
+        }));
+        this.pagination.total = data.total;
+      } catch (err) { console.error('获取列表失败', err); }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() { Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; }); this.pagination.pageNo = 1; this.loadList(); },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(item) { alert('编辑功能待实现'); },
+    async handleDelete(item) { if (!confirm('确定要删除吗？')) return; try { await deleteModel(item.id); alert('删除成功'); this.loadList(); } catch (err) { console.error('删除失败', err); } },
   },
 };
 </script>
+
 
 <style scoped>
 .page-wrapper {

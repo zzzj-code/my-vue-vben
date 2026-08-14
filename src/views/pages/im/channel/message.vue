@@ -4,25 +4,25 @@
       <div class="app-top">
         <div class="top-inp">
           <div>
-            <span>频道</span>
-            <input type="text" placeholder="全部" />
+            <span>频道ID</span>
+            <input type="text" placeholder="请输入频道ID" v-model="searchForm.channelId" />
           </div>
           <div>
-            <span>发送时间</span>
-            <input type="text" placeholder="" />
+            <span>发送人</span>
+            <input type="text" placeholder="请输入发送人" v-model="searchForm.sender" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
       </div>
       <div class="app-main">
         <div class="main-top">
-          <div>频道消息列表</div>
+          <div>列表</div>
           <div>
-            <button>+立即推送</button>
+            <button @click="handleAdd">+新增</button>
             <button>🔍</button>
           </div>
           <div>
@@ -35,13 +35,12 @@
           <table>
             <thead>
               <tr>
-                <th>
-                  <div class="th-cell">编号</div>
-                </th>
-                <th><div class="th-cell">封面</div></th>
-                <th><div class="th-cell">频道</div></th>
-                <th><div class="th-cell">素材标题</div></th>
-                <th><div class="th-cell">接收人</div></th>
+                <th><div class="th-cell">编号</div></th>
+                <th><div class="th-cell">频道ID</div></th>
+                <th><div class="th-cell">发送人</div></th>
+                <th><div class="th-cell">类型</div></th>
+                <th><div class="th-cell">内容</div></th>
+                <th><div class="th-cell">状态</div></th>
                 <th><div class="th-cell">发送时间</div></th>
                 <th class="ol-col"><div class="th-cell">操作</div></th>
               </tr>
@@ -49,31 +48,34 @@
             <tbody>
               <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
-                <td>
-                  <img
-                    :src="item.cover"
-                    style="
-                      width: 40px;
-                      height: 40px;
-                      border-radius: 4px;
-                      object-fit: cover;
-                    "
-                  />
-                </td>
-                <td>{{ item.channel }}</td>
-                <td>{{ item.materialTitle }}</td>
-                <td>{{ item.receiver }}</td>
+                <td>{{ item.channelId }}</td>
+                <td>{{ item.sender }}</td>
+                <td>{{ item.type }}</td>
+                <td>{{ item.content }}</td>
+                <td>{{ item.status }}</td>
                 <td>{{ item.sendTime }}</td>
                 <td class="ol-col">
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
+              </tr>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="8"><div class="asd">暂无数据</div></td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -82,93 +84,75 @@
 </template>
 
 <script>
+import { getChannelMessagePage, deleteChannelMessage } from '#/api/im/channel/channel-message';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          cover: "https://picsum.photos/60/60?random=1",
-          channel: "技术交流",
-          materialTitle: "Vue3 性能优化实战指南",
-          receiver: "全部用户",
-          sendTime: "2026-08-09 10:30:00",
-        },
-        {
-          id: 2,
-          cover: "https://picsum.photos/60/60?random=2",
-          channel: "项目协作",
-          materialTitle: "团队协作效率提升技巧",
-          receiver: "项目组",
-          sendTime: "2026-08-09 11:00:00",
-        },
-        {
-          id: 3,
-          cover: "https://picsum.photos/60/60?random=3",
-          channel: "产品发布",
-          materialTitle: "新功能上线通知",
-          receiver: "VIP用户",
-          sendTime: "2026-08-09 11:30:00",
-        },
-        {
-          id: 4,
-          cover: "https://picsum.photos/60/60?random=4",
-          channel: "技术交流",
-          materialTitle: "React 18 新特性解析",
-          receiver: "开发者群",
-          sendTime: "2026-08-09 12:00:00",
-        },
-        {
-          id: 5,
-          cover: "https://picsum.photos/60/60?random=5",
-          channel: "设计分享",
-          materialTitle: "UI设计趋势2026",
-          receiver: "设计组",
-          sendTime: "2026-08-09 13:00:00",
-        },
-        {
-          id: 6,
-          cover: "https://picsum.photos/60/60?random=6",
-          channel: "项目协作",
-          materialTitle: "周报提交提醒",
-          receiver: "全体成员",
-          sendTime: "2026-08-09 14:00:00",
-        },
-        {
-          id: 7,
-          cover: "https://picsum.photos/60/60?random=7",
-          channel: "产品发布",
-          materialTitle: "版本更新日志v3.2",
-          receiver: "全部用户",
-          sendTime: "2026-08-09 14:30:00",
-        },
-        {
-          id: 8,
-          cover: "https://picsum.photos/60/60?random=8",
-          channel: "技术交流",
-          materialTitle: "TypeScript 高级类型技巧",
-          receiver: "开发者群",
-          sendTime: "2026-08-09 15:00:00",
-        },
-        {
-          id: 9,
-          cover: "https://picsum.photos/60/60?random=9",
-          channel: "设计分享",
-          materialTitle: "色彩搭配方案精选",
-          receiver: "设计组",
-          sendTime: "2026-08-09 15:30:00",
-        },
-        {
-          id: 10,
-          cover: "https://picsum.photos/60/60?random=10",
-          channel: "项目协作",
-          materialTitle: "项目进度汇报通知",
-          receiver: "项目组",
-          sendTime: "2026-08-09 16:00:00",
-        },
-      ],
+      searchForm: { channelId: '', sender: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: []
     };
   },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = { pageNo: this.pagination.pageNo, pageSize: this.pagination.pageSize };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getChannelMessagePage(params);
+        this.tabValue = data.list.map((item) => {
+          const obj = {};
+          obj.id = item.id || '';
+          obj.channelId = item.channelId || '';
+          obj.sender = item.sender || '';
+          obj.type = item.type || '';
+          obj.content = item.content || '';
+          obj.status = item.status || '';
+          obj.sendTime = item.sendTime || '';
+          return obj;
+        });
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => {
+        this.searchForm[key] = '';
+      });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    handleAdd() {
+      alert('新增功能待实现');
+    },
+    handleEdit(item) {
+      alert('编辑功能待实现');
+    },
+    async handleDelete(item) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteChannelMessage(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    }
+  }
 };
 </script>
 

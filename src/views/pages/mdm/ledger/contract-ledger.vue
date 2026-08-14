@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>台账主编码</span>
-            <input type="text" placeholder="请输入" />
+            <input type="text" placeholder="请输入" v-model="searchForm.code" />
           </div>
           <div>
             <span>合同编号</span>
-            <input type="text" placeholder="请输入" />
+            <input type="text" placeholder="请输入" v-model="searchForm.contractNo" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>合同主数据</div>
           <div>
-            <button>+新增计量单位</button>
+            <button @click="handleAdd">+新增合同台账</button>
             <button>🔍</button>
           </div>
           <div>
@@ -61,8 +61,8 @@
                 <td>{{ item.status }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
@@ -70,8 +70,15 @@
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -80,272 +87,86 @@
 </template>
 
 <script>
+// ========== 导入合同台账相关API ==========
+import { getContractLedgerPage, deleteContractLedger } from '#/api/mdm/ledger/contract-ledger';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "HT-2024-001",
-          contractNo: "CON-2024-0001",
-          contractName: "年度采购框架协议",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-001",
-          otherParty: "华为技术有限公司",
-          amount: 2500000.0,
-          source: "手工录入",
-          status: "已生效",
-          createTime: "2024-01-15 09:30:00",
-        },
-        {
-          id: 2,
-          code: "HT-2024-002",
-          contractNo: "CON-2024-0002",
-          contractName: "设备采购合同",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-003",
-          otherParty: "腾讯科技（深圳）有限公司",
-          amount: 1800000.0,
-          source: "系统同步",
-          status: "审批中",
-          createTime: "2024-01-18 14:20:00",
-        },
-        {
-          id: 3,
-          code: "HT-2024-003",
-          contractNo: "CON-2024-0003",
-          contractName: "技术服务合作协议",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-005",
-          otherParty: "京东集团股份有限公司",
-          amount: 3200000.0,
-          source: "手工录入",
-          status: "已生效",
-          createTime: "2024-01-20 11:45:00",
-        },
-        {
-          id: 4,
-          code: "HT-2024-004",
-          contractNo: "CON-2024-0004",
-          contractName: "原材料供应合同",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-007",
-          otherParty: "上海汽车集团股份有限公司",
-          amount: 5600000.0,
-          source: "系统同步",
-          status: "已废止",
-          createTime: "2024-01-22 16:10:00",
-        },
-        {
-          id: 5,
-          code: "HT-2024-005",
-          contractNo: "CON-2024-0005",
-          contractName: "物流服务框架合同",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-010",
-          otherParty: "顺丰速运有限公司",
-          amount: 980000.0,
-          source: "手工录入",
-          status: "已生效",
-          createTime: "2024-01-25 10:00:00",
-        },
-        {
-          id: 6,
-          code: "HT-2024-006",
-          contractNo: "CON-2024-0006",
-          contractName: "品牌授权合作协议",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-002",
-          otherParty: "阿里巴巴集团控股有限公司",
-          amount: 15000000.0,
-          source: "系统同步",
-          status: "审批中",
-          createTime: "2024-01-28 13:30:00",
-        },
-        {
-          id: 7,
-          code: "HT-2024-007",
-          contractNo: "CON-2024-0007",
-          contractName: "设备租赁合同",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-009",
-          otherParty: "珠海格力电器股份有限公司",
-          amount: 860000.0,
-          source: "手工录入",
-          status: "已生效",
-          createTime: "2024-02-01 09:15:00",
-        },
-        {
-          id: 8,
-          code: "HT-2024-008",
-          contractNo: "CON-2024-0008",
-          contractName: "软件开发服务合同",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-006",
-          otherParty: "百度网络技术有限公司",
-          amount: 4200000.0,
-          source: "系统同步",
-          status: "已废止",
-          createTime: "2024-02-03 15:40:00",
-        },
-        {
-          id: 9,
-          code: "HT-2024-009",
-          contractNo: "CON-2024-0009",
-          contractName: "保险服务框架协议",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-008",
-          otherParty: "中国平安保险（集团）股份有限公司",
-          amount: 1200000.0,
-          source: "手工录入",
-          status: "已生效",
-          createTime: "2024-02-05 11:20:00",
-        },
-        {
-          id: 10,
-          code: "HT-2024-010",
-          contractNo: "CON-2024-0010",
-          contractName: "仓储服务合同",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-012",
-          otherParty: "网易（杭州）网络有限公司",
-          amount: 750000.0,
-          source: "系统同步",
-          status: "审批中",
-          createTime: "2024-02-08 08:50:00",
-        },
-        {
-          id: 11,
-          code: "HT-2024-011",
-          contractNo: "CON-2024-0011",
-          contractName: "新能源汽车采购合同",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-011",
-          otherParty: "比亚迪股份有限公司",
-          amount: 28000000.0,
-          source: "手工录入",
-          status: "已生效",
-          createTime: "2024-02-10 14:00:00",
-        },
-        {
-          id: 12,
-          code: "HT-2024-012",
-          contractNo: "CON-2024-0012",
-          contractName: "通讯设备采购合同",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-013",
-          otherParty: "中兴通讯股份有限公司",
-          amount: 5600000.0,
-          source: "系统同步",
-          status: "已废止",
-          createTime: "2024-02-12 10:30:00",
-        },
-        {
-          id: 13,
-          code: "HT-2024-013",
-          contractNo: "CON-2024-0013",
-          contractName: "移动通信服务合同",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-014",
-          otherParty: "中国移动通信集团有限公司",
-          amount: 2300000.0,
-          source: "手工录入",
-          status: "已生效",
-          createTime: "2024-02-15 16:45:00",
-        },
-        {
-          id: 14,
-          code: "HT-2024-014",
-          contractNo: "CON-2024-0014",
-          contractName: "家电采购框架协议",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-015",
-          otherParty: "美的集团股份有限公司",
-          amount: 6800000.0,
-          source: "系统同步",
-          status: "审批中",
-          createTime: "2024-02-18 09:00:00",
-        },
-        {
-          id: 15,
-          code: "HT-2024-015",
-          contractNo: "CON-2024-0015",
-          contractName: "商业地产租赁合同",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-016",
-          otherParty: "万达集团股份有限公司",
-          amount: 3500000.0,
-          source: "手工录入",
-          status: "已生效",
-          createTime: "2024-02-20 13:20:00",
-        },
-        {
-          id: 16,
-          code: "HT-2024-016",
-          contractNo: "CON-2024-0016",
-          contractName: "计算机设备采购合同",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-017",
-          otherParty: "联想（北京）有限公司",
-          amount: 4200000.0,
-          source: "系统同步",
-          status: "已生效",
-          createTime: "2024-02-22 11:10:00",
-        },
-        {
-          id: 17,
-          code: "HT-2024-017",
-          contractNo: "CON-2024-0017",
-          contractName: "出行服务合作协议",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-018",
-          otherParty: "滴滴出行科技有限公司",
-          amount: 1500000.0,
-          source: "手工录入",
-          status: "已废止",
-          createTime: "2024-02-25 15:30:00",
-        },
-        {
-          id: 18,
-          code: "HT-2024-018",
-          contractNo: "CON-2024-0018",
-          contractName: "零售合作框架协议",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-019",
-          otherParty: "苏宁易购集团股份有限公司",
-          amount: 8900000.0,
-          source: "系统同步",
-          status: "审批中",
-          createTime: "2024-02-28 08:40:00",
-        },
-        {
-          id: 19,
-          code: "HT-2024-019",
-          contractNo: "CON-2024-0019",
-          contractName: "智能终端采购合同",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-020",
-          otherParty: "TCL科技集团股份有限公司",
-          amount: 12000000.0,
-          source: "手工录入",
-          status: "已生效",
-          createTime: "2024-03-01 14:50:00",
-        },
-        {
-          id: 20,
-          code: "HT-2024-020",
-          contractNo: "CON-2024-0020",
-          contractName: "电子元器件供应合同",
-          ourParty: "深圳科技有限公司",
-          customerCode: "CUST-2024-004",
-          otherParty: "北京小米科技有限责任公司",
-          amount: 7300000.0,
-          source: "系统同步",
-          status: "已生效",
-          createTime: "2024-03-03 10:25:00",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        code: '',
+        contractNo: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getContractLedgerPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          code: item.code || '',
+          contractNo: item.contractNo || '',
+          contractName: item.contractName || '',
+          ourParty: item.ourParty || '',
+          customerCode: item.customerCode || '',
+          otherParty: item.otherParty || '',
+          amount: item.amount / 100 || 0,
+          source: item.source === 1 ? '手工录入' : '系统同步',
+          status: this.getStatusName(item.status),
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 状态转换
+    getStatusName(status) {
+      const map = { 0: '审批中', 1: '已生效', 2: '已废止' };
+      return map[status] || '未知';
+    },
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 新增
+    handleAdd() { alert('新增功能待实现'); },
+    // 编辑
+    handleEdit(item) { alert('编辑功能待实现'); },
+    // 删除
+    async handleDelete(item) {
+      if (!confirm(`确定要删除合同台账"${item.contractName}"吗？`)) return;
+      try {
+        await deleteContractLedger(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>

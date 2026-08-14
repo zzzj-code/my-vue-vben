@@ -3,119 +3,86 @@
     <div class="app">
       <div class="app-top">
         <div class="top-inp">
-          <div>
-            <span>知识库名称</span>
-            <input type="text" placeholder="请输入知识库名称" />
-          </div>
-          <div>
-            <span>是否启用</span>
-            <input type="text" placeholder="请输入" />
-          </div>
-          <div>
-            <button>重置</button>
-            <button>搜索</button>
-            收起^
-          </div>
+          <div><span>知识库名称</span><input type="text" placeholder="请输入知识库名称" v-model="searchForm.name" /></div>
+          <div><span>是否启用</span><input type="text" placeholder="请输入" v-model="searchForm.status" /></div>
+          <div><button @click="handleReset">重置</button><button @click="handleSearch">搜索</button>收起^</div>
         </div>
       </div>
       <div class="app-main">
         <div class="main-top">
           <div>AI 知识库列表</div>
-          <div>
-            <button>+新增AI 知识库</button>
-            <button>🔍</button>
-          </div>
-          <div>
-            <button>⟳</button>
-            <button>⛶</button>
-            <button>⊞</button>
-          </div>
+          <div><button @click="handleAdd">+新增AI 知识库</button><button>🔍</button></div>
+          <div><button>⟳</button><button>⛶</button><button>⊞</button></div>
         </div>
         <div class="main-tab">
           <table>
-            <thead>
-              <tr>
-                <th><div class="th-cell">编号</div></th>
+            <thead><tr>                <th><div class="th-cell">编号</div></th>
                 <th><div class="th-cell">知识库名称</div></th>
                 <th><div class="th-cell">知识库描述</div></th>
                 <th><div class="th-cell">向量化模型</div></th>
                 <th><div class="th-cell">是否启用</div></th>
                 <th><div class="th-cell">创建时间</div></th>
                 <th class="ol-col"><div class="th-cell">操作</div></th>
-              </tr>
-            </thead>
+              </tr></thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.description }}</td>
-                <td>{{ item.model }}</td>
-                <td>{{ item.enabled }}</td>
+                <td>{{ item.modelId }}</td>
+                <td>{{ item.status === 0 ? '启用' : '禁用' }}</td>
                 <td>{{ item.createTime }}</td>
-                <td class="ol-col">
-                  <button>编辑</button>
-                  <button>文档</button>
-                  <button style="width: 84px;">召回测试</button>
-                  <button>删除</button>
-                </td>
+                <td class="ol-col"><button @click="handleEdit(item)">编辑</button><button @click="handleDelete(item)">删除</button></td>
               </tr>
+              <tr v-if="tabValue.length === 0"><td colspan="7"><div class="asd">暂无数据</div></td></tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
-          <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+          <div class="left-info">共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span></div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
-
 <script>
+import { getKnowledgePage, deleteKnowledge } from '#/api/ai/knowledge/knowledge';
 export default {
-  data() {
-    return {
-      tabValue: [
-        {
-          id: 1,
-          name: "智能客服知识库",
-          description: "包含常见问题与话术",
-          model: "text-embedding-ada-002",
-          enabled: "是",
-          createTime: "2026-01-15 10:30:00",
-        },
-        {
-          id: 2,
-          name: "产品文档库",
-          description: "产品使用手册与FAQ",
-          model: "text-embedding-3-small",
-          enabled: "是",
-          createTime: "2026-02-20 14:20:00",
-        },
-        {
-          id: 3,
-          name: "内部培训资料",
-          description: "员工培训课程与试题",
-          model: "text-embedding-ada-002",
-          enabled: "否",
-          createTime: "2026-03-01 09:00:00",
-        },
-        {
-          id: 4,
-          name: "市场分析报告",
-          description: "行业调研与竞品分析",
-          model: "text-embedding-3-large",
-          enabled: "是",
-          createTime: "2026-04-10 16:45:00",
-        },
-      ],
-    };
+  data() { return { searchForm: { name: '', status: '' }, pagination: { pageNo: 1, pageSize: 10, total: 0 }, tabValue: [] }; },
+  mounted() { this.loadList(); },
+  methods: {
+    async loadList() {
+      try {
+        const params = { pageNo: this.pagination.pageNo, pageSize: this.pagination.pageSize };
+        Object.keys(this.searchForm).forEach((key) => { if (this.searchForm[key]) params[key] = this.searchForm[key]; });
+        const data = await getKnowledgePage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          name: item.name || '',
+          description: item.description || '',
+          modelId: item.modelId || '',
+          status: item.status || '',
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) { console.error('获取列表失败', err); }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() { Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; }); this.pagination.pageNo = 1; this.loadList(); },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(item) { alert('编辑功能待实现'); },
+    async handleDelete(item) { if (!confirm('确定要删除吗？')) return; try { await deleteKnowledge(item.id); alert('删除成功'); this.loadList(); } catch (err) { console.error('删除失败', err); } },
   },
 };
 </script>
-
 <style scoped>
 .page-wrapper {
   width: 1030px;
@@ -338,3 +305,6 @@ export default {
   padding-top: 3px;
 }
 </style>
+
+
+

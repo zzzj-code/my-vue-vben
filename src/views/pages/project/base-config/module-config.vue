@@ -8,23 +8,23 @@
         >
       </div>
       <div class="app-main">
-        <div class="main-box" v-for="value in 8">
+        <div class="main-box" v-for="(item, index) in tabValue" :key="item.id || index">
           <div class="module-card">
             <div class="card-head">
               <div>
-                <div class="module-title">成本核算<span class="status-badge">已落地</span></div>
-                <div class="module-subtitle">cost</div>
+                <div class="module-title">{{ item.moduleName || item.name }}<span class="status-badge">{{ item.statusText || '已落地' }}</span></div>
+                <div class="module-subtitle">{{ item.moduleCode || item.code }}</div>
               </div>
               <div class="module-status">
                 <label class="switch">
-                  <input type="checkbox" checked />
+                  <input type="checkbox" :checked="item.enabled" @change="handleToggle(item)" />
                   <span class="slider"></span>
                 </label>
               </div>
             </div>
             <div class="card-body">
-              <div class="module-desc">工时归集、预算基线与盈利分析</div>
-              <div class="module-tip">启用效果：显示「工时记录」「预算/成本」「盈利分析」Tab</div>
+              <div class="module-desc">{{ item.description || item.desc }}</div>
+              <div class="module-tip">{{ item.tip || '' }}</div>
             </div>
           </div>
         </div>
@@ -33,7 +33,63 @@
   </div>
 </template>
 
-<script></script>
+<script>
+import { getProjectModuleConfigPage, deleteProjectModuleConfig } from '#/api/project/base-config/module-config';
+
+export default {
+  data() {
+    return {
+      searchForm: {  },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: []
+    };
+  },
+  created() {
+    this.loadData();
+  },
+  methods: {
+    async loadData() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm
+        };
+        const res = await getProjectModuleConfigPage(params);
+        this.tabValue = res.list || res.records || [];
+        this.pagination.total = res.total || 0;
+      } catch (e) {
+        console.error('加载数据失败', e);
+      }
+    },
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleReset() {
+      this.searchForm = {  };
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleAdd() {
+      alert('新增功能');
+    },
+    async handleDelete(id) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteProjectModuleConfig(id);
+        this.loadData();
+      } catch (e) {
+        console.error('删除失败', e);
+      }
+    },
+    handleToggle(item) {
+      item.enabled = !item.enabled;
+      console.log('切换模块状态', item);
+    },
+  }
+};
+</script>
 
 <style scoped>
 .page-wrapper {

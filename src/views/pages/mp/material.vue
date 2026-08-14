@@ -5,14 +5,14 @@
         <div class="top-inp">
           <div>
             <span>公众号</span>
-            <input type="text" placeholder="1" />
+            <input type="text" placeholder="1" v-model="searchForm.accountId" />
           </div>
           <div>
             
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -21,13 +21,13 @@
         <div class="main-top">
           <div class="top-1">
             <div class="top-1-1">
-                <div class="top-item">图片</div>
-                <div class="top-item">语音</div>
-                <div class="top-item">视频</div>
+                <div class="top-item" :class="{active: currentType === 'image'}" @click="switchType('image')">图片</div>
+                <div class="top-item" :class="{active: currentType === 'voice'}" @click="switchType('voice')">语音</div>
+                <div class="top-item" :class="{active: currentType === 'video'}" @click="switchType('video')">视频</div>
             </div>
           </div>
           <div>
-            <button>+点击上传</button>
+            <button @click="handleUpload">+点击上传</button>
             <button>🔍</button>
           </div>
           <div>
@@ -48,14 +48,32 @@
               </tr>
             </thead>
             <tbody>
-              <div class="asd">暂无数据</div>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td>{{ item.id }}</td>
+                <td>{{ item.name }}</td>
+                <td><img :src="item.url" style="width:40px;height:40px" v-if="item.url" /></td>
+                <td>{{ item.createTime }}</td>
+                <td class="ol-col">
+                  <button @click="handleDelete(item)">删除</button>
+                </td>
+              </tr>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="5"><div class="asd">暂无数据</div></td>
+              </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -64,13 +82,80 @@
 </template>
 
 <script>
+// ========== 导入公众号素材相关API ==========
+import { getMaterialPage, deletePermanentMaterial } from '#/api/mp/material';
+
 export default {
   data() {
     return {
-      tabValue: [
-        
-      ],
+      // 当前素材类型
+      currentType: 'image',
+      // 搜索表单
+      searchForm: {
+        accountId: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          type: this.currentType,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getMaterialPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          name: item.name || '',
+          url: item.url || '',
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 切换素材类型
+    switchType(type) {
+      this.currentType = type;
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 上传
+    handleUpload() { alert('上传功能待实现'); },
+    // 删除
+    async handleDelete(item) {
+      if (!confirm('确定要删除该素材吗？')) return;
+      try {
+        await deletePermanentMaterial(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>

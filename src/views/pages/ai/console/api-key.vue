@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>名称</span>
-            <input type="text" placeholder="请输入名称" />
+            <input type="text" placeholder="请输入名称" v-model="searchForm.name" />
           </div>
           <div>
             <span>平台</span>
-            <input type="text" placeholder="请输入" />
+            <input type="text" placeholder="请输入" v-model="searchForm.platform" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>API 密钥列表</div>
           <div>
-            <button>+新增API 密钥</button>
+            <button @click="handleAdd">+新增API 密钥</button>
             <button>🔍</button>
           </div>
           <div>
@@ -44,24 +44,34 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.platform }}</td>
                 <td>{{ item.name }}</td>
-                <td>{{ item.key }}</td>
-                <td>{{ item.apiUrl }}</td>
-                <td>{{ item.status }}</td>
+                <td>{{ item.apiKey }}</td>
+                <td>{{ item.url }}</td>
+                <td>{{ item.status === 0 ? '启用' : '禁用' }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
+              </tr>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="6"><div class="asd">暂无数据</div></td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -70,152 +80,76 @@
 </template>
 
 <script>
+// ========== 导入AI API密钥相关API ==========
+import { getApiKeyPage, deleteApiKey } from '#/api/ai/model/apiKey';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          platform: "OpenAI",
-          name: "生产环境密钥",
-          key: "sk-prod-8x7f9a2b3c4d5e6f",
-          apiUrl: "https://api.openai.com/v1",
-          status: "启用",
-        },
-        {
-          platform: "Azure",
-          name: "测试环境密钥",
-          key: "az-test-9d8c7b6a5f4e3d2c",
-          apiUrl: "https://azure.openai.azure.com",
-          status: "启用",
-        },
-        {
-          platform: "Anthropic",
-          name: "Claude 主密钥",
-          key: "sk-ant-1a2b3c4d5e6f7g8h",
-          apiUrl: "https://api.anthropic.com",
-          status: "启用",
-        },
-        {
-          platform: "Google",
-          name: "Gemini 密钥",
-          key: "gl-9i8j7k6l5m4n3o2p",
-          apiUrl: "https://generativelanguage.googleapis.com",
-          status: "禁用",
-        },
-        {
-          platform: "OpenAI",
-          name: "开发环境密钥",
-          key: "sk-dev-2c3d4e5f6g7h8i9j",
-          apiUrl: "https://api.openai.com/v1",
-          status: "启用",
-        },
-        {
-          platform: "Azure",
-          name: "生产环境密钥",
-          key: "az-prod-1a2b3c4d5e6f7g8h",
-          apiUrl: "https://azure.openai.azure.com",
-          status: "启用",
-        },
-        {
-          platform: "智谱AI",
-          name: "GLM 主密钥",
-          key: "zhipu-9i8j7k6l5m4n3o2p",
-          apiUrl: "https://open.bigmodel.cn/api",
-          status: "启用",
-        },
-        {
-          platform: "百度",
-          name: "文心一言密钥",
-          key: "baidu-3d4e5f6g7h8i9j0k",
-          apiUrl: "https://aip.baidubce.com",
-          status: "禁用",
-        },
-        {
-          platform: "阿里",
-          name: "通义千问密钥",
-          key: "ali-4e5f6g7h8i9j0k1l",
-          apiUrl: "https://dashscope.aliyuncs.com",
-          status: "启用",
-        },
-        {
-          platform: "腾讯",
-          name: "混元大模型密钥",
-          key: "tencent-5f6g7h8i9j0k1l2m",
-          apiUrl: "https://hunyuan.tencent.com",
-          status: "启用",
-        },
-        {
-          platform: "OpenAI",
-          name: "备用密钥",
-          key: "sk-backup-6g7h8i9j0k1l2m3n",
-          apiUrl: "https://api.openai.com/v1",
-          status: "禁用",
-        },
-        {
-          platform: "Azure",
-          name: "欧洲区域密钥",
-          key: "az-eu-7h8i9j0k1l2m3n4o",
-          apiUrl: "https://azure.openai.azure.com",
-          status: "启用",
-        },
-        {
-          platform: "Anthropic",
-          name: "Claude 备用密钥",
-          key: "sk-ant-8i9j0k1l2m3n4o5p",
-          apiUrl: "https://api.anthropic.com",
-          status: "禁用",
-        },
-        {
-          platform: "Google",
-          name: "Vertex AI 密钥",
-          key: "gl-vertex-9j0k1l2m3n4o5p6q",
-          apiUrl: "https://aiplatform.googleapis.com",
-          status: "启用",
-        },
-        {
-          platform: "智谱AI",
-          name: "GLM 备用密钥",
-          key: "zhipu-0k1l2m3n4o5p6q7r",
-          apiUrl: "https://open.bigmodel.cn/api",
-          status: "启用",
-        },
-        {
-          platform: "百度",
-          name: "文心一言备用",
-          key: "baidu-1l2m3n4o5p6q7r8s",
-          apiUrl: "https://aip.baidubce.com",
-          status: "禁用",
-        },
-        {
-          platform: "阿里",
-          name: "通义千问备用",
-          key: "ali-2m3n4o5p6q7r8s9t",
-          apiUrl: "https://dashscope.aliyuncs.com",
-          status: "启用",
-        },
-        {
-          platform: "腾讯",
-          name: "混元备用密钥",
-          key: "tencent-3n4o5p6q7r8s9t0u",
-          apiUrl: "https://hunyuan.tencent.com",
-          status: "禁用",
-        },
-        {
-          platform: "OpenAI",
-          key: "sk-prod-4o5p6q7r8s9t0u1v",
-          name: "新加坡区域密钥",
-          apiUrl: "https://api.openai.com/v1",
-          status: "启用",
-        },
-        {
-          platform: "Azure",
-          key: "az-asia-5p6q7r8s9t0u1v2w",
-          name: "亚洲区域密钥",
-          apiUrl: "https://azure.openai.azure.com",
-          status: "启用",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        name: '',
+        platform: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getApiKeyPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          platform: item.platform || '',
+          name: item.name || '',
+          apiKey: item.apiKey || '',
+          url: item.url || '',
+          status: item.status || 0,
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 新增
+    handleAdd() { alert('新增功能待实现'); },
+    // 编辑
+    handleEdit(item) { alert('编辑功能待实现'); },
+    // 删除
+    async handleDelete(item) {
+      if (!confirm(`确定要删除"${item.name}"吗？`)) return;
+      try {
+        await deleteApiKey(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>

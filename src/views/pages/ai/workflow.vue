@@ -3,101 +3,86 @@
     <div class="app">
       <div class="app-top">
         <div class="top-inp">
-          <div>
-            <span>流程标识</span>
-            <input type="text" placeholder="请输入流程标识" />
-          </div>
-          <div>
-            <span>流程名称</span>
-            <input type="text" placeholder="请输入" />
-          </div>
-          <div>
-            <button>重置</button>
-            <button>搜索</button>
-            收起^
-          </div>
+          <div><span>流程标识</span><input type="text" placeholder="请输入流程标识" v-model="searchForm.flowCode" /></div>
+          <div><span>流程名称</span><input type="text" placeholder="请输入" v-model="searchForm.flowName" /></div>
+          <div><button @click="handleReset">重置</button><button @click="handleSearch">搜索</button>收起^</div>
         </div>
       </div>
       <div class="app-main">
         <div class="main-top">
           <div>AI 工作流列表</div>
-          <div>
-            <button>+新增AI 工作流</button>
-            <button>🔍</button>
-          </div>
-          <div>
-            <button>⟳</button>
-            <button>⛶</button>
-            <button>⊞</button>
-          </div>
+          <div><button @click="handleAdd">+新增AI 工作流</button><button>🔍</button></div>
+          <div><button>⟳</button><button>⛶</button><button>⊞</button></div>
         </div>
         <div class="main-tab">
           <table>
-            <thead>
-              <tr>
-                <th><div class="th-cell">编号</div></th>
+            <thead><tr>                <th><div class="th-cell">编号</div></th>
                 <th><div class="th-cell">流程标识</div></th>
                 <th><div class="th-cell">流程名称</div></th>
                 <th><div class="th-cell">创建时间</div></th>
                 <th><div class="th-cell">备注</div></th>
                 <th><div class="th-cell">状态</div></th>
                 <th class="ol-col"><div class="th-cell">操作</div></th>
-              </tr>
-            </thead>
+              </tr></thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
                 <td>{{ item.flowCode }}</td>
                 <td>{{ item.flowName }}</td>
                 <td>{{ item.createTime }}</td>
                 <td>{{ item.remark }}</td>
-                <td>{{ item.status }}</td>
-                <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
-                </td>
+                <td>{{ item.status === 0 ? '启用' : '禁用' }}</td>
+                <td class="ol-col"><button @click="handleEdit(item)">编辑</button><button @click="handleDelete(item)">删除</button></td>
               </tr>
+              <tr v-if="tabValue.length === 0"><td colspan="7"><div class="asd">暂无数据</div></td></tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
-          <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+          <div class="left-info">共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span></div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
-
 <script>
+import { getWorkflowPage, deleteWorkflow } from '#/api/ai/workflow';
 export default {
-  data() {
-    return {
-      tabValue: [
-        {
-          id: 1,
-          flowCode: "WF_CUSTOMER_SERVICE_001",
-          flowName: "智能客服工作流",
-          createTime: "2026-01-15 10:30:00",
-          remark: "处理客户咨询与投诉",
-          status: "启用",
-        },
-        {
-          id: 2,
-          flowCode: "WF_ORDER_AUDIT_002",
-          flowName: "订单审核工作流",
-          createTime: "2026-03-20 14:20:00",
-          remark: "自动化订单审核流程",
-          status: "停用",
-        },
-      ],
-    };
+  data() { return { searchForm: { flowCode: '', flowName: '' }, pagination: { pageNo: 1, pageSize: 10, total: 0 }, tabValue: [] }; },
+  mounted() { this.loadList(); },
+  methods: {
+    async loadList() {
+      try {
+        const params = { pageNo: this.pagination.pageNo, pageSize: this.pagination.pageSize };
+        Object.keys(this.searchForm).forEach((key) => { if (this.searchForm[key]) params[key] = this.searchForm[key]; });
+        const data = await getWorkflowPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          flowCode: item.flowCode || '',
+          flowName: item.flowName || '',
+          createTime: item.createTime || '',
+          remark: item.remark || '',
+          status: item.status || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) { console.error('获取列表失败', err); }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() { Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; }); this.pagination.pageNo = 1; this.loadList(); },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(item) { alert('编辑功能待实现'); },
+    async handleDelete(item) { if (!confirm('确定要删除吗？')) return; try { await deleteWorkflow(item.id); alert('删除成功'); this.loadList(); } catch (err) { console.error('删除失败', err); } },
   },
 };
 </script>
-
 <style scoped>
 .page-wrapper {
   width: 1030px;
@@ -320,3 +305,6 @@ export default {
   padding-top: 3px;
 }
 </style>
+
+
+

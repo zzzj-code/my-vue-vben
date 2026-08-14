@@ -5,24 +5,24 @@
         <div class="top-inp">
           <div>
             <span>发起人</span>
-            <input type="text" placeholder="" />
+            <input type="text" placeholder="请输入发起人" v-model="searchForm.initiator" />
           </div>
           <div>
             <span>会话类型</span>
-            <input type="text" placeholder="" />
+            <input type="text" placeholder="请输入会话类型" v-model="searchForm.sessionType" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
       </div>
       <div class="app-main">
         <div class="main-top">
-          <div>通话记录列表</div>
+          <div>列表</div>
           <div>
-            <button style="background-color: #fff">+新增工具</button>
+            <button @click="handleAdd">+新增</button>
             <button>🔍</button>
           </div>
           <div>
@@ -52,23 +52,34 @@
                 <td>{{ item.id }}</td>
                 <td>{{ item.initiator }}</td>
                 <td>{{ item.sessionType }}</td>
-                <td>{{ item.group }}</td>
+                <td>{{ item.groupId }}</td>
                 <td>{{ item.mediaType }}</td>
                 <td>{{ item.callStatus }}</td>
                 <td>{{ item.endReason }}</td>
                 <td>{{ item.duration }}</td>
                 <td>{{ item.startTime }}</td>
                 <td class="ol-col">
-                  <button>详情</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
+              </tr>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="10"><div class="asd">暂无数据</div></td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -77,35 +88,77 @@
 </template>
 
 <script>
+import { getRtcRecordPage, deleteRtcRecord } from '#/api/im/rtc';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          initiator: "张三",
-          sessionType: "单聊",
-          group: "-",
-          mediaType: "语音通话",
-          callStatus: "已接通",
-          endReason: "正常挂断",
-          duration: "05:32",
-          startTime: "2026-08-09 10:30:00",
-        },
-        {
-          id: 2,
-          initiator: "李四",
-          sessionType: "群聊",
-          group: "前端技术交流群",
-          mediaType: "视频通话",
-          callStatus: "未接通",
-          endReason: "对方忙线",
-          duration: "00:00",
-          startTime: "2026-08-09 14:15:00",
-        },
-      ],
+      searchForm: { initiator: '', sessionType: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: []
     };
   },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = { pageNo: this.pagination.pageNo, pageSize: this.pagination.pageSize };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getRtcRecordPage(params);
+        this.tabValue = data.list.map((item) => {
+          const obj = {};
+          obj.id = item.id || '';
+          obj.initiator = item.initiator || '';
+          obj.sessionType = item.sessionType || '';
+          obj.groupId = item.groupId || '';
+          obj.mediaType = item.mediaType || '';
+          obj.callStatus = item.callStatus || '';
+          obj.endReason = item.endReason || '';
+          obj.duration = item.duration || '';
+          obj.startTime = item.startTime || '';
+          return obj;
+        });
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => {
+        this.searchForm[key] = '';
+      });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    handleAdd() {
+      alert('新增功能待实现');
+    },
+    handleEdit(item) {
+      alert('编辑功能待实现');
+    },
+    async handleDelete(item) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteRtcRecord(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    }
+  }
 };
 </script>
 

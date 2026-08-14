@@ -4,19 +4,19 @@
       <div class="app-top">
         <div>
           <span>工单编号</span>
-          <input type="text" placeholder="请输入工单编号" />
+          <input type="text" placeholder="请输入工单编号" v-model="searchForm.no" />
         </div>
         <div>
           <span>工单标题</span>
-          <input type="text" placeholder="请输入工单标题" />
+          <input type="text" placeholder="请输入工单标题" v-model="searchForm.title" />
         </div>
         <div>
           <span>流程状态</span>
-          <input type="text" placeholder="请输入流程状态" />
+          <input type="text" placeholder="请输入流程状态" v-model="searchForm.processStatus" />
         </div>
         <div>
-          <button>重置</button>
-          <button>搜索</button>
+          <button @click="handleReset">重置</button>
+          <button @click="handleSearch">搜索</button>
           展开▽
         </div>
       </div>
@@ -24,7 +24,7 @@
         <div class="main-top">
           <div class="top-1">工单列表</div>
           <div class="top-2">
-            <button>+新增</button>
+            <button @click="handleAdd">+新增</button>
             <button disabled>批量删除</button>
             <button>🔍</button>
           </div>
@@ -65,13 +65,23 @@
                 <td>{{ item.handler }}</td>
                 <td>{{ item.creator }}</td>
                 <td>{{ item.createTime }}</td>
-                <td class="ol-col"></td>
+                <td class="ol-col">
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
-          共{{ tabValue.length }}条记录<span>20条/页</span>
+          共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+          </div>
         </div>
       </div>
     </div>
@@ -79,108 +89,81 @@
 </template>
 
 <script>
+// ========== 导入工单相关API ==========
+import { getTicketPage, deleteTicket } from '#/api/ticket/ticket';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          invoiceNo: "WO-2024-001",
-          processStatus: "审批中",
-          orderStatus: "待处理",
-          title: "服务器硬件故障维修",
-          category: "故障报修",
-          priority: "紧急",
-          handler: "张伟",
-          creator: "李娜",
-          createTime: "2024-07-15 09:30:00",
-        },
-        {
-          id: 2,
-          invoiceNo: "WO-2024-002",
-          processStatus: "已完成",
-          orderStatus: "已关闭",
-          title: "ERP系统用户权限变更",
-          category: "系统变更",
-          priority: "高",
-          handler: "王强",
-          creator: "刘洋",
-          createTime: "2024-07-16 14:20:00",
-        },
-        {
-          id: 3,
-          invoiceNo: "WO-2024-003",
-          processStatus: "待审批",
-          orderStatus: "进行中",
-          title: "数据库备份策略调整",
-          category: "配置变更",
-          priority: "中",
-          handler: "陈静",
-          creator: "杨帆",
-          createTime: "2024-07-17 11:45:00",
-        },
-        {
-          id: 4,
-          invoiceNo: "WO-2024-004",
-          processStatus: "已驳回",
-          orderStatus: "已退回",
-          title: "网络设备升级申请",
-          category: "设备升级",
-          priority: "高",
-          handler: "赵磊",
-          creator: "黄丽",
-          createTime: "2024-07-18 16:10:00",
-        },
-        {
-          id: 5,
-          invoiceNo: "WO-2024-005",
-          processStatus: "审批中",
-          orderStatus: "待处理",
-          title: "安全漏洞修复处理",
-          category: "安全事件",
-          priority: "紧急",
-          handler: "周婷",
-          creator: "吴刚",
-          createTime: "2024-07-19 10:00:00",
-        },
-        {
-          id: 6,
-          invoiceNo: "WO-2024-006",
-          processStatus: "已完成",
-          orderStatus: "已关闭",
-          title: "员工入职账号开通",
-          category: "账号管理",
-          priority: "低",
-          handler: "张伟",
-          creator: "李娜",
-          createTime: "2024-07-20 13:30:00",
-        },
-        {
-          id: 7,
-          invoiceNo: "WO-2024-007",
-          processStatus: "待审批",
-          orderStatus: "进行中",
-          title: "应用系统版本发布",
-          category: "版本发布",
-          priority: "高",
-          handler: "王强",
-          creator: "刘洋",
-          createTime: "2024-07-21 09:15:00",
-        },
-        {
-          id: 8,
-          invoiceNo: "WO-2024-008",
-          processStatus: "已驳回",
-          orderStatus: "已退回",
-          title: "服务器资源扩容申请",
-          category: "资源申请",
-          priority: "中",
-          handler: "陈静",
-          creator: "杨帆",
-          createTime: "2024-07-22 15:40:00",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        no: '',
+        title: '',
+        processStatus: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getTicketPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          invoiceNo: item.no || '',
+          processStatus: item.processStatus || '',
+          orderStatus: item.status || '',
+          title: item.title || '',
+          category: item.categoryName || '',
+          priority: item.priority || '',
+          handler: item.handlerName || '',
+          creator: item.creatorName || '',
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 新增
+    handleAdd() { alert('新增功能待实现'); },
+    // 编辑
+    handleEdit(item) { alert('编辑功能待实现'); },
+    // 删除
+    async handleDelete(item) {
+      if (!confirm(`确定要删除工单"${item.title}"吗？`)) return;
+      try {
+        await deleteTicket(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>

@@ -5,15 +5,12 @@
         <div class="top-inp">
           <div>
             <span>用户编号</span>
-            <input type="text" placeholder="请输入用户编号" />
+            <input type="text" placeholder="请输入用户编号" v-model="searchForm.userId" />
           </div>
+          <div></div>
           <div>
-            <span>提示词</span>
-            <input type="text" placeholder="请输入" />
-          </div>
-          <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -21,123 +18,68 @@
       <div class="app-main">
         <div class="main-top">
           <div>思维导图管理列表</div>
-          <div>
-            <button style="background-color: #fff">+新增绘画管理</button>
-            <button>🔍</button>
-          </div>
-          <div>
-            <button>⟳</button>
-            <button>⛶</button>
-            <button>⊞</button>
-          </div>
+          <div><button>🔍</button></div>
+          <div><button>⟳</button><button>⛶</button><button>⊞</button></div>
         </div>
         <div class="main-tab">
           <table>
             <thead>
               <tr>
                 <th><div class="th-cell">编号</div></th>
-                <th><div class="th-cell">用户</div></th>
-                <th><div class="th-cell">提示词</div></th>
-                <th><div class="th-cell">思维导图</div></th>
-                <th><div class="th-cell">模型</div></th>
+                <th><div class="th-cell">标题</div></th>
+                <th><div class="th-cell">用户编号</div></th>
                 <th><div class="th-cell">创建时间</div></th>
-                <th><div class="th-cell">错误信息</div></th>
                 <th class="ol-col"><div class="th-cell">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
-                <td>{{ item.user }}</td>
-                <td>{{ item.prompt }}</td>
-                <td>{{ item.mindmap }}</td>
-                <td>{{ item.model }}</td>
+                <td>{{ item.title }}</td>
+                <td>{{ item.userId }}</td>
                 <td>{{ item.createTime }}</td>
-                <td>{{ item.error }}</td>
-                <td class="ol-col">
-                  <button>预览</button>
-                  <button>删除</button>
-                </td>
+                <td class="ol-col"><button @click="handleDelete(item)">删除</button></td>
               </tr>
+              <tr v-if="tabValue.length === 0"><td colspan="5"><div class="asd">暂无数据</div></td></tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
-          <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+          <div class="left-info">共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span></div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
-
 <script>
+import { getMindMapPage, deleteMindMap } from '#/api/ai/mindmap';
 export default {
-  data() {
-    return {
-      tabValue: [
-        {
-          id: "M001",
-          user: "张三",
-          prompt: "Vue.js 完整学习路线图",
-          mindmap: "Vue基础 → 组件 → 路由 → 状态管理 → 项目实战",
-          model: "GPT-4 Turbo",
-          createTime: "2026-01-05 09:30:00",
-          error: "",
-        },
-        {
-          id: "M002",
-          user: "李四",
-          prompt: "AI 知识库系统架构设计",
-          mindmap: "前端层 → 业务层 → 服务层 → 数据层 → AI模型层",
-          model: "Claude 3.5 Sonnet",
-          createTime: "2026-01-10 14:20:00",
-          error: "",
-        },
-        {
-          id: "M003",
-          user: "王五",
-          prompt: "产品经理技能树",
-          mindmap: "需求分析 → 产品设计 → 项目管理 → 数据分析 → 用户研究",
-          model: "Gemini 1.5 Pro",
-          createTime: "2026-01-15 10:00:00",
-          error: "",
-        },
-        {
-          id: "M004",
-          user: "赵六",
-          prompt: "市场营销策略框架",
-          mindmap: "市场调研 → 目标定位 → 渠道策略 → 内容营销 → 效果评估",
-          model: "Qwen-Max",
-          createTime: "2026-01-20 16:45:00",
-          error: "",
-        },
-        {
-          id: "M005",
-          user: "孙七",
-          prompt: "DevOps 实施路线图",
-          mindmap: "持续集成 → 持续交付 → 自动化测试 → 监控告警 → 容器编排",
-          model: "GPT-4o",
-          createTime: "2026-01-25 11:10:00",
-          error: "",
-        },
-        {
-          id: "M006",
-          user: "周八",
-          prompt: "个人理财规划思维导图",
-          mindmap: "收入管理 → 支出控制 → 储蓄计划 → 投资配置 → 风险保障",
-          model: "GLM-4 Plus",
-          createTime: "2026-02-01 09:00:00",
-          error: "",
-        },
-      ],
-    };
+  data() { return { searchForm: { userId: '' }, pagination: { pageNo: 1, pageSize: 10, total: 0 }, tabValue: [] }; },
+  mounted() { this.loadList(); },
+  methods: {
+    async loadList() {
+      try {
+        const params = { pageNo: this.pagination.pageNo, pageSize: this.pagination.pageSize };
+        if (this.searchForm.userId) params.userId = this.searchForm.userId;
+        const data = await getMindMapPage(params);
+        this.tabValue = data.list.map((item) => ({ id: item.id || '', title: item.title || '', userId: item.userId || '', createTime: item.createTime || '' }));
+        this.pagination.total = data.total;
+      } catch (err) { console.error('获取列表失败', err); }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() { this.searchForm.userId = ''; this.pagination.pageNo = 1; this.loadList(); },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    async handleDelete(item) { if (!confirm('确定要删除吗？')) return; try { await deleteMindMap(item.id); alert('删除成功'); this.loadList(); } catch (err) { console.error('删除失败', err); } },
   },
 };
 </script>
-
 <style scoped>
 .page-wrapper {
   width: 1030px;
@@ -360,3 +302,5 @@ export default {
   padding-top: 3px;
 }
 </style>
+
+

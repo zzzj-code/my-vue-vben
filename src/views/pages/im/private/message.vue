@@ -5,24 +5,24 @@
         <div class="top-inp">
           <div>
             <span>发送人</span>
-            <input type="text" placeholder="" />
+            <input type="text" placeholder="请输入发送人" v-model="searchForm.sender" />
           </div>
           <div>
             <span>接收人</span>
-            <input type="text" placeholder="" />
+            <input type="text" placeholder="请输入接收人" v-model="searchForm.receiver" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
       </div>
       <div class="app-main">
         <div class="main-top">
-          <div>私聊消息列表</div>
+          <div>列表</div>
           <div>
-            <button style="background-color: #fff">+新增工具</button>
+            <button @click="handleAdd">+新增</button>
             <button>🔍</button>
           </div>
           <div>
@@ -52,21 +52,32 @@
                 <td>{{ item.sender }}</td>
                 <td>{{ item.receiver }}</td>
                 <td>{{ item.type }}</td>
-                <td>{{ item.preview }}</td>
+                <td>{{ item.content }}</td>
                 <td>{{ item.status }}</td>
                 <td>{{ item.receipt }}</td>
                 <td>{{ item.sendTime }}</td>
                 <td class="ol-col">
-                  <button>详情</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
+              </tr>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="9"><div class="asd">暂无数据</div></td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -75,163 +86,76 @@
 </template>
 
 <script>
+import { getPrivateMessagePage, deletePrivateMessage } from '#/api/im/private/private-message';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          sender: "张三",
-          receiver: "李四",
-          type: "文本",
-          preview: "你好，明天有空吗？",
-          status: "已读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 10:30:00",
-        },
-        {
-          id: 2,
-          sender: "王五",
-          receiver: "赵六",
-          type: "图片",
-          preview: "[图片] 风景照",
-          status: "未读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 11:15:00",
-        },
-        {
-          id: 3,
-          sender: "孙七",
-          receiver: "周八",
-          type: "文本",
-          preview: "文件已经发送给你了",
-          status: "已读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 12:00:00",
-        },
-        {
-          id: 4,
-          sender: "李四",
-          receiver: "张三",
-          type: "语音",
-          preview: "[语音] 15秒",
-          status: "已读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 13:20:00",
-        },
-        {
-          id: 5,
-          sender: "赵六",
-          receiver: "王五",
-          type: "文本",
-          preview: "收到，谢谢！",
-          status: "已读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 14:00:00",
-        },
-        {
-          id: 6,
-          sender: "周八",
-          receiver: "孙七",
-          type: "文件",
-          preview: "[文件] 项目报告.pdf",
-          status: "未读",
-          receipt: "发送中",
-          sendTime: "2026-08-09 14:45:00",
-        },
-        {
-          id: 7,
-          sender: "张三",
-          receiver: "赵六",
-          type: "文本",
-          preview: "周末一起吃饭吗？",
-          status: "已读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 15:30:00",
-        },
-        {
-          id: 8,
-          sender: "王五",
-          receiver: "李四",
-          type: "图片",
-          preview: "[图片] 美食分享",
-          status: "未读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 16:10:00",
-        },
-        {
-          id: 9,
-          sender: "孙七",
-          receiver: "张三",
-          type: "文本",
-          preview: "好的，没问题",
-          status: "已读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 17:00:00",
-        },
-        {
-          id: 10,
-          sender: "李四",
-          receiver: "周八",
-          type: "语音",
-          preview: "[语音] 30秒",
-          status: "已读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 18:20:00",
-        },
-        {
-          id: 11,
-          sender: "赵六",
-          receiver: "孙七",
-          type: "文本",
-          preview: "会议改到明天下午3点",
-          status: "未读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 19:00:00",
-        },
-        {
-          id: 12,
-          sender: "张三",
-          receiver: "王五",
-          type: "文件",
-          preview: "[文件] 工作计划.xlsx",
-          status: "已读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 20:30:00",
-        },
-        {
-          id: 13,
-          sender: "周八",
-          receiver: "李四",
-          type: "文本",
-          preview: "收到，我确认一下",
-          status: "已读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 21:00:00",
-        },
-        {
-          id: 14,
-          sender: "王五",
-          receiver: "张三",
-          type: "图片",
-          preview: "[图片] 团队合照",
-          status: "未读",
-          receipt: "发送中",
-          sendTime: "2026-08-09 22:15:00",
-        },
-        {
-          id: 15,
-          sender: "李四",
-          receiver: "赵六",
-          type: "文本",
-          preview: "好的，明天见！",
-          status: "已读",
-          receipt: "已送达",
-          sendTime: "2026-08-09 23:00:00",
-        },
-      ],
+      searchForm: { sender: '', receiver: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: []
     };
   },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = { pageNo: this.pagination.pageNo, pageSize: this.pagination.pageSize };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getPrivateMessagePage(params);
+        this.tabValue = data.list.map((item) => {
+          const obj = {};
+          obj.id = item.id || '';
+          obj.sender = item.sender || '';
+          obj.receiver = item.receiver || '';
+          obj.type = item.type || '';
+          obj.content = item.content || '';
+          obj.status = item.status || '';
+          obj.receipt = item.receipt || '';
+          obj.sendTime = item.sendTime || '';
+          return obj;
+        });
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => {
+        this.searchForm[key] = '';
+      });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    handleAdd() {
+      alert('新增功能待实现');
+    },
+    handleEdit(item) {
+      alert('编辑功能待实现');
+    },
+    async handleDelete(item) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deletePrivateMessage(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    }
+  }
 };
 </script>
 

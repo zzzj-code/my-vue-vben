@@ -6,32 +6,32 @@
           <div></div>
           <div>
             <span>总用户</span><br />
-            <span class="s1">46</span><br />
-            <span>今日新增：+0</span>
+            <span class="s1">{{ summary.totalUser }}</span><br />
+            <span>今日新增：+{{ summary.todayNewUser }}</span>
           </div>
         </div>
         <div class="top-1">
           <div style="background-color: #18a058"></div>
           <div>
             <span>总群聊</span><br />
-            <span class="s1">1</span><br />
-            <span>今日新增：+0</span>
+            <span class="s1">{{ summary.totalGroup }}</span><br />
+            <span>今日新增：+{{ summary.todayNewGroup }}</span>
           </div>
         </div>
         <div class="top-1">
           <div style="background-color: #f59e0b"></div>
           <div>
             <span>日活用户</span><br />
-            <span class="s1">0</span><br />
-            <span>周/月活：1/1</span>
+            <span class="s1">{{ summary.dailyActive }}</span><br />
+            <span>周/月活：{{ summary.weeklyActive }}/{{ summary.monthlyActive }}</span>
           </div>
         </div>
         <div class="top-1">
           <div style="background-color: #64748b"></div>
           <div>
             <span>今日消息</span><br />
-            <span class="s1">0</span><br />
-            <span>环比昨日：-100%</span>
+            <span class="s1">{{ summary.todayMessage }}</span><br />
+            <span>环比昨日：{{ summary.messageChange }}</span>
           </div>
         </div>
       </div>
@@ -73,11 +73,28 @@
 
 <script>
 import * as echarts from "echarts";
+// ========== 导入IM统计相关API ==========
+import { getImStatisticsSummary, getMessageStatisticsAnalyse } from '#/api/im/statistics';
+
 export default {
   data() {
-    return {};
+    return {
+      // 统计概览数据
+      summary: {
+        totalUser: 46,
+        todayNewUser: 0,
+        totalGroup: 1,
+        todayNewGroup: 0,
+        dailyActive: 0,
+        weeklyActive: 1,
+        monthlyActive: 1,
+        todayMessage: 0,
+        messageChange: '-100%'
+      }
+    };
   },
   mounted() {
+    this.loadStatistics();
     this.initChart1();
     this.initChart2();
     this.initChart3();
@@ -85,6 +102,27 @@ export default {
     this.initChart5();
   },
   methods: {
+    // 加载统计数据
+    async loadStatistics() {
+      try {
+        const data = await getImStatisticsSummary();
+        if (data) {
+          this.summary = {
+            totalUser: data.totalUser || 0,
+            todayNewUser: data.todayNewUser || 0,
+            totalGroup: data.totalGroup || 0,
+            todayNewGroup: data.todayNewGroup || 0,
+            dailyActive: data.dailyActive || 0,
+            weeklyActive: data.weeklyActive || 0,
+            monthlyActive: data.monthlyActive || 0,
+            todayMessage: data.todayMessage || 0,
+            messageChange: data.messageChange || '0%'
+          };
+        }
+      } catch (err) {
+        console.error('获取统计数据失败', err);
+      }
+    },
     initChart1() {
       const chart = echarts.init(this.$refs.chartRef1);
       const option = {

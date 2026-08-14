@@ -6,23 +6,23 @@
           <div class="tu"></div>
           <div class="zi">
             <div>我负责的项目</div>
-            <div>4</div>
-            <div>参与4</div>
+            <div>{{ summary.myProjectCount || 0 }}</div>
+            <div>参与{{ summary.myProjectCount || 0 }}</div>
           </div>
         </div>
         <div class="top-1">
           <div class="tu" style="background-color: #67c23a"></div>
           <div class="zi">
             <div>进行中的项目</div>
-            <div style="color: #67c23a">0</div>
-            <div style="color: red">逾期0</div>
+            <div style="color: #67c23a">{{ summary.inProgressCount || 0 }}</div>
+            <div style="color: red">逾期{{ summary.overdueTaskCount || 0 }}</div>
           </div>
         </div>
         <div class="top-1">
           <div class="tu" style="background-color: #e6a23c"></div>
           <div class="zi">
             <div>我的待办任务</div>
-            <div style="color: #e6a23c">13</div>
+            <div style="color: #e6a23c">{{ summary.todoTaskCount || 0 }}</div>
             <div>今日到期</div>
           </div>
         </div>
@@ -30,7 +30,7 @@
           <div class="tu" style="background-color: #f56c6c"></div>
           <div class="zi">
             <div>逾期任务</div>
-            <div style="color: #f56c6c">11</div>
+            <div style="color: #f56c6c">{{ summary.overdueTaskCount || 0 }}</div>
             <div>需尽快处理</div>
           </div>
         </div>
@@ -40,76 +40,13 @@
           <div class="left-top">我的待办任务<span>查看全部</span></div>
           <div class="left-main">
             <ul class="left-nav">
-              <li>
+              <li v-for="(item, index) in todoTaskList" :key="index">
                 <div class="nav-1">
-                  <div>OA需求调研<span>逾期</span></div>
-                  <div>计划结束：2026-06-13</div>
+                  <div>{{ item.taskName || item.name }}<span v-if="item.overdue">逾期</span></div>
+                  <div>计划结束：{{ item.planEndTime || item.endTime || '' }}</div>
                 </div>
                 <div class="nav-2">
-                  <div class="b">进行中</div>
-                </div>
-              </li>
-              <li>
-                <div class="nav-1">
-                  <div>系统上线<span>逾期</span></div>
-                  <div>计划结束：2026-06-30</div>
-                </div>
-                <div class="nav-2">
-                  <div>待开始</div>
-                </div>
-              </li>
-              <li>
-                <div class="nav-1">
-                  <div>系统架构设计<span>逾期</span></div>
-                  <div>计划结束：2026-03-28</div>
-                </div>
-                <div class="nav-2">
-                  <div>进行中</div>
-                </div>
-              </li>
-              <li>
-                <div class="nav-1">
-                  <div>需求规格说明书编写<span>逾期</span></div>
-                  <div>计划结束：2026-03-18</div>
-                </div>
-                <div class="nav-2">
-                  <div>进行中</div>
-                </div>
-              </li>
-              <li>
-                <div class="nav-1">
-                  <div>需求调研与访谈<span>逾期</span></div>
-                  <div>计划结束：2026-03-10</div>
-                </div>
-                <div class="nav-2">
-                  <div>进行中</div>
-                </div>
-              </li>
-              <li>
-                <div class="nav-1">
-                  <div>一、需求分析阶段<span>逾期</span></div>
-                  <div>计划结束：2026-03-20</div>
-                </div>
-                <div class="nav-2">
-                  <div>进行中</div>
-                </div>
-              </li>
-              <li>
-                <div class="nav-1">
-                  <div>管理员培训<span>逾期</span></div>
-                  <div>计划结束：2026-04-25</div>
-                </div>
-                <div class="nav-2">
-                  <div>进行中</div>
-                </div>
-              </li>
-              <li>
-                <div class="nav-1">
-                  <div>一、项目调研</div>
-                  <div>计划结束：2026-00-20</div>
-                </div>
-                <div class="nav-2">
-                  <div class="c">已完成</div>
+                  <div :class="{ b: item.status === '进行中', c: item.status === '已完成' }">{{ item.status || '进行中' }}</div>
                 </div>
               </li>
             </ul>
@@ -159,52 +96,19 @@
           <div class="floot-top">我负责的项目</div>
           <div class="floot-main2">
             <ul class="floot-nav">
-              <li>
-                <div class="box1">kingdee20260727<span>已归档</span></div>
-                <div class="box2">
-                  <div class="dbox"></div>
-                  <span>0%</span>
-                </div>
-              </li>
-              <li>
-                <div class="box1">软件研发项目20260727<span>已归档</span></div>
+              <li v-for="(item, index) in myProjectList" :key="index">
+                <div class="box1">{{ item.projectName || item.name }}<span>{{ item.status || '进行中' }}</span></div>
                 <div class="box2">
                   <div class="dbox">
                     <div
-                      style="width: 6%; height: 100%; background-color: #006be6"
+                      :style="{
+                        width: (item.progress || 0) + '%',
+                        height: '100%',
+                        backgroundColor: (item.progress || 0) >= 100 ? '#57d188' : '#006be6'
+                      }"
                     ></div>
                   </div>
-                  <span>6.78%</span>
-                </div>
-              </li>
-              <li>
-                <div class="box1">智能制造MES一期<span>已归档</span></div>
-                <div class="box2">
-                  <div class="dbox">
-                    <div
-                      style="
-                        width: 45%;
-                        height: 100%;
-                        background-color: #006be6;
-                      "
-                    ></div>
-                  </div>
-                  <span>45%</span>
-                </div>
-              </li>
-              <li>
-                <div class="box1">集团数据中台建设<span>已归档</span></div>
-                <div class="box2">
-                  <div class="dbox">
-                    <div
-                      style="
-                        width: 100%;
-                        height: 100%;
-                        background-color: #57d188;
-                      "
-                    ></div>
-                  </div>
-                  <span>100%</span>
+                  <span>{{ item.progress || 0 }}%</span>
                 </div>
               </li>
             </ul>
@@ -214,7 +118,7 @@
           <div class="floot-top">最近动态</div>
           <div class="floot-main3">
             <ul class="main3-nav">
-              <li v-for="value in 15">
+              <li v-for="(item, index) in recentList" :key="index">
                 <div class="div1">
                     <div style="width: 10px; height: 10px; border-radius: 50%;
                     background-color: #57d188;"></div>
@@ -222,14 +126,14 @@
                 </div>
                 <div class="div2">
                   <div class="li-1">
-                    <span>任务</span>执行明细制度更新<br /><span
-                      >· kingdee20260727</span
+                    <span>{{ item.type || '任务' }}</span>{{ item.title || item.content || '' }}<br /><span
+                      >· {{ item.projectName || '' }}</span
                     >
                   </div>
                   <div class="li-2">
-                    执行明细【12121】进度更新至 0.00%，登记工时 2h
+                    {{ item.description || item.detail || '' }}
                   </div>
-                  <div class="li-3">宇擎源码 · 2026-07-29 16:46:15</div>
+                  <div class="li-3">{{ item.creator || '' }} · {{ item.createTime || '' }}</div>
                 </div>
               </li>
             </ul>
@@ -240,7 +144,65 @@
   </div>
 </template>
 
-<script></script>
+<script>
+import { getProjectHomeSummary, getMyTodoTaskList, getMyProjectList, getMyRecentList } from '#/api/project/project-home';
+
+export default {
+  data() {
+    return {
+      summary: {
+        myProjectCount: 0,
+        inProgressCount: 0,
+        todoTaskCount: 0,
+        overdueTaskCount: 0
+      },
+      todoTaskList: [],
+      myProjectList: [],
+      recentList: []
+    };
+  },
+  created() {
+    this.loadSummary();
+    this.loadTodoTaskList();
+    this.loadMyProjectList();
+    this.loadRecentList();
+  },
+  methods: {
+    async loadSummary() {
+      try {
+        const res = await getProjectHomeSummary();
+        this.summary = res || this.summary;
+      } catch (e) {
+        console.error('加载统计失败', e);
+      }
+    },
+    async loadTodoTaskList() {
+      try {
+        const res = await getMyTodoTaskList({ pageNo: 1, pageSize: 8 });
+        this.todoTaskList = res.list || res.records || [];
+      } catch (e) {
+        console.error('加载待办任务失败', e);
+      }
+    },
+    async loadMyProjectList() {
+      try {
+        const res = await getMyProjectList({ pageNo: 1, pageSize: 6 });
+        this.myProjectList = res.list || res.records || [];
+      } catch (e) {
+        console.error('加载我的项目失败', e);
+      }
+    },
+    async loadRecentList() {
+      try {
+        const res = await getMyRecentList({ limit: 15 });
+        this.recentList = res.list || res.records || res || [];
+      } catch (e) {
+        console.error('加载最近动态失败', e);
+      }
+    }
+  }
+};
+</script>
 
 <style scoped>
 .page-wrapper {

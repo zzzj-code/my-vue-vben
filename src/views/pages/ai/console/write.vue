@@ -5,15 +5,12 @@
         <div class="top-inp">
           <div>
             <span>用户编号</span>
-            <input type="text" placeholder="请输入用户编号" />
+            <input type="text" placeholder="请输入用户编号" v-model="searchForm.userId" />
           </div>
+          <div></div>
           <div>
-            <span>写作类型</span>
-            <input type="text" placeholder="请输入" />
-          </div>
-          <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -21,130 +18,68 @@
       <div class="app-main">
         <div class="main-top">
           <div>写作管理列表</div>
-          <div>
-            <button style="background-color: #fff">+新增绘画管理</button>
-            <button>🔍</button>
-          </div>
-          <div>
-            <button>⟳</button>
-            <button>⛶</button>
-            <button>⊞</button>
-          </div>
+          <div><button>🔍</button></div>
+          <div><button>⟳</button><button>⛶</button><button>⊞</button></div>
         </div>
         <div class="main-tab">
           <table>
             <thead>
               <tr>
                 <th><div class="th-cell">编号</div></th>
-                <th><div class="th-cell">用户</div></th>
-                <th><div class="th-cell">写作类型</div></th>
-                <th><div class="th-cell">平台</div></th>
-                <th><div class="th-cell">模型</div></th>
-                <th><div class="th-cell">生成内容提示</div></th>
-                <th><div class="th-cell">生成的内容</div></th>
-                <th><div class="th-cell">原文</div></th>
-                <th><div class="th-cell">长度</div></th>
-                <th><div class="th-cell">格式</div></th>
-                <th><div class="th-cell">语气</div></th>
-                <th><div class="th-cell">语言</div></th>
+                <th><div class="th-cell">标题</div></th>
+                <th><div class="th-cell">用户编号</div></th>
                 <th><div class="th-cell">创建时间</div></th>
-                <th><div class="th-cell">错误信息</div></th>
                 <th class="ol-col"><div class="th-cell">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
-                <td>{{ item.user }}</td>
-                <td>{{ item.type }}</td>
-                <td>{{ item.platform }}</td>
-                <td>{{ item.model }}</td>
-                <td>{{ item.prompt }}</td>
-                <td>{{ item.content }}</td>
-                <td>{{ item.original }}</td>
-                <td>{{ item.length }}</td>
-                <td>{{ item.format }}</td>
-                <td>{{ item.tone }}</td>
-                <td>{{ item.language }}</td>
+                <td>{{ item.title }}</td>
+                <td>{{ item.userId }}</td>
                 <td>{{ item.createTime }}</td>
-                <td>{{ item.error }}</td>
-                <td class="ol-col">
-                  <button>删除</button>
-                </td>
+                <td class="ol-col"><button @click="handleDelete(item)">删除</button></td>
               </tr>
+              <tr v-if="tabValue.length === 0"><td colspan="5"><div class="asd">暂无数据</div></td></tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
-          <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+          <div class="left-info">共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span></div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
-
 <script>
+import { getWritePage, deleteWrite } from '#/api/ai/write';
 export default {
-  data() {
-    return {
-      tabValue: [
-        {
-          id: "W001",
-          user: "张三",
-          type: "营销文案",
-          platform: "OpenAI",
-          model: "GPT-4 Turbo",
-          prompt: "为一款智能手表撰写广告文案，突出健康监测功能",
-          content: "",
-          original: "",
-          length: "短篇",
-          format: "广告文案",
-          tone: "营销",
-          language: "中文",
-          createTime: "2026-01-05 09:30:00",
-          error: "",
-        },
-        {
-          id: "W002",
-          user: "李四",
-          type: "文章总结",
-          platform: "Anthropic",
-          model: "Claude 3.5 Sonnet",
-          prompt: "总结一篇关于AI发展趋势的长文，提炼核心观点",
-          content: "",
-          original: "",
-          length: "中篇",
-          format: "摘要",
-          tone: "客观",
-          language: "中文",
-          createTime: "2026-01-10 14:20:00",
-          error: "",
-        },
-        {
-          id: "W003",
-          user: "王五",
-          type: "创意故事",
-          platform: "Google",
-          model: "Gemini 1.5 Pro",
-          prompt: "写一个关于未来城市中人与AI相处的短篇科幻故事",
-          content: "",
-          original: "",
-          length: "中篇",
-          format: "小说片段",
-          tone: "文艺",
-          language: "中文",
-          createTime: "2026-01-15 10:00:00",
-          error: "",
-        },
-      ],
-    };
+  data() { return { searchForm: { userId: '' }, pagination: { pageNo: 1, pageSize: 10, total: 0 }, tabValue: [] }; },
+  mounted() { this.loadList(); },
+  methods: {
+    async loadList() {
+      try {
+        const params = { pageNo: this.pagination.pageNo, pageSize: this.pagination.pageSize };
+        if (this.searchForm.userId) params.userId = this.searchForm.userId;
+        const data = await getWritePage(params);
+        this.tabValue = data.list.map((item) => ({ id: item.id || '', title: item.title || '', userId: item.userId || '', createTime: item.createTime || '' }));
+        this.pagination.total = data.total;
+      } catch (err) { console.error('获取列表失败', err); }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() { this.searchForm.userId = ''; this.pagination.pageNo = 1; this.loadList(); },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    async handleDelete(item) { if (!confirm('确定要删除吗？')) return; try { await deleteWrite(item.id); alert('删除成功'); this.loadList(); } catch (err) { console.error('删除失败', err); } },
   },
 };
 </script>
-
 <style scoped>
 .page-wrapper {
   width: 1030px;
@@ -367,3 +302,5 @@ export default {
   padding-top: 3px;
 }
 </style>
+
+

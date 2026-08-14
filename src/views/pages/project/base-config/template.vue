@@ -5,16 +5,16 @@
         <div class="top-inp">
           <div class="inp-1">
             <span>模板名称</span>
-            <input type="text" placeholder="请输入模板名称" />
+            <input type="text" placeholder="请输入模板名称"  v-model="searchForm.templateName" />
           </div>
           <div class="inp-1">
             <span>项目分类</span>
-            <input type="text" placeholder="全部" />
+            <input type="text" placeholder="全部"  v-model="searchForm.status" />
           </div>
           <div class="inp-1"></div>
           <div class="inp-1">
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -23,7 +23,7 @@
         <div class="main-top">
           <div class="top-1">项目模板</div>
           <div class="top-2">
-            <button>+新增模板</button>
+            <button @click="handleAdd">+新增模板</button>
             <button>🔍</button>
           </div>
           <div class="top-3">
@@ -75,7 +75,7 @@
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
                   <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleDelete(item.id)">删除</button>
                 </td>
               </tr>
             </tbody>
@@ -88,43 +88,56 @@
 </template>
 
 <script>
+import { getProjectTemplatePage, deleteProjectTemplate } from '#/api/project/base-config/template';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          templateName: "软件开发标准模板",
-          category: "软件开发",
-          defaultDuration: 90,
-          sort: 1,
-          status: "开启",
-          description: "适用于标准软件开发项目，包含需求、设计、开发、测试全流程",
-          createTime: "2026-07-01 10:30",
-        },
-        {
-          id: 2,
-          templateName: "系统集成快速模板",
-          category: "系统集成",
-          defaultDuration: 60,
-          sort: 2,
-          status: "开启",
-          description: "适用于系统集成项目，简化流程，快速部署",
-          createTime: "2026-07-02 14:20",
-        },
-        {
-          id: 3,
-          templateName: "产品研发敏捷模板",
-          category: "产品研发",
-          defaultDuration: 120,
-          sort: 3,
-          status: "关闭",
-          description: "适用于产品研发项目，采用敏捷开发模式，迭代交付",
-          createTime: "2026-07-03 09:15",
-        },
-      ],
+      searchForm: { templateName: '', status: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: []
     };
   },
+  created() {
+    this.loadData();
+  },
+  methods: {
+    async loadData() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm
+        };
+        const res = await getProjectTemplatePage(params);
+        this.tabValue = res.list || res.records || [];
+        this.pagination.total = res.total || 0;
+      } catch (e) {
+        console.error('加载数据失败', e);
+      }
+    },
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleReset() {
+      this.searchForm = { templateName: '', status: '' };
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleAdd() {
+      alert('新增功能');
+    },
+    async handleDelete(id) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteProjectTemplate(id);
+        this.loadData();
+      } catch (e) {
+        console.error('删除失败', e);
+      }
+    },
+  }
 };
 </script>
 

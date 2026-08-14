@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>工具名称</span>
-            <input type="text" placeholder="请输入工具名称" />
+            <input type="text" placeholder="请输入工具名称" v-model="searchForm.name" />
           </div>
           <div>
             <span>状态</span>
-            <input type="text" placeholder="请输入" />
+            <input type="text" placeholder="请输入" v-model="searchForm.status" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>工具列表</div>
           <div>
-            <button>+新增工具</button>
+            <button @click="handleAdd">+新增工具</button>
             <button>🔍</button>
           </div>
           <div>
@@ -44,24 +44,34 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.description }}</td>
-                <td>{{ item.status }}</td>
+                <td>{{ item.status === 0 ? '启用' : '禁用' }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
+              </tr>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="6"><div class="asd">暂无数据</div></td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -70,47 +80,37 @@
 </template>
 
 <script>
+// ========== 导入AI工具相关API ==========
+import { getToolPage, deleteTool } from '#/api/ai/model/tool';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: "T001",
-          name: "搜索引擎",
-          description: "支持联网搜索，获取实时信息",
-          status: "启用",
-          createTime: "2026-01-10 09:00:00",
-        },
-        {
-          id: "T002",
-          name: "代码执行器",
-          description: "安全沙箱环境，支持多种编程语言代码运行",
-          status: "启用",
-          createTime: "2026-02-15 14:30:00",
-        },
-        {
-          id: "T003",
-          name: "图片生成器",
-          description: "基于AI的文本生成图片工具",
-          status: "启用",
-          createTime: "2026-03-01 10:20:00",
-        },
-        {
-          id: "T004",
-          name: "数据分析器",
-          description: "数据清洗、统计分析与可视化图表生成",
-          status: "禁用",
-          createTime: "2026-04-05 16:45:00",
-        },
-        {
-          id: "T005",
-          name: "工单系统",
-          description: "自动创建和跟踪客户服务工单",
-          status: "启用",
-          createTime: "2026-05-12 11:10:00",
-        },
-      ],
+      searchForm: { name: '', status: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() { this.loadList(); },
+  methods: {
+    async loadList() {
+      try {
+        const params = { pageNo: this.pagination.pageNo, pageSize: this.pagination.pageSize };
+        Object.keys(this.searchForm).forEach((key) => { if (this.searchForm[key]) params[key] = this.searchForm[key]; });
+        const data = await getToolPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '', name: item.name || '', description: item.description || '',
+          status: item.status || 0, createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) { console.error('获取列表失败', err); }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() { Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; }); this.pagination.pageNo = 1; this.loadList(); },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(item) { alert('编辑功能待实现'); },
+    async handleDelete(item) { if (!confirm('确定要删除吗？')) return; try { await deleteTool(item.id); alert('删除成功'); this.loadList(); } catch (err) { console.error('删除失败', err); } },
   },
 };
 </script>

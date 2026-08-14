@@ -114,8 +114,41 @@
 </template>
 
 
-<script></script>
+<script>
+// ========== 导入AI聊天相关API ==========
+import { getChatConversationMyList } from '#/api/ai/chat/conversation';
 
+export default {
+  data() {
+    return {
+      // 输入内容
+      inputText: '',
+      // 生成结果
+      result: null,
+      // 加载状态
+      loading: false,
+    };
+  },
+  methods: {
+    // 生成聊天
+    async handleGenerate() {
+      if (!this.inputText) { alert('请输入内容'); return; }
+      this.loading = true;
+      try {
+        // 调用API生成
+        const data = await getChatConversationMyList({ prompt: this.inputText });
+        this.result = data;
+        alert('生成成功');
+      } catch (err) {
+        console.error('生成失败', err);
+        alert('生成失败');
+      } finally {
+        this.loading = false;
+      }
+    },
+  },
+};
+</script>
 
 <style scoped>
 .page-wrapper {

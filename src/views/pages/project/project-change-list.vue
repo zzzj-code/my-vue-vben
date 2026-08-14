@@ -5,19 +5,19 @@
         <div class="top-inp">
           <div class="inp-1">
             <span>所属项目</span>
-            <input type="text" placeholder="请输入所属项目" />
+            <input type="text" placeholder="请输入所属项目" v-model="searchForm.projectName" />
           </div>
           <div class="inp-1">
             <span>变更类型</span>
-            <input type="text" placeholder="全部" />
+            <input type="text" placeholder="全部" v-model="searchForm.changeType" />
           </div>
           <div class="inp-1">
             <span>流程状态</span>
-            <input type="text" placeholder="请输入流程状态" />
+            <input type="text" placeholder="请输入流程状态" v-model="searchForm.status" />
           </div>
           <div class="inp-1">
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -26,7 +26,7 @@
         <div class="main-top">
           <div class="top-1">项目变更</div>
           <div class="top-2">
-            <button>+新增变更</button>
+            <button @click="handleAdd">+新增变更</button>
             <button>🔍</button>
           </div>
           <div class="top-3">
@@ -98,7 +98,7 @@
                 <td class="ol-col">
                   <button>详情</button>
                   <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleDelete(item.id)">删除</button>
                 </td>
               </tr>
             </tbody>
@@ -111,102 +111,61 @@
 </template>
 
 <script>
+import { getProjectChangePage, deleteProjectChange } from '#/api/project/project-change';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          changeNo: "BG-2026-001",
-          projectName: "智慧城市数据中台",
-          changeType: "范围变更",
-          reason: "新增数据采集模块",
-          amount: 350000,
-          status: "待审核",
-          applicant: "张伟",
-          applyTime: "2026-07-15 10:30",
-          approver: "",
-        },
-        {
-          id: 2,
-          changeNo: "BG-2026-002",
-          projectName: "企业ERP升级改造",
-          changeType: "进度变更",
-          reason: "客户需求调整，延期2周",
-          amount: 0,
-          status: "审核中",
-          applicant: "李芳",
-          applyTime: "2026-07-14 14:20",
-          approver: "王经理",
-        },
-        {
-          id: 3,
-          changeNo: "BG-2026-003",
-          projectName: "AI智能客服系统",
-          changeType: "人员变更",
-          reason: "项目经理更换",
-          amount: 0,
-          status: "已通过",
-          applicant: "王磊",
-          applyTime: "2026-07-13 09:15",
-          approver: "赵总监",
-        },
-        {
-          id: 4,
-          changeNo: "BG-2026-004",
-          projectName: "移动办公APP开发",
-          changeType: "预算变更",
-          reason: "新增支付功能开发",
-          amount: 180000,
-          status: "已驳回",
-          applicant: "陈静",
-          applyTime: "2026-07-12 16:40",
-          approver: "钱经理",
-        },
-        {
-          id: 5,
-          changeNo: "BG-2026-005",
-          projectName: "数据中心容灾备份",
-          changeType: "范围变更",
-          reason: "新增异地备份节点",
-          amount: 520000,
-          status: "待审核",
-          applicant: "赵明",
-          applyTime: "2026-07-11 11:00",
-          approver: "",
-        },
-        {
-          id: 6,
-          changeNo: "BG-2026-006",
-          projectName: "区块链溯源平台",
-          changeType: "进度变更",
-          reason: "技术方案调整",
-          amount: 0,
-          status: "已通过",
-          applicant: "孙婷",
-          applyTime: "2026-07-10 08:50",
-          approver: "李总监",
-        },
-      ],
+      searchForm: { projectName: '', changeType: '', status: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: []
     };
   },
+  created() {
+    this.loadData();
+  },
   methods: {
+    async loadData() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm
+        };
+        const res = await getProjectChangePage(params);
+        this.tabValue = res.list || res.records || [];
+        this.pagination.total = res.total || 0;
+      } catch (e) {
+        console.error('加载数据失败', e);
+      }
+    },
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleReset() {
+      this.searchForm = { projectName: '', changeType: '', status: '' };
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleAdd() {
+      alert('新增功能');
+    },
+    async handleDelete(id) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteProjectChange(id);
+        this.loadData();
+      } catch (e) {
+        console.error('删除失败', e);
+      }
+    },
     getStatusColor(status) {
-      const map = {
-        '待审核': '#faad14',
-        '审核中': '#1890ff',
-        '已通过': '#52c41a',
-        '已驳回': '#ff4d4f'
-      };
+      const map = { '待审核': '#faad14', '审核中': '#1890ff', '已通过': '#52c41a', '已驳回': '#ff4d4f' };
       return map[status] || '#333';
     },
     getStatusBg(status) {
-      const map = {
-        '待审核': '#fffbe6',
-        '审核中': '#e6f7ff',
-        '已通过': '#f6ffed',
-        '已驳回': '#fff2f0'
-      };
+      const map = { '待审核': '#fffbe6', '审核中': '#e6f7ff', '已通过': '#f6ffed', '已驳回': '#fff2f0' };
       return map[status] || '#fff';
     }
   }

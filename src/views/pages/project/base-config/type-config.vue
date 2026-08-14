@@ -5,7 +5,7 @@
         <div>项目类型配置</div>
         <div>
           <button style="background-color: #fff"></button>
-          <button style="width: 106px">+新增配置</button>
+          <button style="width: 106px" @click="handleAdd">+新增配置</button>
         </div>
         <div>
           <button>⟳</button>
@@ -50,7 +50,7 @@
               <td>{{ item.changeKey }}</td>
               <td class="ol-col">
                 <button>编辑</button>
-                <button>删除</button>
+                <button @click="handleDelete(item.id)">删除</button>
               </td>
             </tr>
           </tbody>
@@ -61,37 +61,56 @@
 </template>
 
 <script>
+import { getProjectTypeConfigPage, deleteProjectTypeConfig } from '#/api/project/base-config/type-config';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          projectType: "研发型",
-          capabilityPack: "需求管理, 开发管理, 测试管理, 发布管理",
-          defaultTab: "项目概览",
-          approvalKey: "PROJECT_APPROVAL_V1",
-          changeKey: "PROJECT_CHANGE_V1",
-        },
-        {
-          id: 2,
-          projectType: "实施型",
-          capabilityPack: "实施计划, 资源管理, 进度管理, 验收管理",
-          defaultTab: "实施计划",
-          approvalKey: "IMPLEMENT_APPROVAL_V1",
-          changeKey: "IMPLEMENT_CHANGE_V1",
-        },
-        {
-          id: 3,
-          projectType: "服务型",
-          capabilityPack: "服务管理, 客户管理, 交付管理, 满意度管理",
-          defaultTab: "服务概览",
-          approvalKey: "SERVICE_APPROVAL_V1",
-          changeKey: "SERVICE_CHANGE_V1",
-        },
-      ],
+      searchForm: {  },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: []
     };
   },
+  created() {
+    this.loadData();
+  },
+  methods: {
+    async loadData() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm
+        };
+        const res = await getProjectTypeConfigPage(params);
+        this.tabValue = res.list || res.records || [];
+        this.pagination.total = res.total || 0;
+      } catch (e) {
+        console.error('加载数据失败', e);
+      }
+    },
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleReset() {
+      this.searchForm = {  };
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleAdd() {
+      alert('新增功能');
+    },
+    async handleDelete(id) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteProjectTypeConfig(id);
+        this.loadData();
+      } catch (e) {
+        console.error('删除失败', e);
+      }
+    },
+  }
 };
 </script>
 

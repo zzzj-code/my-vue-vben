@@ -3,8 +3,8 @@
     <div class="app">
       <div class="app-top">
         <span>统计区间：</span>
-        <input type="text" placeholder="2026-07-01  ——>  2026-07-31" />
-        <button>查询</button>
+        <input type="text" placeholder="2026-07-01  ——>  2026-07-31"  v-model="searchForm.searchField1" />
+        <button @click="handleSearch">查询</button>
       </div>
       <div class="app-tab">
         <table>
@@ -51,50 +51,66 @@
 </template>
 
 <script>
+import { getProjectResourcePage, deleteProjectResource } from '#/api/project/project-resource';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          member: "张伟",
-          taskCount: 5,
-          allocatedHours: 40,
-          filledHours: 38,
-          standardHours: 40,
-          loadRate: 95,
-        },
-        {
-          id: 2,
-          member: "李芳",
-          taskCount: 4,
-          allocatedHours: 32,
-          filledHours: 30,
-          standardHours: 32,
-          loadRate: 94,
-        },
-        {
-          id: 3,
-          member: "王磊",
-          taskCount: 6,
-          allocatedHours: 48,
-          filledHours: 45,
-          standardHours: 48,
-          loadRate: 94,
-        },
-      ],
+      searchForm: { searchField1: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: []
     };
   },
+  created() {
+    this.loadData();
+  },
   methods: {
+    async loadData() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm
+        };
+        const res = await getProjectResourcePage(params);
+        this.tabValue = res.list || res.records || [];
+        this.pagination.total = res.total || 0;
+      } catch (e) {
+        console.error('加载数据失败', e);
+      }
+    },
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleReset() {
+      this.searchForm = { searchField1: '' };
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleAdd() {
+      alert('新增功能');
+    },
+    async handleDelete(id) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteProjectResource(id);
+        this.loadData();
+      } catch (e) {
+        console.error('删除失败', e);
+      }
+    },
     getLoadRateColor(rate) {
-      if (rate >= 90) return '#52c41a';
-      if (rate >= 70) return '#faad14';
-      return '#ff4d4f';
+      if (rate >= 100) return '#ff4d4f';
+      if (rate >= 80) return '#faad14';
+      if (rate >= 50) return '#1890ff';
+      return '#52c41a';
     },
     getLoadRateBg(rate) {
-      if (rate >= 90) return '#f6ffed';
-      if (rate >= 70) return '#fffbe6';
-      return '#fff2f0';
+      if (rate >= 100) return '#fff2f0';
+      if (rate >= 80) return '#fffbe6';
+      if (rate >= 50) return '#e6f7ff';
+      return '#f6ffed';
     }
   }
 };

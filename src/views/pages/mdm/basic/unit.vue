@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>单位名称</span>
-            <input type="text" placeholder="请输入单位名称" />
+            <input type="text" placeholder="请输入单位名称" v-model="searchForm.name" />
           </div>
           <div>
             <span>单位编码</span>
-            <input type="text" placeholder="请输入单位主编码" />
+            <input type="text" placeholder="请输入单位主编码" v-model="searchForm.code" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>计量单位</div>
           <div>
-            <button>+新增计量单位</button>
+            <button @click="handleAdd">+新增计量单位</button>
             <button>导出</button>
             <button>🔍</button>
           </div>
@@ -58,8 +58,8 @@
                 <td>{{ item.remark }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
@@ -67,8 +67,15 @@
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -77,177 +84,79 @@
 </template>
 
 <script>
+// ========== 导入计量单位相关API ==========
+import { getUnitPage, deleteUnit } from '#/api/mdm/basic/unit';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          name: "个",
-          code: "PCS",
-          type: "基本单位",
-          ratio: 1,
-          status: "启用",
-          sort: 1,
-          remark: "计数单位",
-          createTime: "2024-01-15 09:30:00",
-        },
-        {
-          id: 2,
-          name: "千克",
-          code: "KG",
-          type: "基本单位",
-          ratio: 1,
-          status: "启用",
-          sort: 2,
-          remark: "重量单位",
-          createTime: "2024-01-15 10:20:00",
-        },
-        {
-          id: 3,
-          name: "克",
-          code: "G",
-          type: "辅助单位",
-          ratio: 0.001,
-          status: "启用",
-          sort: 3,
-          remark: "与千克换算",
-          createTime: "2024-01-16 14:15:00",
-        },
-        {
-          id: 4,
-          name: "米",
-          code: "M",
-          type: "基本单位",
-          ratio: 1,
-          status: "启用",
-          sort: 4,
-          remark: "长度单位",
-          createTime: "2024-01-16 16:40:00",
-        },
-        {
-          id: 5,
-          name: "厘米",
-          code: "CM",
-          type: "辅助单位",
-          ratio: 0.01,
-          status: "停用",
-          sort: 5,
-          remark: "与米换算",
-          createTime: "2024-01-17 11:10:00",
-        },
-        {
-          id: 6,
-          name: "箱",
-          code: "BOX",
-          type: "辅助单位",
-          ratio: 12,
-          status: "启用",
-          sort: 6,
-          remark: "1箱=12个",
-          createTime: "2024-01-18 09:45:00",
-        },
-        {
-          id: 7,
-          name: "包",
-          code: "PKG",
-          type: "辅助单位",
-          ratio: 10,
-          status: "启用",
-          sort: 7,
-          remark: "1包=10个",
-          createTime: "2024-01-18 13:30:00",
-        },
-        {
-          id: 8,
-          name: "升",
-          code: "L",
-          type: "基本单位",
-          ratio: 1,
-          status: "启用",
-          sort: 8,
-          remark: "容量单位",
-          createTime: "2024-01-19 10:00:00",
-        },
-        {
-          id: 9,
-          name: "毫升",
-          code: "ML",
-          type: "辅助单位",
-          ratio: 0.001,
-          status: "停用",
-          sort: 9,
-          remark: "与升换算",
-          createTime: "2024-01-19 15:20:00",
-        },
-        {
-          id: 10,
-          name: "吨",
-          code: "T",
-          type: "辅助单位",
-          ratio: 1000,
-          status: "启用",
-          sort: 10,
-          remark: "1吨=1000千克",
-          createTime: "2024-01-20 08:50:00",
-        },
-        {
-          id: 11,
-          name: "打",
-          code: "DZN",
-          type: "辅助单位",
-          ratio: 12,
-          status: "启用",
-          sort: 11,
-          remark: "1打=12个",
-          createTime: "2024-01-20 14:30:00",
-        },
-        {
-          id: 12,
-          name: "套",
-          code: "SET",
-          type: "辅助单位",
-          ratio: 1,
-          status: "启用",
-          sort: 12,
-          remark: "套装单位",
-          createTime: "2024-01-21 09:15:00",
-        },
-        {
-          id: 13,
-          name: "件",
-          code: "PCE",
-          type: "基本单位",
-          ratio: 1,
-          status: "停用",
-          sort: 13,
-          remark: "服装计数单位",
-          createTime: "2024-01-21 16:40:00",
-        },
-        {
-          id: 14,
-          name: "双",
-          code: "PR",
-          type: "辅助单位",
-          ratio: 2,
-          status: "启用",
-          sort: 14,
-          remark: "1双=2个",
-          createTime: "2024-01-22 11:20:00",
-        },
-        {
-          id: 15,
-          name: "桶",
-          code: "BAR",
-          type: "辅助单位",
-          ratio: 50,
-          status: "启用",
-          sort: 15,
-          remark: "1桶=50升",
-          createTime: "2024-01-22 15:00:00",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        name: '',
+        code: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getUnitPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          name: item.name || '',
+          code: item.code || '',
+          type: item.type === 1 ? '基本单位' : '辅助单位',
+          ratio: item.ratio || 1,
+          status: item.status === 0 ? '启用' : '停用',
+          sort: item.sort || 0,
+          remark: item.remark || '',
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 新增
+    handleAdd() { alert('新增功能待实现'); },
+    // 编辑
+    handleEdit(item) { alert('编辑功能待实现'); },
+    // 删除
+    async handleDelete(item) {
+      if (!confirm(`确定要删除单位"${item.name}"吗？`)) return;
+      try {
+        await deleteUnit(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>

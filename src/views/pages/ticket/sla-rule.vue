@@ -5,19 +5,19 @@
         <div class="top-inp">
           <div>
             <span>规则名称</span>
-            <input type="text" placeholder="请输入规则名称" />
+            <input type="text" placeholder="请输入规则名称" v-model="searchForm.name" />
           </div>
           <div>
             <span>匹配优先级</span>
-            <input type="text" placeholder="请输入" />
+            <input type="text" placeholder="请输入" v-model="searchForm.priority" />
           </div>
           <div>
             <span>状态</span>
-            <input type="text" placeholder="请输入状态" />
+            <input type="text" placeholder="请输入状态" v-model="searchForm.status" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -26,7 +26,7 @@
         <div class="main-top">
           <div>SLA 规则列表</div>
           <div>
-            <button>+新增SLA规则</button>
+            <button @click="handleAdd">+新增SLA规则</button>
             <button>🔍</button>
           </div>
           <div>
@@ -63,8 +63,8 @@
                 <td>{{ item.sort }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
@@ -72,8 +72,15 @@
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -82,84 +89,81 @@
 </template>
 
 <script>
+// ========== 导入SLA规则相关API ==========
+import { getSlaRulePage, deleteSlaRule } from '#/api/ticket/sla-rule';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          name: "紧急故障响应规则",
-          priority: 1,
-          category: "故障报修",
-          responseTime: 1,
-          solveTime: 4,
-          warningTime: 30,
-          status: "启用",
-          sort: 1,
-          createTime: "2024-07-10 09:00:00",
-        },
-        {
-          id: 2,
-          name: "高优先级处理规则",
-          priority: 2,
-          category: "系统变更",
-          responseTime: 2,
-          solveTime: 8,
-          warningTime: 60,
-          status: "启用",
-          sort: 2,
-          createTime: "2024-07-11 14:20:00",
-        },
-        {
-          id: 3,
-          name: "常规业务处理规则",
-          priority: 3,
-          category: "账号管理",
-          responseTime: 4,
-          solveTime: 24,
-          warningTime: 120,
-          status: "启用",
-          sort: 3,
-          createTime: "2024-07-12 11:45:00",
-        },
-        {
-          id: 4,
-          name: "低优先级处理规则",
-          priority: 4,
-          category: "版本发布",
-          responseTime: 8,
-          solveTime: 48,
-          warningTime: 240,
-          status: "停用",
-          sort: 4,
-          createTime: "2024-07-13 16:10:00",
-        },
-        {
-          id: 5,
-          name: "安全事件响应规则",
-          priority: 1,
-          category: "安全事件",
-          responseTime: 0.5,
-          solveTime: 2,
-          warningTime: 15,
-          status: "启用",
-          sort: 5,
-          createTime: "2024-07-14 10:30:00",
-        },
-        {
-          id: 6,
-          name: "资源申请处理规则",
-          priority: 3,
-          category: "资源申请",
-          responseTime: 6,
-          solveTime: 36,
-          warningTime: 180,
-          status: "启用",
-          sort: 6,
-          createTime: "2024-07-15 09:15:00",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        name: '',
+        priority: '',
+        status: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getSlaRulePage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          name: item.name || '',
+          priority: item.priority || 0,
+          category: item.categoryName || '',
+          responseTime: item.responseTime || 0,
+          solveTime: item.solveTime || 0,
+          warningTime: item.warningTime || 0,
+          status: item.status === 0 ? '启用' : '停用',
+          sort: item.sort || 0,
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 新增
+    handleAdd() { alert('新增功能待实现'); },
+    // 编辑
+    handleEdit(item) { alert('编辑功能待实现'); },
+    // 删除
+    async handleDelete(item) {
+      if (!confirm(`确定要删除SLA规则"${item.name}"吗？`)) return;
+      try {
+        await deleteSlaRule(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>

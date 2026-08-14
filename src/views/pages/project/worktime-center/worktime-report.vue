@@ -5,19 +5,19 @@
         <div class="top-inp">
           <div class="inp-1">
             <span>单据编号</span>
-            <input type="text" placeholder="请输入单据编号" />
+            <input type="text" placeholder="请输入单据编号"  v-model="searchForm.documentNo" />
           </div>
           <div class="inp-1">
             <span>年份</span>
-            <input type="text" placeholder="请输入年份" />
+            <input type="text" placeholder="请输入年份"  v-model="searchForm.year" />
           </div>
           <div class="inp-1">
             <span>审批状态</span>
-            <input type="text" placeholder="请输入审批状态" />
+            <input type="text" placeholder="请输入审批状态"  v-model="searchForm.status" />
           </div>
           <div class="inp-1">
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -98,67 +98,49 @@
 </template>
 
 <script>
+import { getWorktimeReportPage } from '#/api/project/worktime/worktime-report';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          documentNo: "GZ-2026-001",
-          weekNo: "第28周",
-          startDate: "2026-07-08",
-          endDate: "2026-07-14",
-          workDays: 5,
-          totalHours: 40,
-          reporter: "张伟",
-          department: "技术研发部",
-          status: "已审批",
-          createTime: "2026-07-15 09:30",
-        },
-        {
-          id: 2,
-          documentNo: "GZ-2026-002",
-          weekNo: "第28周",
-          startDate: "2026-07-08",
-          endDate: "2026-07-14",
-          workDays: 5,
-          totalHours: 38,
-          reporter: "李芳",
-          department: "产品交付部",
-          status: "审批中",
-          createTime: "2026-07-15 10:15",
-        },
-        {
-          id: 3,
-          documentNo: "GZ-2026-003",
-          weekNo: "第27周",
-          startDate: "2026-07-01",
-          endDate: "2026-07-07",
-          workDays: 5,
-          totalHours: 42,
-          reporter: "王磊",
-          department: "AI实验室",
-          status: "已驳回",
-          createTime: "2026-07-08 14:20",
-        },
-      ],
+      searchForm: { documentNo: '', year: '', status: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: []
     };
   },
+  created() {
+    this.loadData();
+  },
   methods: {
+    async loadData() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm
+        };
+        const res = await getWorktimeReportPage(params);
+        this.tabValue = res.list || res.records || [];
+        this.pagination.total = res.total || 0;
+      } catch (e) {
+        console.error('加载数据失败', e);
+      }
+    },
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleReset() {
+      this.searchForm = { documentNo: '', year: '', status: '' };
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
     getStatusColor(status) {
-      const map = {
-        '已审批': '#52c41a',
-        '审批中': '#faad14',
-        '已驳回': '#ff4d4f'
-      };
+      const map = { '待审核': '#faad14', '已通过': '#52c41a', '已驳回': '#ff4d4f' };
       return map[status] || '#333';
     },
     getStatusBg(status) {
-      const map = {
-        '已审批': '#f6ffed',
-        '审批中': '#fffbe6',
-        '已驳回': '#fff2f0'
-      };
+      const map = { '待审核': '#fffbe6', '已通过': '#f6ffed', '已驳回': '#fff2f0' };
       return map[status] || '#fff';
     }
   }

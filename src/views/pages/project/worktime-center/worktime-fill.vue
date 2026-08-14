@@ -5,18 +5,18 @@
         <div class="top-inp">
           <div class="inp-1">
             <span>所属项目</span>
-            <input type="text" placeholder="全部" />
+            <input type="text" placeholder="全部"  v-model="searchForm.status" />
           </div>
           <div class="inp-1">
             <span>状态</span>
-            <input type="text" placeholder="全部" />
+            <input type="text" placeholder="全部"  v-model="searchForm.status" />
           </div>
           <div class="inp-1">
             
           </div>
           <div class="inp-1">
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -77,7 +77,7 @@
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
                   <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleDelete(item.id)">删除</button>
                 </td>
               </tr>
             </tbody>
@@ -90,228 +90,61 @@
 </template>
 
 <script>
+import { getWorktimeFillPage, deleteWorktimeFill } from '#/api/project/worktime/worktime-fill';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          workDate: "2026-07-15",
-          taskName: "OA需求调研",
-          hours: 4,
-          content: "与业务部门沟通OA系统需求，整理需求文档",
-          status: "待审核",
-          reviewComment: "需求梳理清晰，同意",
-          createTime: "2026-07-15 18:30",
-        },
-        {
-          id: 2,
-          workDate: "2026-07-15",
-          taskName: "HR需求调研",
-          hours: 3,
-          content: "调研HR系统现有问题，收集改进建议",
-          status: "待审核",
-          reviewComment: "-",
-          createTime: "2026-07-15 18:45",
-        },
-        {
-          id: 3,
-          workDate: "2026-07-14",
-          taskName: "需求规格说明书编写",
-          hours: 6,
-          content: "编写OA模块需求规格说明书，包含功能列表和流程图",
-          status: "待审核",
-          reviewComment: "内容完整，部分细节需补充",
-          createTime: "2026-07-14 19:00",
-        },
-        {
-          id: 4,
-          workDate: "2026-07-14",
-          taskName: "需求评审",
-          hours: 2,
-          content: "参加需求评审会议，记录修改意见",
-          status: "已驳回",
-          reviewComment: "需求不明确，需重新调研",
-          createTime: "2026-07-14 17:30",
-        },
-        {
-          id: 5,
-          workDate: "2026-07-13",
-          taskName: "概要设计",
-          hours: 5,
-          content: "设计系统架构图，编写概要设计文档",
-          status: "待审核",
-          reviewComment: "架构设计合理，通过",
-          createTime: "2026-07-13 18:20",
-        },
-        {
-          id: 6,
-          workDate: "2026-07-13",
-          taskName: "详细设计",
-          hours: 3,
-          content: "设计数据库表结构，编写接口文档",
-          status: "待审核",
-          reviewComment: "-",
-          createTime: "2026-07-13 18:50",
-        },
-        {
-          id: 7,
-          workDate: "2026-07-12",
-          taskName: "开发环境搭建",
-          hours: 4,
-          content: "搭建开发环境，配置项目依赖",
-          status: "待审核",
-          reviewComment: "环境配置完成",
-          createTime: "2026-07-12 17:40",
-        },
-        {
-          id: 8,
-          workDate: "2026-07-12",
-          taskName: "核心功能开发",
-          hours: 6,
-          content: "开发用户管理模块，实现登录注册功能",
-          status: "待审核",
-          reviewComment: "代码质量良好，继续推进",
-          createTime: "2026-07-12 19:10",
-        },
-        {
-          id: 9,
-          workDate: "2026-07-11",
-          taskName: "联调与自测",
-          hours: 5,
-          content: "前后端联调，进行单元测试",
-          status: "待审核",
-          reviewComment: "联调通过，测试覆盖率达标",
-          createTime: "2026-07-11 18:40",
-        },
-        {
-          id: 10,
-          workDate: "2026-07-11",
-          taskName: "OA需求调研",
-          hours: 3,
-          content: "整理需求调研问卷，准备下周调研计划",
-          status: "待审核",
-          reviewComment: "-",
-          createTime: "2026-07-11 17:50",
-        },
-        {
-          id: 11,
-          workDate: "2026-07-10",
-          taskName: "集成测试",
-          hours: 4,
-          content: "执行集成测试用例，修复发现的Bug",
-          status: "已驳回",
-          reviewComment: "存在严重Bug，需重新测试",
-          createTime: "2026-07-10 18:30",
-        },
-        {
-          id: 12,
-          workDate: "2026-07-10",
-          taskName: "UAT测试",
-          hours: 2,
-          content: "准备UAT测试环境，编写测试计划",
-          status: "待审核",
-          reviewComment: "测试准备充分",
-          createTime: "2026-07-10 17:20",
-        },
-        {
-          id: 13,
-          workDate: "2026-07-09",
-          taskName: "部署上线",
-          hours: 3,
-          content: "部署应用到生产环境，验证功能",
-          status: "待审核",
-          reviewComment: "部署成功，功能正常",
-          createTime: "2026-07-09 19:00",
-        },
-        {
-          id: 14,
-          workDate: "2026-07-09",
-          taskName: "OA系统UI设计",
-          hours: 5,
-          content: "设计OA系统界面原型，制作交互稿",
-          status: "待审核",
-          reviewComment: "-",
-          createTime: "2026-07-09 18:45",
-        },
-        {
-          id: 15,
-          workDate: "2026-07-08",
-          taskName: "数据库设计",
-          hours: 4,
-          content: "优化数据库索引，编写存储过程",
-          status: "待审核",
-          reviewComment: "数据库设计优化完成",
-          createTime: "2026-07-08 18:10",
-        },
-        {
-          id: 16,
-          workDate: "2026-07-08",
-          taskName: "接口开发",
-          hours: 6,
-          content: "开发数据接口，进行接口测试",
-          status: "已驳回",
-          reviewComment: "接口响应时间过长，需优化",
-          createTime: "2026-07-08 19:30",
-        },
-        {
-          id: 17,
-          workDate: "2026-07-07",
-          taskName: "性能测试",
-          hours: 3,
-          content: "进行性能压力测试，分析测试报告",
-          status: "待审核",
-          reviewComment: "性能指标达标",
-          createTime: "2026-07-07 17:40",
-        },
-        {
-          id: 18,
-          workDate: "2026-07-07",
-          taskName: "需求规格说明书编写",
-          hours: 4,
-          content: "补充完善需求规格说明书，添加用例图",
-          status: "待审核",
-          reviewComment: "文档已完善",
-          createTime: "2026-07-07 18:20",
-        },
-        {
-          id: 19,
-          workDate: "2026-07-06",
-          taskName: "核心功能开发",
-          hours: 5,
-          content: "开发权限管理模块，实现角色权限控制",
-          status: "待审核",
-          reviewComment: "-",
-          createTime: "2026-07-06 18:50",
-        },
-        {
-          id: 20,
-          workDate: "2026-07-06",
-          taskName: "概要设计",
-          hours: 3,
-          content: "修改概要设计文档，根据评审意见调整",
-          status: "待审核",
-          reviewComment: "修改完成，符合要求",
-          createTime: "2026-07-06 17:30",
-        },
-      ],
+      searchForm: { status: '', status: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: []
     };
   },
+  created() {
+    this.loadData();
+  },
   methods: {
+    async loadData() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm
+        };
+        const res = await getWorktimeFillPage(params);
+        this.tabValue = res.list || res.records || [];
+        this.pagination.total = res.total || 0;
+      } catch (e) {
+        console.error('加载数据失败', e);
+      }
+    },
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleReset() {
+      this.searchForm = { status: '', status: '' };
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleAdd() {
+      alert('新增功能');
+    },
+    async handleDelete(id) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteWorktimeFill(id);
+        this.loadData();
+      } catch (e) {
+        console.error('删除失败', e);
+      }
+    },
     getStatusColor(status) {
-      const map = {
-        '待审核': '#faad14',
-        '已驳回': '#ff4d4f',
-        '已通过': '#52c41a'
-      };
+      const map = { '待审核': '#faad14', '已通过': '#52c41a', '已驳回': '#ff4d4f' };
       return map[status] || '#333';
     },
     getStatusBg(status) {
-      const map = {
-        '待审核': '#fffbe6',
-        '已驳回': '#fff2f0',
-        '已通过': '#f6ffed'
-      };
+      const map = { '待审核': '#fffbe6', '已通过': '#f6ffed', '已驳回': '#fff2f0' };
       return map[status] || '#fff';
     }
   }

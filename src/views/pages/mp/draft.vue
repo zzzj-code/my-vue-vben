@@ -5,14 +5,14 @@
         <div class="top-inp">
           <div>
             <span>公众号</span>
-            <input type="text" placeholder="1" />
+            <input type="text" placeholder="1" v-model="searchForm.accountId" />
           </div>
           <div>
             
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -21,7 +21,7 @@
         <div class="main-top">
           <div>草稿列表</div>
           <div>
-            <button>+新增图文草稿</button>
+            <button @click="handleAdd">+新增图文草稿</button>
             <button>🔍</button>
           </div>
           <div>
@@ -41,14 +41,32 @@
               </tr>
             </thead>
             <tbody>
-              <div class="asd">暂无数据</div>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td><img :src="item.thumbUrl" style="width:60px;height:40px" v-if="item.thumbUrl" /></td>
+                <td>{{ item.title }}</td>
+                <td>{{ item.updateTime }}</td>
+                <td class="ol-col">
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
+                </td>
+              </tr>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="4"><div class="asd">暂无数据</div></td>
+              </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -57,13 +75,73 @@
 </template>
 
 <script>
+// ========== 导入公众号草稿相关API ==========
+import { getDraftPage, deleteDraft } from '#/api/mp/draft';
+
 export default {
   data() {
     return {
-      tabValue: [
-        
-      ],
+      // 搜索表单
+      searchForm: {
+        accountId: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getDraftPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.mediaId || item.id || '',
+          title: item.title || '',
+          thumbUrl: item.thumbUrl || '',
+          updateTime: item.updateTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 新增
+    handleAdd() { alert('新增功能待实现'); },
+    // 编辑
+    handleEdit(item) { alert('编辑功能待实现'); },
+    // 删除
+    async handleDelete(item) {
+      if (!confirm('确定要删除该草稿吗？')) return;
+      try {
+        await deleteDraft(this.searchForm.accountId, item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>

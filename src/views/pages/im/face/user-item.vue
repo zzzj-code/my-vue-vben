@@ -4,25 +4,25 @@
       <div class="app-top">
         <div class="top-inp">
           <div>
-            <span>用户编号</span>
-            <input type="text" placeholder="请输入用户编号" />
+            <span>用户ID</span>
+            <input type="text" placeholder="请输入用户ID" v-model="searchForm.userId" />
           </div>
           <div>
-            <span>表情名</span>
-            <input type="text" placeholder="" />
+            <span>表情包ID</span>
+            <input type="text" placeholder="请输入表情包ID" v-model="searchForm.packId" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
       </div>
       <div class="app-main">
         <div class="main-top">
-          <div>用户表情列表</div>
+          <div>列表</div>
           <div>
-            <button style="background-color: #fff;">+新增敏感词</button>
+            <button @click="handleAdd">+新增</button>
             <button>🔍</button>
           </div>
           <div>
@@ -35,26 +35,45 @@
           <table>
             <thead>
               <tr>
-                <th>
-                  <div class="th-cell"><input type="checkbox" disabled/></div>
-                </th>
-                <th><div class="th-cell">表情图</div></th>
-                <th><div class="th-cell">表情名</div></th>
-                <th><div class="th-cell">所属用户</div></th>
-                <th><div class="th-cell">尺寸</div></th>
+                <th><div class="th-cell">编号</div></th>
+                <th><div class="th-cell">用户ID</div></th>
+                <th><div class="th-cell">表情包ID</div></th>
+                <th><div class="th-cell">表情名称</div></th>
+                <th><div class="th-cell">表情地址</div></th>
                 <th><div class="th-cell">添加时间</div></th>
                 <th class="ol-col"><div class="th-cell">操作</div></th>
               </tr>
             </thead>
             <tbody>
-              <div class="asd">暂无数据</div>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td>{{ item.id }}</td>
+                <td>{{ item.userId }}</td>
+                <td>{{ item.packId }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.url }}</td>
+                <td>{{ item.createTime }}</td>
+                <td class="ol-col">
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
+                </td>
+              </tr>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="7"><div class="asd">暂无数据</div></td>
+              </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -63,14 +82,74 @@
 </template>
 
 <script>
+import { getFaceUserItemPage, deleteFaceUserItem } from '#/api/im/face/face-user-item';
+
 export default {
   data() {
     return {
-      tabValue: [
-        
-      ],
+      searchForm: { userId: '', packId: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: []
     };
   },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = { pageNo: this.pagination.pageNo, pageSize: this.pagination.pageSize };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getFaceUserItemPage(params);
+        this.tabValue = data.list.map((item) => {
+          const obj = {};
+          obj.id = item.id || '';
+          obj.userId = item.userId || '';
+          obj.packId = item.packId || '';
+          obj.name = item.name || '';
+          obj.url = item.url || '';
+          obj.createTime = item.createTime || '';
+          return obj;
+        });
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => {
+        this.searchForm[key] = '';
+      });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    handleAdd() {
+      alert('新增功能待实现');
+    },
+    handleEdit(item) {
+      alert('编辑功能待实现');
+    },
+    async handleDelete(item) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteFaceUserItem(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    }
+  }
 };
 </script>
 

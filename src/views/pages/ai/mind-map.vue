@@ -92,11 +92,17 @@
 
 <script>
 import * as echarts from 'echarts'
+// ========== 导入AI思维导图相关API ==========
+import { generateMindMap, getMindMapPage } from '#/api/ai/mindmap';
 
 export default {
   data() {
     return {
-      chart: null
+      chart: null,
+      // 输入内容
+      inputText: '',
+      // 加载状态
+      loading: false,
     }
   },
   mounted() {

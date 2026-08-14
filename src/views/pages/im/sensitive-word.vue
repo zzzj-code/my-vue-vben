@@ -5,24 +5,24 @@
         <div class="top-inp">
           <div>
             <span>敏感词</span>
-            <input type="text" placeholder="请输入敏感词" />
+            <input type="text" placeholder="请输入敏感词" v-model="searchForm.word" />
           </div>
           <div>
             <span>状态</span>
-            <input type="text" placeholder="" />
+            <input type="text" placeholder="请输入状态" v-model="searchForm.status" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
       </div>
       <div class="app-main">
         <div class="main-top">
-          <div>敏感词列表</div>
+          <div>列表</div>
           <div>
-            <button>+新增敏感词</button>
+            <button @click="handleAdd">+新增</button>
             <button>🔍</button>
           </div>
           <div>
@@ -35,9 +35,7 @@
           <table>
             <thead>
               <tr>
-                <th>
-                  <div class="th-cell"><input type="checkbox" /></div>
-                </th>
+                <th><div class="th-cell"><input type="checkbox" /></div></th>
                 <th><div class="th-cell">编号</div></th>
                 <th><div class="th-cell">敏感词</div></th>
                 <th><div class="th-cell">状态</div></th>
@@ -50,22 +48,32 @@
               <tr v-for="item in tabValue" :key="item.id">
                 <td><input type="checkbox" /></td>
                 <td>{{ item.id }}</td>
-                <td>{{ item.sensitiveWord }}</td>
+                <td>{{ item.word }}</td>
                 <td>{{ item.status }}</td>
                 <td>{{ item.creator }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>详情</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
+              </tr>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="7"><div class="asd">暂无数据</div></td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -74,20 +82,73 @@
 </template>
 
 <script>
+import { getSensitiveWordPage, deleteSensitiveWord } from '#/api/im/sensitive-word';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          sensitiveWord: "赌博",
-          status: "已启用",
-          creator: "管理员",
-          createTime: "2026-08-09 10:30:00",
-        },
-      ],
+      searchForm: { word: '', status: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: []
     };
   },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = { pageNo: this.pagination.pageNo, pageSize: this.pagination.pageSize };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getSensitiveWordPage(params);
+        this.tabValue = data.list.map((item) => {
+          const obj = {};
+          obj.id = item.id || '';
+          obj.word = item.word || '';
+          obj.status = item.status || '';
+          obj.creator = item.creator || '';
+          obj.createTime = item.createTime || '';
+          return obj;
+        });
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => {
+        this.searchForm[key] = '';
+      });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    handleAdd() {
+      alert('新增功能待实现');
+    },
+    handleEdit(item) {
+      alert('编辑功能待实现');
+    },
+    async handleDelete(item) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteSensitiveWord(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    }
+  }
 };
 </script>
 

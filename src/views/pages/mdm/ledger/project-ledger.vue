@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>台账主编码</span>
-            <input type="text" placeholder="请输入" />
+            <input type="text" placeholder="请输入" v-model="searchForm.code" />
           </div>
           <div>
             <span>项目编号</span>
-            <input type="text" placeholder="请输入" />
+            <input type="text" placeholder="请输入" v-model="searchForm.projectNo" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="main-top">
           <div>项目台账</div>
           <div>
-            <button>+新增项目台账</button>
+            <button @click="handleAdd">+新增项目台账</button>
             <button>🔍</button>
           </div>
           <div>
@@ -59,8 +59,8 @@
                 <td>{{ item.status }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
@@ -68,8 +68,15 @@
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -78,72 +85,85 @@
 </template>
 
 <script>
+// ========== 导入项目台账相关API ==========
+import { getProjectLedgerPage, deleteProjectLedger } from '#/api/mdm/ledger/project-ledger';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          code: "XM-2024-001",
-          projectNo: "PRJ-2024-0001",
-          projectName: "智能仓储系统建设项目",
-          contractCode: "HT-2024-001",
-          customerCode: "CUST-2024-001",
-          budgetAmount: 3500000.0,
-          source: "手工录入",
-          status: "进行中",
-          createTime: "2024-01-15 09:30:00",
-        },
-        {
-          id: 2,
-          code: "XM-2024-002",
-          projectNo: "PRJ-2024-0002",
-          projectName: "ERP系统升级改造项目",
-          contractCode: "HT-2024-003",
-          customerCode: "CUST-2024-005",
-          budgetAmount: 4200000.0,
-          source: "系统同步",
-          status: "已立项",
-          createTime: "2024-01-20 14:20:00",
-        },
-        {
-          id: 3,
-          code: "XM-2024-003",
-          projectNo: "PRJ-2024-0003",
-          projectName: "新能源汽车充电桩部署项目",
-          contractCode: "HT-2024-011",
-          customerCode: "CUST-2024-011",
-          budgetAmount: 28000000.0,
-          source: "手工录入",
-          status: "进行中",
-          createTime: "2024-02-10 10:00:00",
-        },
-        {
-          id: 4,
-          code: "XM-2024-004",
-          projectNo: "PRJ-2024-0004",
-          projectName: "智慧物流平台开发项目",
-          contractCode: "HT-2024-005",
-          customerCode: "CUST-2024-010",
-          budgetAmount: 980000.0,
-          source: "系统同步",
-          status: "已完结",
-          createTime: "2024-02-15 16:45:00",
-        },
-        {
-          id: 5,
-          code: "XM-2024-005",
-          projectNo: "PRJ-2024-0005",
-          projectName: "数据中心扩容建设项目",
-          contractCode: "HT-2024-016",
-          customerCode: "CUST-2024-017",
-          budgetAmount: 6200000.0,
-          source: "手工录入",
-          status: "已中止",
-          createTime: "2024-03-01 11:30:00",
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        code: '',
+        projectNo: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getProjectLedgerPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          code: item.code || '',
+          projectNo: item.projectNo || '',
+          projectName: item.projectName || '',
+          contractCode: item.contractCode || '',
+          customerCode: item.customerCode || '',
+          budgetAmount: item.budgetAmount / 100 || 0,
+          source: item.source === 1 ? '手工录入' : '系统同步',
+          status: this.getStatusName(item.status),
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 状态转换
+    getStatusName(status) {
+      const map = { 0: '已立项', 1: '进行中', 2: '已完结', 3: '已中止' };
+      return map[status] || '未知';
+    },
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 新增
+    handleAdd() { alert('新增功能待实现'); },
+    // 编辑
+    handleEdit(item) { alert('编辑功能待实现'); },
+    // 删除
+    async handleDelete(item) {
+      if (!confirm(`确定要删除项目台账"${item.projectName}"吗？`)) return;
+      try {
+        await deleteProjectLedger(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>

@@ -4,16 +4,14 @@
       <div class="app-top">
         <div class="top-inp">
           <div>
-            <span>角色名称</span>
-            <input type="text" placeholder="请输入角色名称" />
+            <span>角色名称</span><input type="text" placeholder="请输入角色名称" v-model="searchForm.name" />
           </div>
           <div>
-            <span>角色类别</span>
-            <input type="text" placeholder="请输入角色类别" />
+            <span>角色类别</span><input type="text" placeholder="请输入角色类别" v-model="searchForm.category" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -22,7 +20,7 @@
         <div class="main-top">
           <div>聊天角色列表</div>
           <div>
-            <button>+新增聊天角色</button>
+            <button @click="handleAdd">+新增聊天角色</button>
             <button>🔍</button>
           </div>
           <div>
@@ -50,102 +48,49 @@
                 <th class="ol-col"><div class="th-cell">操作</div></th>
               </tr>
             </thead>
-            <tbody>
-              <tr v-for="item in tabValue">
-                <td>{{ item.name }}</td>
-                <td>{{ item.model }}</td>
-                <td>{{ item.avatar }}</td>
-                <td>{{ item.category }}</td>
-                <td>{{ item.description }}</td>
-                <td>{{ item.setting }}</td>
-                <td>{{ item.knowledge }}</td>
-                <td>{{ item.tools }}</td>
-                <td>{{ item.mcp }}</td>
-                <td>{{ item.isPublic }}</td>
-                <td>{{ item.status }}</td>
-                <td>{{ item.sort }}</td>
-                <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
-                </td>
-              </tr>
-            </tbody>
+            <tbody><tr v-for="item in tabValue" :key="item.id"><td>{{ item.name }}</td><td>{{ item.modelId }}</td><td><img :src="item.avatar" style="width:40px;height:40px" v-if="item.avatar" /></td><td>{{ item.category }}</td><td>{{ item.description }}</td><td>{{ item.systemPrompt }}</td><td>{{ item.knowledgeIds }}</td><td>{{ item.toolIds }}</td><td>{{ item.mcpServerIds }}</td><td>{{ item.publicStatus === 1 ? "是" : "否" }}</td><td>{{ item.status === 0 ? "启用" : "禁用" }}</td><td>{{ item.sort }}</td><td class="ol-col"><button @click="handleEdit(item)">编辑</button><button @click="handleDelete(item)">删除</button></td></tr><tr v-if="tabValue.length === 0"><td colspan="13"><div class="asd">暂无数据</div></td></tr></tbody>
           </table>
         </div>
-        <div class="main-floot">
-          <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
-          </div>
-        </div>
+        <div class="main-floot"><div class="left-info">共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span></div><div style="float: right;"><button @click="handlePageChange(1)">&lt;&lt;</button><button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button><button class="active">{{ pagination.pageNo }}</button><button @click="handlePageChange(pagination.pageNo + 1)">></button><button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button></div></div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+// ========== 导入AI聊天角色相关API ==========
+import { getChatRolePage, deleteChatRole } from '#/api/ai/model/chatRole';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          name: "智能客服助手",
-          model: "GPT-4 Turbo",
-          avatar: "🤖",
-          category: "客服",
-          description: "专业解决客户咨询与投诉",
-          setting: "你是一位专业的客服助手，态度友好耐心",
-          knowledge: "智能客服知识库",
-          tools: "搜索, 工单",
-          mcp: "Slack",
-          isPublic: "是",
-          status: "启用",
-          sort: 1,
-        },
-        {
-          name: "技术顾问",
-          model: "Claude 3.5 Sonnet",
-          avatar: "👨‍💻",
-          category: "技术支持",
-          description: "提供编程与技术架构咨询",
-          setting: "你是一位资深技术顾问，精通多种编程语言",
-          knowledge: "产品文档库",
-          tools: "代码执行, 搜索",
-          mcp: "GitHub",
-          isPublic: "是",
-          status: "启用",
-          sort: 2,
-        },
-        {
-          name: "营销策划师",
-          model: "Gemini 1.5 Pro",
-          avatar: "📊",
-          category: "营销",
-          description: "创意策划与营销方案生成",
-          setting: "你是一位创意营销专家，擅长品牌策划",
-          knowledge: "市场分析报告",
-          tools: "搜索, 图片生成",
-          mcp: "Notion",
-          isPublic: "否",
-          status: "启用",
-          sort: 3,
-        },
-        {
-          name: "数据分析师",
-          model: "Qwen-Max",
-          avatar: "📈",
-          category: "数据",
-          description: "数据解读与报表分析",
-          setting: "你是一位数据分析专家，擅长数据洞察",
-          knowledge: "内部培训资料",
-          tools: "数据分析, 图表",
-          mcp: "Tableau",
-          isPublic: "否",
-          status: "禁用",
-          sort: 4,
-        },
-      ],
+      searchForm: { name: '', category: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() { this.loadList(); },
+  methods: {
+    async loadList() {
+      try {
+        const params = { pageNo: this.pagination.pageNo, pageSize: this.pagination.pageSize };
+        Object.keys(this.searchForm).forEach((key) => { if (this.searchForm[key]) params[key] = this.searchForm[key]; });
+        const data = await getChatRolePage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '', name: item.name || '', modelId: item.modelId || '', avatar: item.avatar || '',
+          category: item.category || '', description: item.description || '', systemPrompt: item.systemPrompt || '',
+          knowledgeIds: item.knowledgeIds || '', toolIds: item.toolIds || '', mcpServerIds: item.mcpServerIds || '',
+          publicStatus: item.publicStatus || 0, status: item.status || 0, sort: item.sort || 0,
+        }));
+        this.pagination.total = data.total;
+      } catch (err) { console.error('获取列表失败', err); }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() { Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; }); this.pagination.pageNo = 1; this.loadList(); },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    handleAdd() { alert('新增功能待实现'); },
+    handleEdit(item) { alert('编辑功能待实现'); },
+    async handleDelete(item) { if (!confirm('确定要删除吗？')) return; try { await deleteChatRole(item.id); alert('删除成功'); this.loadList(); } catch (err) { console.error('删除失败', err); } },
   },
 };
 </script>
@@ -372,3 +317,5 @@ export default {
   padding-top: 3px;
 }
 </style>
+
+

@@ -6,52 +6,52 @@
         <div class="main-inp">
           <div class="inp">
             <span>项目编号前缀</span>
-            <input type="text" value="PJ" />
+            <input type="text" v-model="form.projectNoPrefix" />
           </div>
           <div class="inp">
             <span>编号日期格式</span>
-            <input type="text" value="yyyyMMdd" />
+            <input type="text" v-model="form.dateFormat" />
           </div>
           <div class="inp">
             <span>流水号位数</span>
-            <input type="text" value="4" />
+            <input type="text" v-model="form.serialNumberLength" />
           </div>
           <div class="inp">
             <span>每日标准工时</span>
-            <input type="text" value="8" />
+            <input type="text" v-model="form.dailyStandardHours" />
           </div>
           <div class="inp">
             <span>默认成本率</span>
-            <input type="text" placeholder="成员未配置费率时的默认值" />
+            <input type="text" placeholder="成员未配置费率时的默认值" v-model="form.defaultCostRate" />
           </div>
           <div class="inp">
             <span>逾期提醒</span>
             <label class="switch">
-              <input type="checkbox" checked />
+              <input type="checkbox" v-model="form.overdueReminder" />
               <span style="width: 250px;" class="slider"></span>
             </label>
           </div>
           <div class="inp">
             <span>逾期天数</span>
-            <input type="text" value="3"/>
+            <input type="text" v-model="form.overdueDays" />
           </div>
           <div class="inp">
             <span>里程碑提醒</span>
             <label class="switch">
-              <input type="checkbox" checked />
+              <input type="checkbox" v-model="form.milestoneReminder" />
               <span style="width: 250px;" class="slider"></span>
             </label>
           </div>
           <div class="inp">
             <span>里程碑天数</span>
-            <input type="text" value="7"/>
+            <input type="text" v-model="form.milestoneDays" />
           </div>
           <div class="inp">
-            <button>重置</button>
-            <button>提交</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSubmit">提交</button>
           </div>
           <div class="inp1">
-            <button>保存配置</button>
+            <button @click="handleSubmit">保存配置</button>
           </div>
         </div>
       </div>
@@ -59,7 +59,51 @@
   </div>
 </template>
 
-<script></script>
+<script>
+import { getProjectSettings, updateProjectSettings } from '#/api/project/base-config/settings';
+
+export default {
+  data() {
+    return {
+      form: {
+        projectNoPrefix: '',
+        dateFormat: '',
+        serialNumberLength: '',
+        dailyStandardHours: '',
+        defaultCostRate: '',
+        overdueReminder: false,
+        overdueDays: '',
+        milestoneReminder: false,
+        milestoneDays: ''
+      }
+    };
+  },
+  created() {
+    this.loadSettings();
+  },
+  methods: {
+    async loadSettings() {
+      try {
+        const res = await getProjectSettings();
+        this.form = { ...this.form, ...res };
+      } catch (e) {
+        console.error('加载配置失败', e);
+      }
+    },
+    handleReset() {
+      this.loadSettings();
+    },
+    async handleSubmit() {
+      try {
+        await updateProjectSettings(this.form);
+        alert('保存成功');
+      } catch (e) {
+        console.error('保存失败', e);
+      }
+    }
+  }
+};
+</script>
 
 <style scoped>
 .title {

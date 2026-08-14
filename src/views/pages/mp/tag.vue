@@ -5,14 +5,14 @@
         <div class="top-inp">
           <div>
             <span>公众号</span>
-            <input type="text" />
+            <input type="text" v-model="searchForm.accountId" />
           </div>
           <div>
             
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -21,8 +21,8 @@
         <div class="main-top">
           <div>公众号标签列表</div>
           <div>
-            <button>+新增公众号标签</button>
-            <button>同步</button>
+            <button @click="handleAdd">+新增公众号标签</button>
+            <button @click="handleSync">同步</button>
             <button>🔍</button>
           </div>
           <div>
@@ -43,14 +43,33 @@
               </tr>
             </thead>
             <tbody>
-              <div class="asd">暂无数据</div>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td>{{ item.id }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.count }}</td>
+                <td>{{ item.createTime }}</td>
+                <td class="ol-col">
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
+                </td>
+              </tr>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="5"><div class="asd">暂无数据</div></td>
+              </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -59,13 +78,84 @@
 </template>
 
 <script>
+// ========== 导入公众号标签相关API ==========
+import { getTagPage, deleteTag, syncTag } from '#/api/mp/tag';
+
 export default {
   data() {
     return {
-      tabValue: [
-        
-      ],
+      // 搜索表单
+      searchForm: {
+        accountId: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getTagPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          name: item.name || '',
+          count: item.count || 0,
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 新增
+    handleAdd() { alert('新增功能待实现'); },
+    // 编辑
+    handleEdit(item) { alert('编辑功能待实现'); },
+    // 删除
+    async handleDelete(item) {
+      if (!confirm(`确定要删除标签"${item.name}"吗？`)) return;
+      try {
+        await deleteTag(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
+    // 同步
+    async handleSync() {
+      if (!this.searchForm.accountId) { alert('请先输入公众号ID'); return; }
+      try {
+        await syncTag(this.searchForm.accountId);
+        alert('同步成功');
+        this.loadList();
+      } catch (err) {
+        console.error('同步失败', err);
+      }
+    },
   },
 };
 </script>

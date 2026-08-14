@@ -5,19 +5,19 @@
         <div class="top-inp">
           <div class="inp-1">
             <span>项目编号</span>
-            <input type="text" placeholder="请输入项目编号" />
+            <input type="text" placeholder="请输入项目编号"  v-model="searchForm.projectNo" />
           </div>
           <div class="inp-1">
             <span>项目名称</span>
-            <input type="text" placeholder="请输入项目名称" />
+            <input type="text" placeholder="请输入项目名称"  v-model="searchForm.projectName" />
           </div>
           <div class="inp-1">
             <span>项目类型</span>
-            <input type="text" placeholder="请输入项目类型" />
+            <input type="text" placeholder="请输入项目类型"  v-model="searchForm.projectType" />
           </div>
           <div class="inp-1">
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             展开▽
           </div>
         </div>
@@ -151,81 +151,54 @@
 </template>
 
 <script>
+import { getProjectLedgerPage, deleteProjectLedger } from '#/api/project/project-ledger';
+
 export default {
   data() {
     return {
-      activeNav: "全部",
-      tabValue: [
-        {
-          id: 1,
-          projectNo: "XM-2026-001",
-          projectName: "智慧城市数据中台",
-          projectType: "研发",
-          priority: "高",
-          status: "已立项",
-          progress: "65%",
-          manager: "张伟",
-          department: "技术研发部",
-          counterparty: "市政数局",
-          planStart: "2026-07-01",
-          planEnd: "2026-12-31",
-          budget: 2800000,
-          createTime: "2026-07-01",
-        },
-        {
-          id: 2,
-          projectNo: "XM-2026-002",
-          projectName: "企业ERP升级改造",
-          projectType: "实施",
-          priority: "中",
-          status: "审核中",
-          progress: "30%",
-          manager: "李芳",
-          department: "产品交付部",
-          counterparty: "恒通集团",
-          planStart: "2026-07-15",
-          planEnd: "2026-11-30",
-          budget: 1500000,
-          createTime: "2026-07-03",
-        },
-        {
-          id: 3,
-          projectNo: "XM-2026-003",
-          projectName: "AI智能客服系统",
-          projectType: "研发",
-          priority: "高",
-          status: "已立项",
-          progress: "45%",
-          manager: "王磊",
-          department: "AI实验室",
-          counterparty: "云创科技",
-          planStart: "2026-06-20",
-          planEnd: "2026-10-15",
-          budget: 3200000,
-          createTime: "2026-06-28",
-        },
-        {
-          id: 4,
-          projectNo: "XM-2026-004",
-          projectName: "移动办公APP开发",
-          projectType: "开发",
-          priority: "低",
-          status: "已驳回",
-          progress: "0%",
-          manager: "陈静",
-          department: "移动开发部",
-          counterparty: "内部项目",
-          planStart: "2026-07-10",
-          planEnd: "2026-09-20",
-          budget: 800000,
-          createTime: "2026-07-05",
-        },
-      ],
+      searchForm: { projectNo: '', projectName: '', projectType: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: []
     };
   },
+  created() {
+    this.loadData();
+  },
   methods: {
-    switchNav(item) {
-      this.activeNav = item;
+    async loadData() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm
+        };
+        const res = await getProjectLedgerPage(params);
+        this.tabValue = res.list || res.records || [];
+        this.pagination.total = res.total || 0;
+      } catch (e) {
+        console.error('加载数据失败', e);
+      }
+    },
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleReset() {
+      this.searchForm = { projectNo: '', projectName: '', projectType: '' };
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleAdd() {
+      alert('新增功能');
+    },
+    async handleDelete(id) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteProjectLedger(id);
+        this.loadData();
+      } catch (e) {
+        console.error('删除失败', e);
+      }
     },
     getPriorityColor(priority) {
       const map = { '高': '#ff4d4f', '中': '#faad14', '低': '#52c41a' };
@@ -236,35 +209,12 @@ export default {
       return map[priority] || '#fff';
     },
     getStatusColor(status) {
-      const map = {
-        '已立项': '#52c41a',
-        '审核中': '#faad14',
-        '已驳回': '#ff4d4f',
-        '进行中': '#1890ff',
-        '已逾期': '#ff4d4f'
-      };
+      const map = { '进行中': '#1890ff', '已完成': '#52c41a', '已暂停': '#faad14', '已取消': '#ff4d4f' };
       return map[status] || '#333';
     },
     getStatusBg(status) {
-      const map = {
-        '已立项': '#f6ffed',
-        '审核中': '#fffbe6',
-        '已驳回': '#fff2f0',
-        '进行中': '#e6f7ff',
-        '已逾期': '#fff2f0'
-      };
+      const map = { '进行中': '#e6f7ff', '已完成': '#f6ffed', '已暂停': '#fffbe6', '已取消': '#fff2f0' };
       return map[status] || '#fff';
-    },
-    handleDetail(item) {
-      alert(`项目详情：${item.projectName}\n编号：${item.projectNo}\n预算：¥${item.budget.toLocaleString()}`);
-    },
-    handleEdit(item) {
-      alert(`编辑项目：${item.projectName}`);
-    },
-    handleDelete(item) {
-      if (confirm(`确定要删除项目"${item.projectName}"吗？`)) {
-        this.tabValue = this.tabValue.filter(i => i.id !== item.id);
-      }
     }
   }
 };

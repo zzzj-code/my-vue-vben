@@ -4,7 +4,7 @@
       <div class="app-top">
         <div>项目分类</div>
         <div>
-          <button style="width: 106px">+新增分类</button>
+          <button style="width: 106px" @click="handleAdd">+新增分类</button>
           <button>收缩</button>
         </div>
         <div>
@@ -53,7 +53,7 @@
               <td class="ol-col">
                 <button>新增下级</button>
                 <button>编辑</button>
-                <button>删除</button>
+                <button @click="handleDelete(item.id)">删除</button>
               </td>
             </tr>
           </tbody>
@@ -64,49 +64,56 @@
 </template>
 
 <script>
+import { getProjectCategoryPage, deleteProjectCategory } from '#/api/project/base-config/category';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          categoryName: "软件开发",
-          categoryCode: "SW-001",
-          sort: 1,
-          status: "开启",
-          remark: "所有软件开发类项目",
-          createTime: "2026-07-01 10:30",
-        },
-        {
-          id: 2,
-          categoryName: "系统集成",
-          categoryCode: "SI-002",
-          sort: 2,
-          status: "开启",
-          remark: "系统集成与实施类项目",
-          createTime: "2026-07-02 14:20",
-        },
-        {
-          id: 3,
-          categoryName: "产品研发",
-          categoryCode: "PR-003",
-          sort: 3,
-          status: "开启",
-          remark: "新产品研发与创新项目",
-          createTime: "2026-07-03 09:15",
-        },
-        {
-          id: 4,
-          categoryName: "技术支持",
-          categoryCode: "TS-004",
-          sort: 4,
-          status: "关闭",
-          remark: "技术支持和运维服务",
-          createTime: "2026-07-04 16:40",
-        },
-      ],
+      searchForm: {  },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: []
     };
   },
+  created() {
+    this.loadData();
+  },
+  methods: {
+    async loadData() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          ...this.searchForm
+        };
+        const res = await getProjectCategoryPage(params);
+        this.tabValue = res.list || res.records || [];
+        this.pagination.total = res.total || 0;
+      } catch (e) {
+        console.error('加载数据失败', e);
+      }
+    },
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleReset() {
+      this.searchForm = {  };
+      this.pagination.pageNo = 1;
+      this.loadData();
+    },
+    handleAdd() {
+      alert('新增功能');
+    },
+    async handleDelete(id) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteProjectCategory(id);
+        this.loadData();
+      } catch (e) {
+        console.error('删除失败', e);
+      }
+    },
+  }
 };
 </script>
 

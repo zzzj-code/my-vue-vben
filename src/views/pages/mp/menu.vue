@@ -4,7 +4,7 @@
       <div class="app-top">
         <span>公众号</span>
 
-        <input type="text" placeholder="请选择公众号" />
+        <input type="text" placeholder="请选择公众号" v-model="accountId" @blur="loadMenu" />
       </div>
 
       <div class="app-main">
@@ -20,15 +20,21 @@
                 <span class="back-icon">〈 返回</span>
                 <span class="user-icon">👤</span>
               </div>
-              <div class="phone-content"></div>
+              <div class="phone-content">
+                <div v-if="menuList.length > 0" style="position: absolute; bottom: 0; left: 0; right: 0; display: flex; border-top: 1px solid #e8eaed;">
+                  <div v-for="(menu, index) in menuList" :key="index" style="flex: 1; text-align: center; padding: 10px; font-size: 12px; border-right: 1px solid #e8eaed;" :style="{borderRight: index === menuList.length - 1 ? 'none' : '1px solid #e8eaed'}">
+                    {{ menu.name }}
+                  </div>
+                </div>
+              </div>
               <div class="phone-bottom-add">
                 <span class="key-icon">⌨</span>
                 <div class="add-btn">+</div>
               </div>
             </div>
             <div class="phone-buttons">
-              <button class="save-btn">保存并发布菜单</button>
-              <button class="clear-btn">清空菜单</button>
+              <button class="save-btn" @click="handleSave">保存并发布菜单</button>
+              <button class="clear-btn" @click="handleDelete">清空菜单</button>
             </div>
           </div>
         </div>
@@ -40,7 +46,55 @@
   </div>
 </template>
 
-<script></script>
+<script>
+// ========== 导入公众号菜单相关API ==========
+import { getMenuList, saveMenu, deleteMenu } from '#/api/mp/menu';
+
+export default {
+  data() {
+    return {
+      // 公众号ID
+      accountId: '',
+      // 菜单列表
+      menuList: [],
+    };
+  },
+  methods: {
+    // 加载菜单
+    async loadMenu() {
+      if (!this.accountId) return;
+      try {
+        const data = await getMenuList(this.accountId);
+        this.menuList = data || [];
+      } catch (err) {
+        console.error('获取菜单失败', err);
+      }
+    },
+    // 保存菜单
+    async handleSave() {
+      if (!this.accountId) { alert('请先输入公众号ID'); return; }
+      try {
+        await saveMenu(this.accountId, this.menuList);
+        alert('保存成功');
+      } catch (err) {
+        console.error('保存失败', err);
+      }
+    },
+    // 清空菜单
+    async handleDelete() {
+      if (!this.accountId) { alert('请先输入公众号ID'); return; }
+      if (!confirm('确定要清空菜单吗？')) return;
+      try {
+        await deleteMenu(this.accountId);
+        alert('清空成功');
+        this.menuList = [];
+      } catch (err) {
+        console.error('清空失败', err);
+      }
+    },
+  },
+};
+</script>
 
 <style scoped>
 .page-wrapper {

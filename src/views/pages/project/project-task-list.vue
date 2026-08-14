@@ -4,10 +4,10 @@
       <div class="app-top">
         <div class="top-1">
           <div>项目任务</div>
-          <input type="text" value="软件研发项目2026060602" />
-          <input type="text" placeholder="搜索任务名称/负责人/指派人" />
-          <button class="btn1">搜索</button>
-          <button class="btn2">重置</button>
+          <input type="text" v-model="searchForm.projectName" placeholder="请选择项目" />
+          <input type="text" placeholder="搜索任务名称/负责人/指派人" v-model="searchForm.keyword" />
+          <button class="btn1" @click="handleSearch">搜索</button>
+          <button class="btn2" @click="handleReset">重置</button>
           <div>软件研发项目2026060602</div>
         </div>
         <div class="top-2">
@@ -206,9 +206,15 @@
 </template>
 
 <script>
+import { getProjectTaskPage, deleteProjectTask } from '#/api/project/project-task';
+
 export default {
   data() {
     return {
+      searchForm: {
+        projectName: '',
+        keyword: ''
+      },
       activeNav: "全部",
       btnValue: [
         "全部",
@@ -402,7 +408,30 @@ export default {
       ],
     };
   },
+  created() {
+    this.loadData();
+  },
   methods: {
+    async loadData() {
+      try {
+        const params = {
+          pageNo: 1,
+          pageSize: 20,
+          ...this.searchForm
+        };
+        const res = await getProjectTaskPage(params);
+        this.tabValue = res.list || res.records || [];
+      } catch (e) {
+        console.error('加载任务列表失败', e);
+      }
+    },
+    handleSearch() {
+      this.loadData();
+    },
+    handleReset() {
+      this.searchForm = { projectName: '', keyword: '' };
+      this.loadData();
+    },
     switchNav(item) {
       this.activeNav = item;
     },

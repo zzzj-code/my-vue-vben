@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>用户编号</span>
-            <input type="text" placeholder="请输入用户编号" />
+            <input type="text" placeholder="请输入用户编号" v-model="searchForm.userId" />
           </div>
           <div>
             <span>聊天标题</span>
-            <input type="text" placeholder="请输入聊天标题" />
+            <input type="text" placeholder="请输入聊天标题" v-model="searchForm.title" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -49,28 +49,38 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
                 <td>{{ item.title }}</td>
-                <td>{{ item.user }}</td>
-                <td>{{ item.role }}</td>
-                <td>{{ item.model }}</td>
-                <td>{{ item.msgCount }}</td>
+                <td>{{ item.userId }}</td>
+                <td>{{ item.roleId }}</td>
+                <td>{{ item.modelId }}</td>
+                <td>{{ item.messageCount }}</td>
                 <td>{{ item.createTime }}</td>
-                <td>{{ item.temp }}</td>
-                <td>{{ item.tokens }}</td>
-                <td>{{ item.context }}</td>
+                <td>{{ item.temperature }}</td>
+                <td>{{ item.maxTokens }}</td>
+                <td>{{ item.contextCount }}</td>
                 <td class="ol-col">
-                  <button>删除</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
+              </tr>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="11"><div class="asd">暂无数据</div></td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -79,252 +89,76 @@
 </template>
 
 <script>
+// ========== 导入AI聊天对话相关API ==========
+import { getChatConversationPage, deleteChatConversationByAdmin } from '#/api/ai/chat/conversation';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: "D001",
-          title: "如何优化前端性能",
-          user: "张三",
-          role: "智能客服助手",
-          model: "gpt-4-turbo",
-          msgCount: 12,
-          createTime: "2026-01-05 09:30:00",
-          temp: 0.7,
-          tokens: 2048,
-          context: 8192,
-        },
-        {
-          id: "D002",
-          title: "Python 异步编程",
-          user: "李四",
-          role: "技术顾问",
-          model: "claude-3-5-sonnet",
-          msgCount: 8,
-          createTime: "2026-01-10 14:20:00",
-          temp: 0.5,
-          tokens: 4096,
-          context: 16384,
-        },
-        {
-          id: "D003",
-          title: "品牌营销策略讨论",
-          user: "王五",
-          role: "营销策划师",
-          model: "gemini-1.5-pro",
-          msgCount: 15,
-          createTime: "2026-01-15 10:00:00",
-          temp: 0.8,
-          tokens: 3072,
-          context: 8192,
-        },
-        {
-          id: "D004",
-          title: "销售数据分析",
-          user: "赵六",
-          role: "数据分析师",
-          model: "qwen-max",
-          msgCount: 6,
-          createTime: "2026-01-20 16:45:00",
-          temp: 0.3,
-          tokens: 4096,
-          context: 4096,
-        },
-        {
-          id: "D005",
-          title: "Vue3 组件设计",
-          user: "孙七",
-          role: "技术顾问",
-          model: "gpt-4o",
-          msgCount: 10,
-          createTime: "2026-01-25 11:10:00",
-          temp: 0.6,
-          tokens: 2048,
-          context: 16384,
-        },
-        {
-          id: "D006",
-          title: "客户投诉处理",
-          user: "周八",
-          role: "智能客服助手",
-          model: "azure-gpt-4",
-          msgCount: 18,
-          createTime: "2026-02-01 09:00:00",
-          temp: 0.7,
-          tokens: 4096,
-          context: 8192,
-        },
-        {
-          id: "D007",
-          title: "AI 发展趋势探讨",
-          user: "吴九",
-          role: "营销策划师",
-          model: "claude-3-opus",
-          msgCount: 14,
-          createTime: "2026-02-05 13:30:00",
-          temp: 0.9,
-          tokens: 4096,
-          context: 32768,
-        },
-        {
-          id: "D008",
-          title: "数据库性能调优",
-          user: "郑十",
-          role: "技术顾问",
-          model: "glm-4-plus",
-          msgCount: 9,
-          createTime: "2026-02-10 10:20:00",
-          temp: 0.4,
-          tokens: 2048,
-          context: 4096,
-        },
-        {
-          id: "D009",
-          title: "市场调研报告解读",
-          user: "冯十一",
-          role: "数据分析师",
-          model: "ernie-4.0",
-          msgCount: 7,
-          createTime: "2026-02-15 15:00:00",
-          temp: 0.5,
-          tokens: 4096,
-          context: 8192,
-        },
-        {
-          id: "D010",
-          title: "新品发布会策划",
-          user: "陈十二",
-          role: "营销策划师",
-          model: "gemini-1.5-flash",
-          msgCount: 11,
-          createTime: "2026-02-20 08:40:00",
-          temp: 0.8,
-          tokens: 3072,
-          context: 16384,
-        },
-        {
-          id: "D011",
-          title: "React 性能优化",
-          user: "褚十三",
-          role: "技术顾问",
-          model: "gpt-3.5-turbo",
-          msgCount: 5,
-          createTime: "2026-02-25 12:10:00",
-          temp: 0.6,
-          tokens: 2048,
-          context: 4096,
-        },
-        {
-          id: "D012",
-          title: "售后服务流程改进",
-          user: "卫十四",
-          role: "智能客服助手",
-          model: "azure-gpt-35",
-          msgCount: 13,
-          createTime: "2026-03-01 09:50:00",
-          temp: 0.7,
-          tokens: 4096,
-          context: 8192,
-        },
-        {
-          id: "D013",
-          title: "用户画像分析",
-          user: "蒋十五",
-          role: "数据分析师",
-          model: "qwen-plus",
-          msgCount: 8,
-          createTime: "2026-03-05 14:30:00",
-          temp: 0.4,
-          tokens: 4096,
-          context: 4096,
-        },
-        {
-          id: "D014",
-          title: "社交媒体运营策略",
-          user: "沈十六",
-          role: "营销策划师",
-          model: "hunyuan-pro",
-          msgCount: 16,
-          createTime: "2026-03-10 11:20:00",
-          temp: 0.8,
-          tokens: 3072,
-          context: 8192,
-        },
-        {
-          id: "D015",
-          title: "Docker 容器化部署",
-          user: "韩十七",
-          role: "技术顾问",
-          model: "claude-3-5-sonnet",
-          msgCount: 10,
-          createTime: "2026-03-15 16:00:00",
-          temp: 0.5,
-          tokens: 4096,
-          context: 16384,
-        },
-        {
-          id: "D016",
-          title: "用户满意度调查",
-          user: "杨十八",
-          role: "智能客服助手",
-          model: "gpt-4-turbo",
-          msgCount: 14,
-          createTime: "2026-03-20 10:30:00",
-          temp: 0.6,
-          tokens: 2048,
-          context: 8192,
-        },
-        {
-          id: "D017",
-          title: "竞品分析报告",
-          user: "朱十九",
-          role: "数据分析师",
-          model: "glm-4-air",
-          msgCount: 9,
-          createTime: "2026-03-25 13:10:00",
-          temp: 0.4,
-          tokens: 4096,
-          context: 8192,
-        },
-        {
-          id: "D018",
-          title: "视频内容创意讨论",
-          user: "秦二十",
-          role: "营销策划师",
-          model: "gemini-1.5-pro",
-          msgCount: 12,
-          createTime: "2026-04-01 09:00:00",
-          temp: 0.9,
-          tokens: 3072,
-          context: 16384,
-        },
-        {
-          id: "D019",
-          title: "微服务架构设计",
-          user: "尤二十一",
-          role: "技术顾问",
-          model: "gpt-4o",
-          msgCount: 7,
-          createTime: "2026-04-05 15:30:00",
-          temp: 0.6,
-          tokens: 4096,
-          context: 32768,
-        },
-        {
-          id: "D020",
-          title: "员工培训需求调研",
-          user: "许二十二",
-          role: "智能客服助手",
-          model: "azure-gpt-4",
-          msgCount: 11,
-          createTime: "2026-04-10 11:40:00",
-          temp: 0.7,
-          tokens: 2048,
-          context: 8192,
-        },
-      ],
+      // 搜索表单
+      searchForm: {
+        userId: '',
+        title: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getChatConversationPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          title: item.title || '',
+          userId: item.userId || '',
+          roleId: item.roleId || '',
+          modelId: item.modelId || '',
+          messageCount: item.messageCount || 0,
+          createTime: item.createTime || '',
+          temperature: item.temperature || 0,
+          maxTokens: item.maxTokens || 0,
+          contextCount: item.contextCount || 0,
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 删除
+    async handleDelete(item) {
+      if (!confirm('确定要删除该对话吗？')) return;
+      try {
+        await deleteChatConversationByAdmin(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>

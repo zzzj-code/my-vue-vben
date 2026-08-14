@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>用户编号</span>
-            <input type="text" placeholder="请输入用户编号" />
+            <input type="text" placeholder="请输入用户编号" v-model="searchForm.userId" />
           </div>
           <div>
             <span>平台</span>
-            <input type="text" placeholder="请输入" />
+            <input type="text" placeholder="请输入" v-model="searchForm.platform" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -52,31 +52,41 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tabValue">
+              <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
-                <td>{{ item.image }}</td>
-                <td>{{ item.user }}</td>
+                <td><img :src="item.imageUrl" style="width:60px;height:40px" v-if="item.imageUrl" /></td>
+                <td>{{ item.userId }}</td>
                 <td>{{ item.platform }}</td>
-                <td>{{ item.model }}</td>
+                <td>{{ item.modelId }}</td>
                 <td>{{ item.status }}</td>
-                <td>{{ item.isPublished }}</td>
+                <td>{{ item.publicStatus === 1 ? '是' : '否' }}</td>
                 <td>{{ item.prompt }}</td>
                 <td>{{ item.createTime }}</td>
                 <td>{{ item.width }}</td>
                 <td>{{ item.height }}</td>
-                <td>{{ item.error }}</td>
+                <td>{{ item.errorMessage }}</td>
                 <td>{{ item.taskId }}</td>
                 <td class="ol-col">
-                  <button>删除</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
+              </tr>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="14"><div class="asd">暂无数据</div></td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -85,282 +95,37 @@
 </template>
 
 <script>
+// ========== 导入AI图片相关API ==========
+import { getImagePage, deleteImage } from '#/api/ai/image';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: "P001",
-          image: "🎨",
-          user: "张三",
-          platform: "OpenAI",
-          model: "DALL-E 3",
-          status: "已完成",
-          isPublished: "是",
-          prompt: "未来城市夜景，霓虹灯，赛博朋克风格",
-          createTime: "2026-01-05 09:30:00",
-          width: 1024,
-          height: 1024,
-          error: "",
-          taskId: "TASK-001",
-        },
-        {
-          id: "P002",
-          image: "🌄",
-          user: "李四",
-          platform: "Stability AI",
-          model: "Stable Diffusion XL",
-          status: "已完成",
-          isPublished: "是",
-          prompt: "日出时分的山间云雾，油画风格",
-          createTime: "2026-01-10 14:20:00",
-          width: 1024,
-          height: 768,
-          error: "",
-          taskId: "TASK-002",
-        },
-        {
-          id: "P003",
-          image: "🐱",
-          user: "王五",
-          platform: "Midjourney",
-          model: "Midjourney V6",
-          status: "已完成",
-          isPublished: "否",
-          prompt: "一只穿着宇航服的猫，卡通风格",
-          createTime: "2026-01-15 10:00:00",
-          width: 1024,
-          height: 1024,
-          error: "",
-          taskId: "TASK-003",
-        },
-        {
-          id: "P004",
-          image: "🌺",
-          user: "赵六",
-          platform: "OpenAI",
-          model: "DALL-E 3",
-          status: "处理中",
-          isPublished: "否",
-          prompt: "热带花卉水彩插画",
-          createTime: "2026-01-20 16:45:00",
-          width: 1024,
-          height: 1024,
-          error: "",
-          taskId: "TASK-004",
-        },
-        {
-          id: "P005",
-          image: "🏰",
-          user: "孙七",
-          platform: "Stability AI",
-          model: "Stable Diffusion 3",
-          status: "已完成",
-          isPublished: "是",
-          prompt: "童话城堡，梦幻风格，魔法森林环绕",
-          createTime: "2026-01-25 11:10:00",
-          width: 1216,
-          height: 832,
-          error: "",
-          taskId: "TASK-005",
-        },
-        {
-          id: "P006",
-          image: "🌊",
-          user: "周八",
-          platform: "Midjourney",
-          model: "Midjourney V6",
-          status: "已完成",
-          isPublished: "是",
-          prompt: "海浪冲击礁石，超现实主义",
-          createTime: "2026-02-01 09:00:00",
-          width: 1024,
-          height: 1024,
-          error: "",
-          taskId: "TASK-006",
-        },
-        {
-          id: "P007",
-          image: "🚀",
-          user: "吴九",
-          platform: "OpenAI",
-          model: "DALL-E 3",
-          status: "失败",
-          isPublished: "否",
-          prompt: "星际飞船穿越星云",
-          createTime: "2026-02-05 13:30:00",
-          width: 1024,
-          height: 1024,
-          error: "API 请求超时",
-          taskId: "TASK-007",
-        },
-        {
-          id: "P008",
-          image: "🌸",
-          user: "郑十",
-          platform: "Stability AI",
-          model: "Stable Diffusion XL",
-          status: "已完成",
-          isPublished: "否",
-          prompt: "樱花树下，日系动漫风格",
-          createTime: "2026-02-10 10:20:00",
-          width: 768,
-          height: 1024,
-          error: "",
-          taskId: "TASK-008",
-        },
-        {
-          id: "P009",
-          image: "🌌",
-          user: "冯十一",
-          platform: "Midjourney",
-          model: "Midjourney V6",
-          status: "已完成",
-          isPublished: "是",
-          prompt: "银河星空，极光，全景风光",
-          createTime: "2026-02-15 15:00:00",
-          width: 1024,
-          height: 1024,
-          error: "",
-          taskId: "TASK-009",
-        },
-        {
-          id: "P010",
-          image: "🐉",
-          user: "陈十二",
-          platform: "OpenAI",
-          model: "DALL-E 3",
-          status: "处理中",
-          isPublished: "否",
-          prompt: "中国龙腾云驾雾，水墨风格",
-          createTime: "2026-02-20 08:40:00",
-          width: 1024,
-          height: 1024,
-          error: "",
-          taskId: "TASK-010",
-        },
-        {
-          id: "P011",
-          image: "🏔️",
-          user: "褚十三",
-          platform: "Stability AI",
-          model: "Stable Diffusion 3",
-          status: "已完成",
-          isPublished: "是",
-          prompt: "雪山倒影在湖面，真实摄影风格",
-          createTime: "2026-02-25 12:10:00",
-          width: 1024,
-          height: 768,
-          error: "",
-          taskId: "TASK-011",
-        },
-        {
-          id: "P012",
-          image: "🎭",
-          user: "卫十四",
-          platform: "Midjourney",
-          model: "Midjourney V6",
-          status: "已完成",
-          isPublished: "否",
-          prompt: "威尼斯面具，华丽巴洛克风格",
-          createTime: "2026-03-01 09:50:00",
-          width: 1024,
-          height: 1024,
-          error: "",
-          taskId: "TASK-012",
-        },
-        {
-          id: "P013",
-          image: "🌿",
-          user: "蒋十五",
-          platform: "OpenAI",
-          model: "DALL-E 3",
-          status: "失败",
-          isPublished: "否",
-          prompt: "热带雨林神秘生物",
-          createTime: "2026-03-05 14:30:00",
-          width: 1024,
-          height: 1024,
-          error: "内容过滤违规",
-          taskId: "TASK-013",
-        },
-        {
-          id: "P014",
-          image: "🎪",
-          user: "沈十六",
-          platform: "Stability AI",
-          model: "Stable Diffusion XL",
-          status: "已完成",
-          isPublished: "是",
-          prompt: "马戏团小丑与大象，复古海报风格",
-          createTime: "2026-03-10 11:20:00",
-          width: 832,
-          height: 1216,
-          error: "",
-          taskId: "TASK-014",
-        },
-        {
-          id: "P015",
-          image: "🌅",
-          user: "韩十七",
-          platform: "Midjourney",
-          model: "Midjourney V6",
-          status: "已完成",
-          isPublished: "是",
-          prompt: "沙漠日落，骆驼队剪影",
-          createTime: "2026-03-15 16:00:00",
-          width: 1024,
-          height: 1024,
-          error: "",
-          taskId: "TASK-015",
-        },
-        {
-          id: "P016",
-          image: "🧚",
-          user: "杨十八",
-          platform: "OpenAI",
-          model: "DALL-E 3",
-          status: "处理中",
-          isPublished: "否",
-          prompt: "森林精灵与小鹿，童话插画",
-          createTime: "2026-03-20 10:30:00",
-          width: 1024,
-          height: 1024,
-          error: "",
-          taskId: "TASK-016",
-        },
-        {
-          id: "P017",
-          image: "🏯",
-          user: "朱十九",
-          platform: "Stability AI",
-          model: "Stable Diffusion 3",
-          status: "已完成",
-          isPublished: "否",
-          prompt: "日本古城樱花季，浮世绘风格",
-          createTime: "2026-03-25 13:10:00",
-          width: 1024,
-          height: 768,
-          error: "",
-          taskId: "TASK-017",
-        },
-        {
-          id: "P018",
-          image: "🦋",
-          user: "秦二十",
-          platform: "Midjourney",
-          model: "Midjourney V6",
-          status: "已完成",
-          isPublished: "是",
-          prompt: "蝴蝶翅膀特写，微距摄影风格",
-          createTime: "2026-04-01 09:00:00",
-          width: 1024,
-          height: 1024,
-          error: "",
-          taskId: "TASK-018",
-        },
-      ],
+      searchForm: { userId: '', platform: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: [],
     };
+  },
+  mounted() { this.loadList(); },
+  methods: {
+    async loadList() {
+      try {
+        const params = { pageNo: this.pagination.pageNo, pageSize: this.pagination.pageSize };
+        Object.keys(this.searchForm).forEach((key) => { if (this.searchForm[key]) params[key] = this.searchForm[key]; });
+        const data = await getImagePage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '', imageUrl: item.imageUrl || '', userId: item.userId || '',
+          platform: item.platform || '', modelId: item.modelId || '', status: item.status || '',
+          publicStatus: item.publicStatus || 0, prompt: item.prompt || '', createTime: item.createTime || '',
+          width: item.width || 0, height: item.height || 0, errorMessage: item.errorMessage || '', taskId: item.taskId || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) { console.error('获取列表失败', err); }
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() { Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; }); this.pagination.pageNo = 1; this.loadList(); },
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    async handleDelete(item) { if (!confirm('确定要删除该图片吗？')) return; try { await deleteImage(item.id); alert('删除成功'); this.loadList(); } catch (err) { console.error('删除失败', err); } },
   },
 };
 </script>

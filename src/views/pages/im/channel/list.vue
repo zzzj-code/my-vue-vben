@@ -5,24 +5,24 @@
         <div class="top-inp">
           <div>
             <span>编码</span>
-            <input type="text" placeholder="频道业务码" />
+            <input type="text" placeholder="请输入编码" v-model="searchForm.code" />
           </div>
           <div>
             <span>名称</span>
-            <input type="text" placeholder="频道名称" />
+            <input type="text" placeholder="请输入名称" v-model="searchForm.name" />
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
       </div>
       <div class="app-main">
         <div class="main-top">
-          <div>频道列表</div>
+          <div>列表</div>
           <div>
-            <button>+新增频道</button>
+            <button @click="handleAdd">+新增</button>
             <button>🔍</button>
           </div>
           <div>
@@ -35,9 +35,7 @@
           <table>
             <thead>
               <tr>
-                <th>
-                  <div class="th-cell">编号</div>
-                </th>
+                <th><div class="th-cell">编号</div></th>
                 <th><div class="th-cell">头像</div></th>
                 <th><div class="th-cell">编码</div></th>
                 <th><div class="th-cell">名称</div></th>
@@ -50,29 +48,34 @@
             <tbody>
               <tr v-for="item in tabValue" :key="item.id">
                 <td>{{ item.id }}</td>
-                <td>
-                  <img
-                    :src="item.avatar"
-                    style="width: 40px; height: 40px; border-radius: 50%"
-                  />
-                </td>
+                <td><img :src="item.avatar" style="width: 40px; height: 40px; border-radius: 50%" /></td>
                 <td>{{ item.code }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.sort }}</td>
                 <td>{{ item.status }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
+              </tr>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="8"><div class="asd">暂无数据</div></td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -81,31 +84,75 @@
 </template>
 
 <script>
+import { getChannelPage, deleteChannel } from '#/api/im/channel/channel';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          avatar: "https://i.pravatar.cc/40?img=11",
-          code: "CH001",
-          name: "技术交流",
-          sort: 1,
-          status: "启用",
-          createTime: "2026-08-09 10:30:00",
-        },
-        {
-          id: 2,
-          avatar: "https://i.pravatar.cc/40?img=12",
-          code: "CH002",
-          name: "项目协作",
-          sort: 2,
-          status: "停用",
-          createTime: "2026-08-09 14:20:00",
-        },
-      ],
+      searchForm: { code: '', name: '' },
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      tabValue: []
     };
   },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const params = { pageNo: this.pagination.pageNo, pageSize: this.pagination.pageSize };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getChannelPage(params);
+        this.tabValue = data.list.map((item) => {
+          const obj = {};
+          obj.id = item.id || '';
+          obj.avatar = item.avatar || '';
+          obj.code = item.code || '';
+          obj.name = item.name || '';
+          obj.sort = item.sort || '';
+          obj.status = item.status || '';
+          obj.createTime = item.createTime || '';
+          return obj;
+        });
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    handleSearch() {
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => {
+        this.searchForm[key] = '';
+      });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    handlePageChange(page) {
+      this.pagination.pageNo = page;
+      this.loadList();
+    },
+    handleAdd() {
+      alert('新增功能待实现');
+    },
+    handleEdit(item) {
+      alert('编辑功能待实现');
+    },
+    async handleDelete(item) {
+      if (!confirm('确定要删除吗？')) return;
+      try {
+        await deleteChannel(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    }
+  }
 };
 </script>
 

@@ -5,7 +5,7 @@
         <div class="main-top">
           <div>物料分类</div>
           <div>
-            <button>+新增分类</button>
+            <button @click="handleAdd">+新增分类</button>
             <button>收缩</button>
           </div>
           <div>
@@ -34,9 +34,9 @@
                 <td>{{ item.status }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
-                  <button>+新增下级</button>
-                  <button>编辑</button>
-                  <button>删除</button>
+                  <button @click="handleAddChild(item)">+新增下级</button>
+                  <button @click="handleEdit(item)">编辑</button>
+                  <button @click="handleDelete(item)">删除</button>
                 </td>
               </tr>
             </tbody>
@@ -48,92 +48,53 @@
 </template>
 
 <script>
+// ========== 导入物料分类相关API ==========
+import { getMaterialCategoryList, deleteMaterialCategory } from '#/api/mdm/basic/material-category';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          name: "原材料",
-          code: "CAT-RAW-001",
-          sort: 1,
-          status: "启用",
-          createTime: "2024-01-10 09:00:00",
-        },
-        {
-          id: 2,
-          name: "五金类",
-          code: "CAT-HAR-002",
-          sort: 2,
-          status: "启用",
-          createTime: "2024-01-12 10:30:00",
-        },
-        {
-          id: 3,
-          name: "注塑类",
-          code: "CAT-INJ-003",
-          sort: 3,
-          status: "启用",
-          createTime: "2024-01-15 14:20:00",
-        },
-        {
-          id: 4,
-          name: "包装类",
-          code: "CAT-PKG-004",
-          sort: 4,
-          status: "停用",
-          createTime: "2024-01-18 11:45:00",
-        },
-        {
-          id: 5,
-          name: "辅料类",
-          code: "CAT-AUX-005",
-          sort: 5,
-          status: "启用",
-          createTime: "2024-01-20 16:10:00",
-        },
-        {
-          id: 6,
-          name: "产成品",
-          code: "CAT-FIN-006",
-          sort: 6,
-          status: "启用",
-          createTime: "2024-01-22 09:30:00",
-        },
-        {
-          id: 7,
-          name: "半成品",
-          code: "CAT-SEM-007",
-          sort: 7,
-          status: "启用",
-          createTime: "2024-01-25 13:50:00",
-        },
-        {
-          id: 8,
-          name: "电子元器件",
-          code: "CAT-ELC-008",
-          sort: 8,
-          status: "停用",
-          createTime: "2024-01-28 10:15:00",
-        },
-        {
-          id: 9,
-          name: "化工原料",
-          code: "CAT-CHE-009",
-          sort: 9,
-          status: "启用",
-          createTime: "2024-02-01 15:40:00",
-        },
-        {
-          id: 10,
-          name: "工具设备",
-          code: "CAT-TOO-010",
-          sort: 10,
-          status: "启用",
-          createTime: "2024-02-03 08:20:00",
-        },
-      ],
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // 加载列表
+    async loadList() {
+      try {
+        const data = await getMaterialCategoryList();
+        this.tabValue = data.map((item) => ({
+          id: item.id || '',
+          name: item.name || '',
+          code: item.code || '',
+          sort: item.sort || 0,
+          status: item.status === 0 ? '启用' : '停用',
+          createTime: item.createTime || '',
+        }));
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 新增
+    handleAdd() { alert('新增分类功能待实现'); },
+    // 新增下级
+    handleAddChild(item) { alert('新增下级功能待实现'); },
+    // 编辑
+    handleEdit(item) { alert('编辑功能待实现'); },
+    // 删除
+    async handleDelete(item) {
+      if (!confirm(`确定要删除分类"${item.name}"吗？`)) return;
+      try {
+        await deleteMaterialCategory(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
   },
 };
 </script>

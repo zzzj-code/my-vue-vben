@@ -5,15 +5,15 @@
         <div class="top-inp">
           <div>
             <span>公众号</span>
-            <input type="text" />
+            <input type="text" v-model="searchForm.accountId" />
           </div>
           <div>
             <span>用户标识</span>
-            <input type="text" placeholder="请输入用户标识">
+            <input type="text" placeholder="请输入用户标识" v-model="searchForm.openid">
           </div>
           <div>
-            <button>重置</button>
-            <button>搜索</button>
+            <button @click="handleReset">重置</button>
+            <button @click="handleSearch">搜索</button>
             收起^
           </div>
         </div>
@@ -23,7 +23,7 @@
           <div>粉丝列表</div>
           <div>
             <button style="background-color: #fff;"></button>
-            <button>同步</button>
+            <button @click="handleSync">同步</button>
             <button>🔍</button>
           </div>
           <div>
@@ -48,14 +48,36 @@
               </tr>
             </thead>
             <tbody>
-              <div class="asd">暂无数据</div>
+              <tr v-for="item in tabValue" :key="item.id">
+                <td>{{ item.id }}</td>
+                <td>{{ item.openid }}</td>
+                <td><img :src="item.headImgUrl" style="width:40px;height:40px" v-if="item.headImgUrl" /></td>
+                <td>{{ item.nickname }}</td>
+                <td>{{ item.remark }}</td>
+                <td>{{ item.tagNames }}</td>
+                <td>{{ item.subscribeStatus === 1 ? '已订阅' : '未订阅' }}</td>
+                <td>{{ item.subscribeTime }}</td>
+                <td class="ol-col">
+                  <button @click="handleEdit(item)">编辑</button>
+                </td>
+              </tr>
+              <tr v-if="tabValue.length === 0">
+                <td colspan="9"><div class="asd">暂无数据</div></td>
+              </tr>
             </tbody>
           </table>
         </div>
         <div class="main-floot">
           <div class="left-info">
-            共{{ tabValue.length }}条记录
-            <span>20条/页</span>
+            共{{ pagination.total }}条记录
+            <span>{{ pagination.pageSize }}条/页</span>
+          </div>
+          <div style="float: right;">
+            <button @click="handlePageChange(1)">&lt;&lt;</button>
+            <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+            <button class="active">{{ pagination.pageNo }}</button>
+            <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+            <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
           </div>
         </div>
       </div>
@@ -64,13 +86,76 @@
 </template>
 
 <script>
+// ========== 导入公众号粉丝相关API ==========
+import { getUserPage, syncUser } from '#/api/mp/user';
+
 export default {
   data() {
     return {
-      tabValue: [
-        
-      ],
+      // 搜索表单
+      searchForm: {
+        accountId: '',
+        openid: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
     };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getUserPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          openid: item.openid || '',
+          headImgUrl: item.headImgUrl || '',
+          nickname: item.nickname || '',
+          remark: item.remark || '',
+          tagNames: item.tagNames || '',
+          subscribeStatus: item.subscribeStatus || 0,
+          subscribeTime: item.subscribeTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 编辑
+    handleEdit(item) { alert('编辑功能待实现'); },
+    // 同步
+    async handleSync() {
+      if (!this.searchForm.accountId) { alert('请先输入公众号ID'); return; }
+      try {
+        await syncUser(this.searchForm.accountId);
+        alert('同步成功');
+        this.loadList();
+      } catch (err) {
+        console.error('同步失败', err);
+      }
+    },
   },
 };
 </script>

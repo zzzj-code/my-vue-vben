@@ -4,7 +4,7 @@
       <div class="app-left">
         <div class="left-title">物料分类</div>
         <div class="left-main">
-          <input type="text" placeholder="🔍请输入部门名称" />
+          <input type="text" placeholder="🔍请输入分类名称" v-model="treeSearch" />
           <div class="main-tab">
             <ul class="org-tree">
               <li
@@ -53,15 +53,15 @@
           <div class="top-inp">
             <div>
               <span>名称</span>
-              <input type="text" placeholder="请输入名称" />
+              <input type="text" placeholder="请输入名称" v-model="searchForm.name" />
             </div>
             <div>
               <span>物料编码</span>
-              <input type="text" placeholder="请输入物料编码" />
+              <input type="text" placeholder="请输入物料编码" v-model="searchForm.code" />
             </div>
             <div>
-              <button>重置</button>
-              <button>搜索</button>
+              <button @click="handleReset">重置</button>
+              <button @click="handleSearch">搜索</button>
               展开▽
             </div>
           </div>
@@ -70,9 +70,9 @@
           <div class="main-top">
             <div>物料信息</div>
             <div>
-              <button>+新增物料</button>
+              <button @click="handleAdd">+新增物料</button>
               <button>导入</button>
-              <button>导出</button>
+              <button @click="handleExport">导出</button>
               <button>🔍</button>
             </div>
             <div>
@@ -109,15 +109,22 @@
                   <td>{{ item.status }}</td>
                   <td>{{ item.createTime }}</td>
                   <td class="ol-col">
-                    <button>编辑</button>
-                    <button>删除</button>
+                    <button @click="handleEdit(item)">编辑</button>
+                    <button @click="handleDelete(item)">删除</button>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
           <div class="main-floot">
-            共{{ tabValue.length }}条记录<span>20条/页</span>
+            共{{ pagination.total }}条记录<span>{{ pagination.pageSize }}条/页</span>
+            <div style="float: right;">
+              <button @click="handlePageChange(1)">&lt;&lt;</button>
+              <button @click="handlePageChange(Math.max(1, pagination.pageNo - 1))" :disabled="pagination.pageNo <= 1">&lt;</button>
+              <button class="active">{{ pagination.pageNo }}</button>
+              <button @click="handlePageChange(pagination.pageNo + 1)">></button>
+              <button @click="handlePageChange(Math.ceil(pagination.total / pagination.pageSize))">&gt;&gt;</button>
+            </div>
           </div>
         </div>
       </div>
@@ -126,254 +133,125 @@
 </template>
 
 <script>
+// ========== 导入物料和物料分类相关API ==========
+import { getMaterialPage, deleteMaterial, exportMaterial } from '#/api/mdm/basic/material';
+import { getMaterialCategoryList } from '#/api/mdm/basic/material-category';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          id: 1,
-          name: "笔记本电脑",
-          code: "MAT-2024-001",
-          spec: "14英寸/i5/16GB/512GB",
-          type: "产成品",
-          purchasePrice: 4500.0,
-          salePrice: 5200.0,
-          status: "启用",
-          createTime: "2024-01-15 09:30:00",
-        },
-        {
-          id: 2,
-          name: "不锈钢螺丝",
-          code: "MAT-2024-002",
-          spec: "M5×20mm/304不锈钢",
-          type: "五金类",
-          purchasePrice: 0.85,
-          salePrice: 1.2,
-          status: "启用",
-          createTime: "2024-01-15 10:20:00",
-        },
-        {
-          id: 3,
-          name: "ABS塑料颗粒",
-          code: "MAT-2024-003",
-          spec: "黑色/注塑级/25kg袋",
-          type: "注塑类",
-          purchasePrice: 12.5,
-          salePrice: 15.0,
-          status: "停用",
-          createTime: "2024-01-16 14:15:00",
-        },
-        {
-          id: 4,
-          name: "瓦楞纸箱",
-          code: "MAT-2024-004",
-          spec: "60×40×50cm/五层/加硬",
-          type: "包装类",
-          purchasePrice: 8.2,
-          salePrice: 10.5,
-          status: "启用",
-          createTime: "2024-01-16 16:40:00",
-        },
-        {
-          id: 5,
-          name: "无铅锡丝",
-          code: "MAT-2024-005",
-          spec: "0.8mm/500g/卷",
-          type: "辅料类",
-          purchasePrice: 85.0,
-          salePrice: 105.0,
-          status: "启用",
-          createTime: "2024-01-17 11:10:00",
-        },
-        {
-          id: 6,
-          name: "PCB电路板",
-          code: "MAT-2024-006",
-          spec: "双层/FR4/1.6mm/10×10cm",
-          type: "半成品",
-          purchasePrice: 32.0,
-          salePrice: 45.0,
-          status: "启用",
-          createTime: "2024-01-18 09:45:00",
-        },
-        {
-          id: 7,
-          name: "手机充电器",
-          code: "MAT-2024-007",
-          spec: "20W快充/Type-C接口",
-          type: "产成品",
-          purchasePrice: 28.0,
-          salePrice: 39.9,
-          status: "停用",
-          createTime: "2024-01-18 13:30:00",
-        },
-        {
-          id: 8,
-          name: "铝合金型材",
-          code: "MAT-2024-008",
-          spec: "6061-T6/20×20mm/6m",
-          type: "五金类",
-          purchasePrice: 156.0,
-          salePrice: 195.0,
-          status: "启用",
-          createTime: "2024-01-19 10:00:00",
-        },
-        {
-          id: 9,
-          name: "PE保护膜",
-          code: "MAT-2024-009",
-          spec: "0.05mm×1.2m×200m",
-          type: "包装类",
-          purchasePrice: 280.0,
-          salePrice: 350.0,
-          status: "启用",
-          createTime: "2024-01-19 15:20:00",
-        },
-        {
-          id: 10,
-          name: "润滑油",
-          code: "MAT-2024-010",
-          spec: "10W-40/4L/桶",
-          type: "辅料类",
-          purchasePrice: 120.0,
-          salePrice: 150.0,
-          status: "停用",
-          createTime: "2024-01-20 08:50:00",
-        },
-        {
-          id: 11,
-          name: "LED显示屏模组",
-          code: "MAT-2024-011",
-          spec: "P2.5/320×160mm",
-          type: "半成品",
-          purchasePrice: 420.0,
-          salePrice: 520.0,
-          status: "启用",
-          createTime: "2024-01-20 14:30:00",
-        },
-        {
-          id: 12,
-          name: "鼠标键盘套装",
-          code: "MAT-2024-012",
-          spec: "无线/2.4G/USB接收器",
-          type: "产成品",
-          purchasePrice: 65.0,
-          salePrice: 89.0,
-          status: "启用",
-          createTime: "2024-01-21 09:15:00",
-        },
-        {
-          id: 13,
-          name: "防静电包装袋",
-          code: "MAT-2024-013",
-          spec: "30×40cm/防静电/自封",
-          type: "包装类",
-          purchasePrice: 0.45,
-          salePrice: 0.6,
-          status: "启用",
-          createTime: "2024-01-21 16:40:00",
-        },
-        {
-          id: 14,
-          name: "焊锡膏",
-          code: "MAT-2024-014",
-          spec: "Sn63Pb37/500g/瓶",
-          type: "辅料类",
-          purchasePrice: 145.0,
-          salePrice: 180.0,
-          status: "停用",
-          createTime: "2024-01-22 11:20:00",
-        },
-        {
-          id: 15,
-          name: "连接器端子",
-          code: "MAT-2024-015",
-          spec: "PH2.0/镀锡/1000个/盘",
-          type: "五金类",
-          purchasePrice: 38.0,
-          salePrice: 48.0,
-          status: "启用",
-          createTime: "2024-01-22 15:00:00",
-        },
-        {
-          id: 16,
-          name: "树脂原料",
-          code: "MAT-2024-016",
-          spec: "环氧树脂/透明/1kg",
-          type: "注塑类",
-          purchasePrice: 65.0,
-          salePrice: 82.0,
-          status: "启用",
-          createTime: "2024-01-23 09:30:00",
-        },
-        {
-          id: 17,
-          name: "移动电源",
-          code: "MAT-2024-017",
-          spec: "20000mAh/快充/双向充电",
-          type: "产成品",
-          purchasePrice: 85.0,
-          salePrice: 129.0,
-          status: "启用",
-          createTime: "2024-01-23 14:20:00",
-        },
-      ],
-
-      selectedTab: "day",
-      rangeStart: "2026-07-01",
-      rangeEnd: "2026-07-25",
-      treeData: [
-        {
-          id: "root1",
-          label: "物料产品分类",
-          open: true,
-          children: [
-            {
-              id: "shenzhen",
-              label: "原材料",
-              open: true,
-              children: [
-                { id: "rd", label: "五金类" },
-                { id: "test", label: "注塑类" },
-                { id: "test2", label: "包装类" },
-                { id: "test3", label: "辅料类" },
-              ],
-            },
-            {
-              id: "changsha",
-              label: "产品",
-              open: true,
-              children: [
-                { id: "market", label: "半成品" },
-                { id: "finance", label: "产成品" },
-              ],
-            },
-          ],
-        },
-      ],
+      // 分类树搜索
+      treeSearch: '',
+      // 搜索表单
+      searchForm: {
+        name: '',
+        code: '',
+      },
+      // 分页数据
+      pagination: { pageNo: 1, pageSize: 10, total: 0 },
+      // 表格数据
+      tabValue: [],
+      // 分类树数据
+      treeData: [],
     };
   },
+  mounted() {
+    this.loadCategoryTree();
+    this.loadList();
+  },
   methods: {
+    // 加载分类树
+    async loadCategoryTree() {
+      try {
+        const data = await getMaterialCategoryList();
+        this.treeData = this.buildTree(data);
+      } catch (err) {
+        console.error('获取分类树失败', err);
+      }
+    },
+    // 构建树形结构
+    buildTree(list) {
+      const map = {};
+      const roots = [];
+      list.forEach((item) => {
+        map[item.id] = { ...item, label: item.name, children: [], open: true };
+      });
+      list.forEach((item) => {
+        if (item.parentId && map[item.parentId]) {
+          map[item.parentId].children.push(map[item.id]);
+        } else {
+          roots.push(map[item.id]);
+        }
+      });
+      return roots;
+    },
+    // 加载列表
+    async loadList() {
+      try {
+        const params = {
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        };
+        Object.keys(this.searchForm).forEach((key) => {
+          if (this.searchForm[key]) params[key] = this.searchForm[key];
+        });
+        const data = await getMaterialPage(params);
+        this.tabValue = data.list.map((item) => ({
+          id: item.id || '',
+          name: item.name || '',
+          code: item.code || '',
+          spec: item.specification || '',
+          type: item.typeName || '',
+          purchasePrice: item.purchasePrice / 100 || 0,
+          salePrice: item.salePrice / 100 || 0,
+          status: item.status === 0 ? '启用' : '停用',
+          createTime: item.createTime || '',
+        }));
+        this.pagination.total = data.total;
+      } catch (err) {
+        console.error('获取列表失败', err);
+      }
+    },
+    // 搜索
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    // 重置
+    handleReset() {
+      Object.keys(this.searchForm).forEach((key) => { this.searchForm[key] = ''; });
+      this.pagination.pageNo = 1;
+      this.loadList();
+    },
+    // 分页
+    handlePageChange(page) { this.pagination.pageNo = page; this.loadList(); },
+    // 新增
+    handleAdd() { alert('新增功能待实现'); },
+    // 编辑
+    handleEdit(item) { alert('编辑功能待实现'); },
+    // 删除
+    async handleDelete(item) {
+      if (!confirm(`确定要删除物料"${item.name}"吗？`)) return;
+      try {
+        await deleteMaterial(item.id);
+        alert('删除成功');
+        this.loadList();
+      } catch (err) {
+        console.error('删除失败', err);
+      }
+    },
+    // 导出
+    handleExport() { alert('导出功能待实现'); },
+    // 展开/收起节点
     toggleNode(node) {
       if (node.children && node.children.length) {
         node.open = !node.open;
       }
     },
-    selectTab(value) {
-      this.selectedTab = value;
-    },
+    // 状态颜色
     getStatusColor(status) {
-      const map = {
-        启用: "#52c41a",
-        停用: "#8c8c8c",
-      };
+      const map = { 启用: "#52c41a", 停用: "#8c8c8c" };
       return map[status] || "#333";
     },
     getStatusBg(status) {
-      const map = {
-        启用: "#f6ffed",
-        停用: "#f5f5f5",
-      };
+      const map = { 启用: "#f6ffed", 停用: "#f5f5f5" };
       return map[status] || "#fff";
     },
   },
