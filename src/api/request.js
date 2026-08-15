@@ -37,11 +37,23 @@ service.interceptors.response.use(
       localStorage.removeItem('refreshToken');
       window.location.href = '/login';
     }
+    // IM模块请求失败只打印控制台，不弹窗
+    const isImRequest = response.config && response.config.url && response.config.url.indexOf('/im/') !== -1;
+    if (isImRequest) {
+      console.error('[IM请求失败]', response.config.url, res.msg || '请求失败');
+      return Promise.reject(new Error(res.msg || '请求失败'));
+    }
     // 其他错误
     alert(res.msg || '请求失败');
     return Promise.reject(new Error(res.msg || '请求失败'));
   },
   (error) => {
+    // IM模块网络错误只打印控制台，不弹窗
+    const isImRequest = error.config && error.config.url && error.config.url.indexOf('/im/') !== -1;
+    if (isImRequest) {
+      console.error('[IM网络错误]', error.config ? error.config.url : '', error.message || '网络错误');
+      return Promise.reject(error);
+    }
     alert(error.message || '网络错误');
     return Promise.reject(error);
   }

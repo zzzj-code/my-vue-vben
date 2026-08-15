@@ -25,12 +25,15 @@
           placeholder="请输入用户名"
         />
       </div>
-      <div class="inp-verify">
+      <div class="inp-verify password-box">
         <input
           v-model="login.password"
-          type="password"
+          :type="showPassword ? 'text' : 'password'"
           placeholder="请输入密码"
         />
+        <button type="button" class="eye-btn" @click="showPassword = !showPassword">
+          {{ showPassword ? '🙈' : '👁️' }}
+        </button>
       </div>
     </div>
     <!-- ___________ -->
@@ -101,6 +104,7 @@ export default {
         remember: false,
       },
       loading: false, //登录加载
+      showPassword: false, //密码显示切换
     };
   },
   methods: {
@@ -274,6 +278,25 @@ export default {
 .inp-verify input:focus {
   border: 0.5px solid rgb(79, 104, 247);
   outline: none;
+}
+/* 密码框小眼睛 */
+.password-box {
+  position: relative;
+}
+.password-box input {
+  padding-right: 44px;
+}
+.eye-btn {
+  position: absolute;
+  right: 8px;
+  top: 35%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px;
+  line-height: 1;
 }
 /* __________ */
 

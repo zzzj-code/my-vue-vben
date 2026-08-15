@@ -102,7 +102,7 @@ export default {
   methods: {
     async loadList() {
       try {
-        const params = { pageNo: this.pagination.pageNo, pageSize: this.pagination.pageSize };
+        const params = { pageNo: this.pagination.pageNo, pageSize: this.pagination.pageSize, limit: this.pagination.pageSize };
         Object.keys(this.searchForm).forEach((key) => {
           if (this.searchForm[key]) params[key] = this.searchForm[key];
         });
