@@ -96,111 +96,52 @@
 </template>
 
 <script>
+import { getMerchantPage, deleteMerchant } from '#/api/wms/merchant';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          enterpriseCode: "EP-001",
-          enterpriseName: "华为技术有限公司",
-          enterpriseType: "供应商",
-          level: "A级",
-          contact: "张伟",
-          remark: "战略合作伙伴",
-        },
-        {
-          enterpriseCode: "EP-002",
-          enterpriseName: "阿里巴巴集团",
-          enterpriseType: "客户",
-          level: "A级",
-          contact: "李娜",
-          remark: "长期合作",
-        },
-        {
-          enterpriseCode: "EP-003",
-          enterpriseName: "腾讯科技有限公司",
-          enterpriseType: "供应商",
-          level: "B级",
-          contact: "王强",
-          remark: "试合作",
-        },
-        {
-          enterpriseCode: "EP-004",
-          enterpriseName: "字节跳动有限公司",
-          enterpriseType: "客户",
-          level: "A级",
-          contact: "刘洋",
-          remark: "重点客户",
-        },
-        {
-          enterpriseCode: "EP-005",
-          enterpriseName: "美团科技有限公司",
-          enterpriseType: "供应商",
-          level: "B级",
-          contact: "陈静",
-          remark: "试合作",
-        },
-        {
-          enterpriseCode: "EP-006",
-          enterpriseName: "京东物流有限公司",
-          enterpriseType: "客户",
-          level: "C级",
-          contact: "赵敏",
-          remark: "新客户",
-        },
-        {
-          enterpriseCode: "EP-007",
-          enterpriseName: "小米科技有限公司",
-          enterpriseType: "供应商",
-          level: "A级",
-          contact: "孙浩",
-          remark: "优质供应商",
-        },
-        {
-          enterpriseCode: "EP-008",
-          enterpriseName: "网易科技有限公司",
-          enterpriseType: "客户",
-          level: "B级",
-          contact: "周婷",
-          remark: "试合作",
-        },
-        {
-          enterpriseCode: "EP-009",
-          enterpriseName: "滴滴出行科技有限公司",
-          enterpriseType: "供应商",
-          level: "C级",
-          contact: "吴刚",
-          remark: "试合作",
-        },
-        {
-          enterpriseCode: "EP-010",
-          enterpriseName: "拼多多有限公司",
-          enterpriseType: "客户",
-          level: "B级",
-          contact: "郑丽",
-          remark: "试合作",
-        },
-      ],
+      searchForm: { name: '', code: '' },
+      pagination: { pageNo: 1, pageSize: 20, total: 0 },
+      tabValue: [],
     };
   },
+  mounted() {
+    this.loadList();
+  },
   methods: {
-    getLevelColor(level) {
-      const map = {
-        'A级': '#52c41a',
-        'B级': '#1890ff',
-        'C级': '#faad14'
-      };
-      return map[level] || '#333';
+    async loadList() {
+      try {
+        const data = await getMerchantPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          name: this.searchForm.name,
+          code: this.searchForm.code,
+        });
+        const list = (data && data.list) || [];
+        this.tabValue = list.map(item => ({
+          id: item.id,
+          enterpriseCode: item.code || '',
+          enterpriseName: item.name || '',
+          enterpriseType: item.type === 1 ? '供应商' : item.type === 2 ? '客户' : '货主',
+          level: item.level || '',
+          contact: item.contact || '',
+          remark: item.remark || '',
+        }));
+        this.pagination.total = (data && data.total) || 0;
+      } catch (e) {
+        console.error('获取货主列表失败', e);
+      }
     },
-    getLevelBg(level) {
-      const map = {
-        'A级': '#f6ffed',
-        'B级': '#e6f7ff',
-        'C级': '#fffbe6'
-      };
-      return map[level] || '#fff';
-    }
-  }
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() { this.searchForm = { name: '', code: '' }; this.loadList(); },
+    handleEdit(row) { alert('编辑：' + row.enterpriseName); },
+    async handleDelete(row) {
+      if (!confirm('确定删除「' + row.enterpriseName + '」吗？')) return;
+      try { await deleteMerchant(row.id); alert('删除成功'); this.loadList(); }
+      catch (e) { console.error('删除失败', e); }
+    },
+  },
 };
 </script>
 

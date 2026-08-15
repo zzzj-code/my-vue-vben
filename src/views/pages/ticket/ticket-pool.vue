@@ -169,16 +169,16 @@ export default {
         const data = await getTicketPoolPage(params);
         this.tabValue = data.list.map((item) => ({
           id: item.id || '',
-          no: item.no || '',
+          no: item.billCode || '',
           title: item.title || '',
-          status: item.status || '',
-          categoryName: item.categoryName || '',
-          priority: item.priority || '',
-          slaResponseTime: item.slaResponseTime || '',
-          slaSolveTime: item.slaSolveTime || '',
+          status: this.formatTicketStatus(item.ticketStatus),
+          categoryName: this.formatCategory(item.category),
+          priority: this.formatPriority(item.priority),
+          slaResponseTime: this.formatTime(item.responseDeadline),
+          slaSolveTime: this.formatTime(item.resolveDeadline),
           handlerName: item.handlerName || '',
-          applicantName: item.applicantName || '',
-          createTime: item.createTime || '',
+          applicantName: item.creatorName || '',
+          createTime: this.formatTime(item.createTime),
         }));
         this.pagination.total = data.total;
       } catch (err) {
@@ -208,6 +208,27 @@ export default {
     },
     // 详情
     handleEdit(item) { alert('详情功能待实现'); },
+    // 工单状态转换
+    formatTicketStatus(status) {
+      const map = { 1: '待处理', 2: '处理中', 3: '已完成', 4: '已关闭' };
+      return map[status] || status || '';
+    },
+    // 工单分类转换
+    formatCategory(category) {
+      const map = { 1: '问题咨询', 2: '故障报修', 3: '服务请求', 4: '投诉建议', 5: '其他' };
+      return map[category] || category || '';
+    },
+    // 优先级转换
+    formatPriority(priority) {
+      const map = { 1: '低', 2: '中', 3: '高', 4: '紧急' };
+      return map[priority] || priority || '';
+    },
+    // 时间格式化
+    formatTime(timestamp) {
+      if (!timestamp) return '';
+      const d = new Date(timestamp);
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    },
   },
 };
 </script>
@@ -397,12 +418,20 @@ export default {
 .main-tab td {
   height: 40px;
   font-size: 13px;
+  text-align: center;
 }
 .ol-col{
     width: 140px;
     position: sticky;
     right: 0;
     box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    text-align: center;
+}
+.ol-col button{
+  border: 0;
+  color: #006be6;
+  background-color: #fff;
 }
 .main-floot {
   width: 100%;

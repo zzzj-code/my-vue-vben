@@ -31,7 +31,7 @@
 
 <script>
 // ========== 导入合同配置相关API ==========
-import { getContractConfig, updateContractConfig } from '#/api/crm/contract/config';
+import { getContractConfig, saveContractConfig } from '#/api/crm/contract/config';
 
 export default {
   data() {
@@ -62,7 +62,7 @@ export default {
     },
     async handleSubmit() {
       try {
-        await updateContractConfig(this.form);
+        await saveContractConfig(this.form);
         alert("保存成功");
       } catch (err) {
         console.error("保存合同配置失败", err);

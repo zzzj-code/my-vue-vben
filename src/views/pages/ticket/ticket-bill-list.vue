@@ -124,15 +124,15 @@ export default {
         const data = await getTicketPage(params);
         this.tabValue = data.list.map((item) => ({
           id: item.id || '',
-          invoiceNo: item.no || '',
-          processStatus: item.processStatus || '',
-          orderStatus: item.status || '',
+          invoiceNo: item.billCode || '',
+          processStatus: this.formatProcessStatus(item.processStatus),
+          orderStatus: this.formatTicketStatus(item.ticketStatus),
           title: item.title || '',
-          category: item.categoryName || '',
-          priority: item.priority || '',
+          category: this.formatCategory(item.category),
+          priority: this.formatPriority(item.priority),
           handler: item.handlerName || '',
           creator: item.creatorName || '',
-          createTime: item.createTime || '',
+          createTime: this.formatTime(item.createTime),
         }));
         this.pagination.total = data.total;
       } catch (err) {
@@ -163,6 +163,32 @@ export default {
       } catch (err) {
         console.error('删除失败', err);
       }
+    },
+    // 流程状态转换
+    formatProcessStatus(status) {
+      const map = { 1: '待审批', 2: '审批通过', 3: '审批驳回', 4: '已撤回' };
+      return map[status] || status || '';
+    },
+    // 工单状态转换
+    formatTicketStatus(status) {
+      const map = { 1: '待处理', 2: '处理中', 3: '已完成', 4: '已关闭' };
+      return map[status] || status || '';
+    },
+    // 工单分类转换
+    formatCategory(category) {
+      const map = { 1: '问题咨询', 2: '故障报修', 3: '服务请求', 4: '投诉建议', 5: '其他' };
+      return map[category] || category || '';
+    },
+    // 优先级转换
+    formatPriority(priority) {
+      const map = { 1: '低', 2: '中', 3: '高', 4: '紧急' };
+      return map[priority] || priority || '';
+    },
+    // 时间格式化
+    formatTime(timestamp) {
+      if (!timestamp) return '';
+      const d = new Date(timestamp);
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
     },
   },
 };
@@ -355,6 +381,9 @@ export default {
   border: 0;
   background-color: #fff;
   color: red;
+}
+.ol-col button:first-child{
+  color: #006be6;
 }
 .main-floot {
   width: 100%;

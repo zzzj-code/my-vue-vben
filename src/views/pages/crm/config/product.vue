@@ -70,7 +70,7 @@
 
 <script>
 // ========== 导入产品分类相关API ==========
-import { getProductCategoryPage, deleteProductCategory } from '#/api/crm/product/category';
+import { getProductCategoryList, deleteProductCategory } from '#/api/crm/product/category';
 
 export default {
   data() {
@@ -88,18 +88,17 @@ export default {
   methods: {
     async loadList() {
       try {
-        const data = await getProductCategoryPage({
-          pageNo: this.pagination.pageNo,
-          pageSize: this.pagination.pageSize,
+        const data = await getProductCategoryList({
           name: this.searchForm.name,
         });
-        this.rows = data.list.map((item) => ({
+        const list = Array.isArray(data) ? data : (data.list || []);
+        this.rows = list.map((item) => ({
           id: item.id,
           name: item.name || "",
           no: item.id,
           createTime: this.formatTimestamp(item.createTime),
         }));
-        this.pagination.total = data.total;
+        this.pagination.total = this.rows.length;
       } catch (err) {
         console.error("获取产品分类列表失败", err);
       }

@@ -13,7 +13,7 @@ import { requestClient } from "#/api/request";
  * @param {Object} params - 查询参数
  */
 function getPrivateMessagePage(params) {
-  return requestClient.get("/im/private-message/page", { params });
+  return requestClient.get("/im/private-message/list", { params });
 }
 
 /**

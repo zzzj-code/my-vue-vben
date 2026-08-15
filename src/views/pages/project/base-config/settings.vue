@@ -85,7 +85,18 @@ export default {
     async loadSettings() {
       try {
         const res = await getProjectSettings();
-        this.form = { ...this.form, ...res };
+        const data = res || {};
+        this.form = {
+          projectNoPrefix: data.codePrefix || '',
+          dateFormat: data.codeDateFormat || '',
+          serialNumberLength: data.codeSeqLength || '',
+          dailyStandardHours: data.defaultWorkHours || '',
+          defaultCostRate: data.defaultCostRate || '',
+          overdueReminder: data.overdueNotifyEnabled || false,
+          overdueDays: data.overdueNotifyDays || '',
+          milestoneReminder: data.milestoneNotifyEnabled || false,
+          milestoneDays: data.milestoneNotifyDays || ''
+        };
       } catch (e) {
         console.error('加载配置失败', e);
       }
@@ -95,7 +106,18 @@ export default {
     },
     async handleSubmit() {
       try {
-        await updateProjectSettings(this.form);
+        const data = {
+          codePrefix: this.form.projectNoPrefix,
+          codeDateFormat: this.form.dateFormat,
+          codeSeqLength: this.form.serialNumberLength,
+          defaultWorkHours: this.form.dailyStandardHours,
+          defaultCostRate: this.form.defaultCostRate,
+          overdueNotifyEnabled: this.form.overdueReminder,
+          overdueNotifyDays: this.form.overdueDays,
+          milestoneNotifyEnabled: this.form.milestoneReminder,
+          milestoneNotifyDays: this.form.milestoneDays
+        };
+        await updateProjectSettings(data);
         alert('保存成功');
       } catch (e) {
         console.error('保存失败', e);

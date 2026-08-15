@@ -50,7 +50,7 @@
 
 <script>
 // ========== 导入客户公海配置相关API ==========
-import { getCustomerPoolConfig, updateCustomerPoolConfig } from '#/api/crm/customer/poolConfig';
+import { getCustomerPoolConfig, saveCustomerPoolConfig } from '#/api/crm/customer/poolConfig';
 
 export default {
   data() {
@@ -87,7 +87,7 @@ export default {
     },
     async handleSubmit() {
       try {
-        await updateCustomerPoolConfig(this.form);
+        await saveCustomerPoolConfig(this.form);
         alert("保存成功");
       } catch (err) {
         console.error("保存客户公海配置失败", err);

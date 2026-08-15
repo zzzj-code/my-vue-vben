@@ -8,25 +8,25 @@
  */
 import { requestClient } from "#/api/request";
 function getInfoPage(params) {
-  return requestClient.get("/asset/info/page", { params });
+  return requestClient.get("/asset/card/page", { params });
 }
 function getInfo(id) {
-  return requestClient.get(`/asset/info/get?id=${id}`);
+  return requestClient.get(`/asset/card/get?id=${id}`);
 }
 function createInfo(data) {
-  return requestClient.post("/asset/info/create", data);
+  return requestClient.post("/asset/card/create", data);
 }
 function updateInfo(data) {
-  return requestClient.put("/asset/info/update", data);
+  return requestClient.put("/asset/card/update", data);
 }
 function deleteInfo(id) {
-  return requestClient.delete(`/asset/info/delete?id=${id}`);
+  return requestClient.delete(`/asset/card/delete?id=${id}`);
 }
 function deleteInfoListByIds(ids) {
-  return requestClient.delete(`/asset/info/delete-list?ids=${ids.join(",")}`);
+  return requestClient.delete(`/asset/card/delete-list?ids=${ids.join(",")}`);
 }
 function exportInfo(params) {
-  return requestClient.download("/asset/info/export-excel", params);
+  return requestClient.download("/asset/card/export-excel", params);
 }
 export {
   createInfo,

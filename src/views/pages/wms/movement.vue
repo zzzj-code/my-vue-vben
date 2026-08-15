@@ -122,12 +122,9 @@
 // ========== 导入通用操作单相关 API（src/api/wms/goodscommonoperationorder/index.js）==========
 // 说明：移库单在本项目中对应"通用操作单"（goods-common-operation-order）。
 //       出库/移库/盘库共用该接口，用 type 字段区分业务类型（移库属于调拨类操作）。
-// getGoodsCommonOperationOrderPage : 通用操作单分页查询（GET /wms/goods-common-operation-order/page）
-// deleteGoodsCommonOperationOrder  : 删除通用操作单（DELETE /wms/goods-common-operation-order/delete?id=xxx）
-import {
-  getGoodsCommonOperationOrderPage,
-  deleteGoodsCommonOperationOrder,
-} from '#/api/wms/goodscommonoperationorder';
+// getMovementOrderPage : 通用操作单分页查询（GET /wms/goods-common-operation-order/page）
+// deleteMovementOrder  : 删除通用操作单（DELETE /wms/goods-common-operation-order/delete?id=xxx）
+import { getMovementOrderPage, deleteMovementOrder } from '#/api/wms/movement-order';
 
 export default {
   data() {
@@ -156,7 +153,7 @@ export default {
     async loadMovementList() {
       try {
         // 调用通用操作单分页接口
-        const data = await getGoodsCommonOperationOrderPage({
+        const data = await getMovementOrderPage({
           pageNo: this.pagination.pageNo,
           pageSize: this.pagination.pageSize,
           no: this.searchForm.orderNo,             // 移库单号
@@ -235,7 +232,7 @@ export default {
     async handleDelete(row) {
       if (!confirm(`确定要删除「${row.orderNo}」吗？`)) return;
       try {
-        await deleteGoodsCommonOperationOrder(row.id);
+        await deleteMovementOrder(row.id);
         alert("删除成功");
         this.loadMovementList();
       } catch (err) {

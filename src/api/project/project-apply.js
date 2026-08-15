@@ -13,7 +13,7 @@ import { requestClient } from "#/api/request";
  * @param {Object} params - 查询参数
  */
 function getProjectApplyPage(params) {
-  return requestClient.get("/project/apply/page", { params });
+  return requestClient.get("/project/info/page", { params });
 }
 
 /**
@@ -21,7 +21,7 @@ function getProjectApplyPage(params) {
  * @param {Number} id - 申请ID
  */
 function getProjectApply(id) {
-  return requestClient.get(`/project/apply/get?id=${id}`);
+  return requestClient.get(`/project/info/get?id=${id}`);
 }
 
 /**
@@ -29,7 +29,7 @@ function getProjectApply(id) {
  * @param {Object} data - 申请数据
  */
 function createProjectApply(data) {
-  return requestClient.post("/project/apply/create", data);
+  return requestClient.post("/project/info/create", data);
 }
 
 /**
@@ -37,7 +37,7 @@ function createProjectApply(data) {
  * @param {Object} data - 申请数据
  */
 function updateProjectApply(data) {
-  return requestClient.put("/project/apply/update", data);
+  return requestClient.put("/project/info/update", data);
 }
 
 /**
@@ -45,7 +45,7 @@ function updateProjectApply(data) {
  * @param {Number} id - 申请ID
  */
 function deleteProjectApply(id) {
-  return requestClient.delete(`/project/apply/delete?id=${id}`);
+  return requestClient.delete(`/project/info/delete?id=${id}`);
 }
 
 export {

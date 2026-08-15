@@ -13,7 +13,7 @@ import { requestClient } from '#/api/request';
  * @param {string} params.invoiceNumber - 发票号码
  */
 export function getInputInvoicePage(params) {
-  return requestClient.get('/finance/invoice-input/page', params);
+  return requestClient.get('/finance/input-invoice/page', params);
 }
 
 /**
@@ -21,7 +21,7 @@ export function getInputInvoicePage(params) {
  * @param {number} id - 进项发票ID
  */
 export function getInputInvoice(id) {
-  return requestClient.get(`/finance/invoice-input/get?id=${id}`);
+  return requestClient.get(`/finance/input-invoice/get?id=${id}`);
 }
 
 /**
@@ -29,7 +29,7 @@ export function getInputInvoice(id) {
  * @param {Object} data - 进项发票信息
  */
 export function createInputInvoice(data) {
-  return requestClient.post('/finance/invoice-input/create', data);
+  return requestClient.post('/finance/input-invoice/create', data);
 }
 
 /**
@@ -37,7 +37,7 @@ export function createInputInvoice(data) {
  * @param {Object} data - 进项发票信息
  */
 export function updateInputInvoice(data) {
-  return requestClient.put('/finance/invoice-input/update', data);
+  return requestClient.put('/finance/input-invoice/update', data);
 }
 
 /**
@@ -45,7 +45,7 @@ export function updateInputInvoice(data) {
  * @param {number} id - 进项发票ID
  */
 export function deleteInputInvoice(id) {
-  return requestClient.delete(`/finance/invoice-input/delete?id=${id}`);
+  return requestClient.delete(`/finance/input-invoice/delete?id=${id}`);
 }
 
 /**
@@ -53,7 +53,7 @@ export function deleteInputInvoice(id) {
  * @param {Array} ids - 进项发票ID数组
  */
 export function deleteInputInvoiceListByIds(ids) {
-  return requestClient.delete(`/finance/invoice-input/delete-list?ids=${ids.join(',')}`);
+  return requestClient.delete(`/finance/input-invoice/delete-list?ids=${ids.join(',')}`);
 }
 
 /**
@@ -61,5 +61,5 @@ export function deleteInputInvoiceListByIds(ids) {
  * @param {Object} params - 查询参数
  */
 export function exportInputInvoice(params) {
-  return requestClient.download('/finance/invoice-input/export', params);
+  return requestClient.download('/finance/input-invoice/export', params);
 }

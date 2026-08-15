@@ -13,7 +13,7 @@ import { requestClient } from "#/api/request";
  * @param {Object} params - 查询参数
  */
 function getFacePackPage(params) {
-  return requestClient.get("/im/face-pack/page", { params });
+  return requestClient.get("/im/face-pack/list", { params });
 }
 
 /**

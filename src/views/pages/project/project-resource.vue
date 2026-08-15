@@ -68,13 +68,21 @@ export default {
     async loadData() {
       try {
         const params = {
-          pageNo: this.pagination.pageNo,
-          pageSize: this.pagination.pageSize,
-          ...this.searchForm
+          startDate: '2026-07-01',
+          endDate: '2026-07-31'
         };
         const res = await getProjectResourcePage(params);
-        this.tabValue = res.list || res.records || [];
-        this.pagination.total = res.total || 0;
+        const list = Array.isArray(res) ? res : (res.list || res.records || []);
+        this.tabValue = list.map(item => ({
+          id: item.userId,
+          member: item.userName || '',
+          taskCount: item.taskCount || 0,
+          allocatedHours: item.assignedHours || 0,
+          filledHours: item.filledHours || 0,
+          standardHours: item.standardHours || 0,
+          loadRate: item.loadRate || 0
+        }));
+        this.pagination.total = this.tabValue.length;
       } catch (e) {
         console.error('加载数据失败', e);
       }

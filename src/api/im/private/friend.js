@@ -13,7 +13,7 @@ import { requestClient } from "#/api/request";
  * @param {Object} params - 查询参数
  */
 function getFriendPage(params) {
-  return requestClient.get("/im/friend/page", { params });
+  return requestClient.get("/im/friend/list", { params });
 }
 
 /**

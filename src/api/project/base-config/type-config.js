@@ -13,7 +13,7 @@ import { requestClient } from "#/api/request";
  * @param {Object} params - 查询参数
  */
 function getProjectTypeConfigPage(params) {
-  return requestClient.get("/project/type-config/page", { params });
+  return requestClient.get("/project/type-config/list", { params });
 }
 
 /**

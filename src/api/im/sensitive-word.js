@@ -13,7 +13,7 @@ import { requestClient } from "#/api/request";
  * @param {Object} params - 查询参数
  */
 function getSensitiveWordPage(params) {
-  return requestClient.get("/im/sensitive-word/page", { params });
+  return requestClient.get("/im/sensitive-word/list", { params });
 }
 
 /**

@@ -13,7 +13,7 @@ import { requestClient } from '#/api/request';
  * @param {string} params.invoiceNumber - 发票号码
  */
 export function getOutputInvoicePage(params) {
-  return requestClient.get('/finance/invoice-output/page', params);
+  return requestClient.get('/finance/output-invoice/page', params);
 }
 
 /**
@@ -21,7 +21,7 @@ export function getOutputInvoicePage(params) {
  * @param {number} id - 销项发票ID
  */
 export function getOutputInvoice(id) {
-  return requestClient.get(`/finance/invoice-output/get?id=${id}`);
+  return requestClient.get(`/finance/output-invoice/get?id=${id}`);
 }
 
 /**
@@ -29,7 +29,7 @@ export function getOutputInvoice(id) {
  * @param {Object} data - 销项发票信息
  */
 export function createOutputInvoice(data) {
-  return requestClient.post('/finance/invoice-output/create', data);
+  return requestClient.post('/finance/output-invoice/create', data);
 }
 
 /**
@@ -37,7 +37,7 @@ export function createOutputInvoice(data) {
  * @param {Object} data - 销项发票信息
  */
 export function updateOutputInvoice(data) {
-  return requestClient.put('/finance/invoice-output/update', data);
+  return requestClient.put('/finance/output-invoice/update', data);
 }
 
 /**
@@ -45,7 +45,7 @@ export function updateOutputInvoice(data) {
  * @param {number} id - 销项发票ID
  */
 export function deleteOutputInvoice(id) {
-  return requestClient.delete(`/finance/invoice-output/delete?id=${id}`);
+  return requestClient.delete(`/finance/output-invoice/delete?id=${id}`);
 }
 
 /**
@@ -53,7 +53,7 @@ export function deleteOutputInvoice(id) {
  * @param {Array} ids - 销项发票ID数组
  */
 export function deleteOutputInvoiceListByIds(ids) {
-  return requestClient.delete(`/finance/invoice-output/delete-list?ids=${ids.join(',')}`);
+  return requestClient.delete(`/finance/output-invoice/delete-list?ids=${ids.join(',')}`);
 }
 
 /**
@@ -61,5 +61,5 @@ export function deleteOutputInvoiceListByIds(ids) {
  * @param {Object} params - 查询参数
  */
 export function exportOutputInvoice(params) {
-  return requestClient.download('/finance/invoice-output/export', params);
+  return requestClient.download('/finance/output-invoice/export', params);
 }

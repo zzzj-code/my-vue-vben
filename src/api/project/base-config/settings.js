@@ -12,7 +12,7 @@ import { requestClient } from "#/api/request";
  * 获取项目设置
  */
 function getProjectSettings() {
-  return requestClient.get("/project/settings/get");
+  return requestClient.get("/project/config/get");
 }
 
 /**
@@ -20,7 +20,7 @@ function getProjectSettings() {
  * @param {Object} data - 设置数据
  */
 function updateProjectSettings(data) {
-  return requestClient.put("/project/settings/update", data);
+  return requestClient.put("/project/config/update", data);
 }
 
 export {

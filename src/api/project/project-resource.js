@@ -13,7 +13,7 @@ import { requestClient } from "#/api/request";
  * @param {Object} params - 查询参数
  */
 function getProjectResourcePage(params) {
-  return requestClient.get("/project/resource/page", { params });
+  return requestClient.get("/project/resource/load", { params });
 }
 
 /**

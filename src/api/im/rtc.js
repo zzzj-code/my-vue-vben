@@ -13,7 +13,7 @@ import { requestClient } from "#/api/request";
  * @param {Object} params - 查询参数
  */
 function getRtcRecordPage(params) {
-  return requestClient.get("/im/rtc/record/page", { params });
+  return requestClient.get("/im/rtc/record/list", { params });
 }
 
 /**

@@ -121,13 +121,13 @@ export default {
         // 字段映射，适配页面表格
         this.tabValue = data.list.map((item) => ({
           id: item.id,
-          invoiceNo: item.invoiceNo || '',          // 单据编号
-          invoiceNumber: item.invoiceNumber || '',  // 发票号码
-          sellerName: item.sellerName || '',        // 销方名称
-          invoiceType: item.invoiceType || '',      // 发票类型
-          totalAmount: item.totalAmount || '',      // 价税合计
-          authStatus: item.authStatus || '',        // 认证状态
-          source: item.source || '',                // 来源
+          invoiceNo: item.no || '',
+          invoiceNumber: item.invoiceNo || '',
+          sellerName: item.sellerName || '',
+          invoiceType: this.getInvoiceTypeText(item.invoiceType),
+          totalAmount: item.priceTaxAmount || 0,
+          authStatus: this.getCertStatusText(item.certStatus),
+          source: this.getSourceText(item.source),
           invoiceDate: this.formatTimestamp(item.invoiceDate), // 开票日期
         }));
         this.pagination.total = data.total;

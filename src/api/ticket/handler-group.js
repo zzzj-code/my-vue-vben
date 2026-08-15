@@ -10,32 +10,32 @@ import { requestClient } from "#/api/request";
 
 // 获取处理人组分页列表
 function getHandlerGroupPage(params) {
-  return requestClient.get("/ticket/handler-group/page", { params });
+  return requestClient.get("/oa/ticket-handler-group/page", { params });
 }
 
 // 获取处理人组详情
 function getHandlerGroup(id) {
-  return requestClient.get(`/ticket/handler-group/get?id=${id}`);
+  return requestClient.get(`/oa/ticket-handler-group/get?id=${id}`);
 }
 
 // 新增处理人组
 function createHandlerGroup(data) {
-  return requestClient.post("/ticket/handler-group/create", data);
+  return requestClient.post("/oa/ticket-handler-group/create", data);
 }
 
 // 修改处理人组
 function updateHandlerGroup(data) {
-  return requestClient.put("/ticket/handler-group/update", data);
+  return requestClient.put("/oa/ticket-handler-group/update", data);
 }
 
 // 删除处理人组
 function deleteHandlerGroup(id) {
-  return requestClient.delete(`/ticket/handler-group/delete?id=${id}`);
+  return requestClient.delete(`/oa/ticket-handler-group/delete?id=${id}`);
 }
 
 // 批量删除处理人组
 function deleteHandlerGroupList(ids) {
-  return requestClient.delete(`/ticket/handler-group/delete-list?ids=${ids.join(",")}`);
+  return requestClient.delete(`/oa/ticket-handler-group/delete-list?ids=${ids.join(",")}`);
 }
 
 export {

@@ -8,7 +8,7 @@
  */
 import { requestClient } from "#/api/request";
 function getJobPage(params) {
-  return requestClient.get("/infra/job/page", {
+  return requestClient.get("/infra/job-ops/list", {
     params
   });
 }
@@ -38,8 +38,8 @@ function updateJobStatus(id, status) {
     }
   });
 }
-function runJob(id) {
-  return requestClient.put(`/infra/job/trigger?id=${id}`);
+function runJob(jobHandler) {
+  return requestClient.post(`/infra/job-ops/trigger?jobHandler=${jobHandler}`);
 }
 function getJobNextTimes(id) {
   return requestClient.get(`/infra/job/get_next_times?id=${id}`);

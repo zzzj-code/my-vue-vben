@@ -80,14 +80,18 @@ export default {
   methods: {
     async loadData() {
       try {
-        const params = {
-          pageNo: this.pagination.pageNo,
-          pageSize: this.pagination.pageSize,
-          ...this.searchForm
-        };
-        const res = await getProjectCategoryPage(params);
-        this.tabValue = res.list || res.records || [];
-        this.pagination.total = res.total || 0;
+        const res = await getProjectCategoryPage();
+        const list = Array.isArray(res) ? res : (res.list || res.records || []);
+        this.tabValue = list.map(item => ({
+          id: item.id,
+          categoryName: item.name || '',
+          categoryCode: item.code || '',
+          sort: item.sort || 0,
+          status: item.status === 0 ? '开启' : '关闭',
+          remark: item.remark || '',
+          createTime: this.formatTime(item.createTime)
+        }));
+        this.pagination.total = this.tabValue.length;
       } catch (e) {
         console.error('加载数据失败', e);
       }
@@ -113,6 +117,11 @@ export default {
         console.error('删除失败', e);
       }
     },
+    formatTime(timestamp) {
+      if (!timestamp) return '';
+      const d = new Date(timestamp);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+    }
   }
 };
 </script>

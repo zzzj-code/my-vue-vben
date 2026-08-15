@@ -125,14 +125,14 @@ export default {
         this.tabValue = data.list.map((item) => ({
           id: item.id || '',
           name: item.name || '',
-          priority: item.priority || 0,
-          category: item.categoryName || '',
-          responseTime: item.responseTime || 0,
-          solveTime: item.solveTime || 0,
-          warningTime: item.warningTime || 0,
+          priority: this.formatPriority(item.priority),
+          category: this.formatCategory(item.category),
+          responseTime: item.responseHours ? item.responseHours + '小时' : '',
+          solveTime: item.resolveHours ? item.resolveHours + '小时' : '',
+          warningTime: item.warnBeforeMinutes ? item.warnBeforeMinutes + '分钟' : '',
           status: item.status === 0 ? '启用' : '停用',
           sort: item.sort || 0,
-          createTime: item.createTime || '',
+          createTime: this.formatTime(item.createTime),
         }));
         this.pagination.total = data.total;
       } catch (err) {
@@ -163,6 +163,22 @@ export default {
       } catch (err) {
         console.error('删除失败', err);
       }
+    },
+    // 优先级转换
+    formatPriority(priority) {
+      const map = { 1: '低', 2: '中', 3: '高', 4: '紧急' };
+      return map[priority] || priority || '';
+    },
+    // 工单分类转换
+    formatCategory(category) {
+      const map = { 1: '问题咨询', 2: '故障报修', 3: '服务请求', 4: '投诉建议', 5: '其他' };
+      return map[category] || category || '';
+    },
+    // 时间格式化
+    formatTime(timestamp) {
+      if (!timestamp) return '';
+      const d = new Date(timestamp);
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
     },
   },
 };

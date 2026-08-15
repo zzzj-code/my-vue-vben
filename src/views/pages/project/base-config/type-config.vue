@@ -77,14 +77,17 @@ export default {
   methods: {
     async loadData() {
       try {
-        const params = {
-          pageNo: this.pagination.pageNo,
-          pageSize: this.pagination.pageSize,
-          ...this.searchForm
-        };
-        const res = await getProjectTypeConfigPage(params);
-        this.tabValue = res.list || res.records || [];
-        this.pagination.total = res.total || 0;
+        const res = await getProjectTypeConfigPage();
+        const list = Array.isArray(res) ? res : (res.list || res.records || []);
+        this.tabValue = list.map(item => ({
+          id: item.id,
+          projectType: item.projectType || item.typeName || item.name || '',
+          capabilityPack: item.capabilityPack || item.modules || '',
+          defaultTab: item.defaultTab || '',
+          approvalKey: item.approvalKey || item.initiationProcessKey || '',
+          changeKey: item.changeKey || item.changeProcessKey || ''
+        }));
+        this.pagination.total = this.tabValue.length;
       } catch (e) {
         console.error('加载数据失败', e);
       }

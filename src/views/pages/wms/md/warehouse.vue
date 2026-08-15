@@ -69,7 +69,7 @@
 // ========== 导入仓库管理相关 API（src/api/wms/warehousing/index.js）==========
 // getWarehousingList : 获取仓库列表（GET /wms/warehousing/list）
 // deleteWarehousing  : 删除仓库（DELETE /wms/warehousing/delete?id=xxx）
-import { getWarehousingList, deleteWarehousing } from '#/api/wms/warehousing';
+import { getWarehousePage, deleteWarehouse } from '#/api/wms/warehouse';
 
 export default {
   data() {
@@ -101,7 +101,7 @@ export default {
     async loadWarehouseList() {
       try {
         // 调用后端接口，携带分页参数 + 搜索条件
-        const data = await getWarehousingList({
+        const data = await getWarehousePage({
           pageNo: this.pagination.pageNo,
           pageSize: this.pagination.pageSize,
           name: this.searchForm.warehouseName, // 仓库名称（后端参数名以实际为准，可调整）
@@ -160,7 +160,7 @@ export default {
       if (!confirm(`确定要删除「${row.warehouseName}」吗？`)) return;
       try {
         // 调用后端删除接口（DELETE /wms/warehousing/delete?id=xxx）
-        await deleteWarehousing(row.id);
+        await deleteWarehouse(row.id);
         alert("删除成功");
         // 删除成功后刷新列表
         this.loadWarehouseList();

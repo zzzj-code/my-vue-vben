@@ -87,7 +87,20 @@ export default {
     async loadSummary() {
       try {
         const res = await getProjectStatsSummary();
-        this.summary = { ...this.summary, ...res };
+        const data = res || {};
+        this.summary = {
+          totalCount: (data.managerProjectCount || 0) + (data.memberProjectCount || 0),
+          inProgressCount: data.inProgressProjectCount || 0,
+          completedCount: 0,
+          overdueCount: data.overdueProjectCount || 0,
+          taskCompletionRate: 0,
+          completedTaskCount: 0,
+          totalTaskCount: (data.todoTaskCount || 0) + (data.overdueTaskCount || 0),
+          overdueTaskCount: data.overdueTaskCount || 0,
+          budgetUsageRate: 0,
+          usedBudget: 0,
+          totalBudget: 0
+        };
       } catch (e) {
         console.error('加载统计失败', e);
       }

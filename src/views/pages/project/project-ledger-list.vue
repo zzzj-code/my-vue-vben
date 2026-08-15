@@ -103,7 +103,7 @@
                       borderRadius: '12px',
                       fontSize: '12px'
                     }"
-                  >{{ item.priority }}</span>
+                  >{{ getPriorityText(item.priority) }}</span>
                 </td>
                 <td>
                   <span
@@ -118,7 +118,7 @@
                       borderRadius: '12px',
                       fontSize: '12px'
                     }"
-                  >{{ item.status }}</span>
+                  >{{ getStatusText(item.status) }}</span>
                 </td>
                 <td>
                   <div class="progress-wrapper">
@@ -133,7 +133,7 @@
                 <td>{{ item.counterparty }}</td>
                 <td>{{ item.planStart }}</td>
                 <td>{{ item.planEnd }}</td>
-                <td>¥{{ item.budget.toLocaleString() }}</td>
+                <td>¥{{ (item.budget || 0).toLocaleString() }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
                   <button @click="handleDetail(item)">详情</button>
@@ -156,6 +156,7 @@ import { getProjectLedgerPage, deleteProjectLedger } from '#/api/project/project
 export default {
   data() {
     return {
+      activeNav: '全部',
       searchForm: { projectNo: '', projectName: '', projectType: '' },
       pagination: { pageNo: 1, pageSize: 10, total: 0 },
       tabValue: []
@@ -170,14 +171,36 @@ export default {
         const params = {
           pageNo: this.pagination.pageNo,
           pageSize: this.pagination.pageSize,
-          ...this.searchForm
+          projectCode: this.searchForm.projectNo,
+          projectName: this.searchForm.projectName,
+          projectType: this.searchForm.projectType
         };
         const res = await getProjectLedgerPage(params);
-        this.tabValue = res.list || res.records || [];
+        const list = res.list || res.records || [];
+        this.tabValue = list.map(item => ({
+          id: item.id,
+          projectNo: item.projectCode,
+          projectName: item.projectName,
+          projectType: item.projectType,
+          priority: item.priority,
+          status: item.status,
+          progress: (item.progress || 0) + '%',
+          manager: item.managerUserName,
+          department: item.deptName,
+          counterparty: item.counterpartyName,
+          planStart: item.planStartDate || '',
+          planEnd: item.planEndDate || '',
+          budget: item.budgetAmount || 0,
+          createTime: this.formatTime(item.createTime)
+        }));
         this.pagination.total = res.total || 0;
       } catch (e) {
         console.error('加载数据失败', e);
       }
+    },
+    switchNav(nav) {
+      this.activeNav = nav;
+      this.loadData();
     },
     handleSearch() {
       this.pagination.pageNo = 1;
@@ -201,16 +224,37 @@ export default {
       }
     },
     getPriorityColor(priority) {
-      const map = { '高': '#ff4d4f', '中': '#faad14', '低': '#52c41a' };
+      const map = { 1: '#ff4d4f', 2: '#faad14', 3: '#52c41a', '高': '#ff4d4f', '中': '#faad14', '低': '#52c41a' };
       return map[priority] || '#333';
+    },
+    getPriorityBg(priority) {
+      const map = { 1: '#fff2f0', 2: '#fffbe6', 3: '#f6ffed', '高': '#fff2f0', '中': '#fffbe6', '低': '#f6ffed' };
+      return map[priority] || '#fff';
+    },
+    getPriorityText(priority) {
+      const map = { 1: '高', 2: '中', 3: '低' };
+      return map[priority] || priority;
     },
     getPriorityBg(priority) {
       const map = { '高': '#fff2f0', '中': '#fffbe6', '低': '#f6ffed' };
       return map[priority] || '#fff';
     },
     getStatusColor(status) {
-      const map = { '进行中': '#1890ff', '已完成': '#52c41a', '已暂停': '#faad14', '已取消': '#ff4d4f' };
+      const map = { 0: '#8c8c8c', 1: '#faad14', 2: '#52c41a', 3: '#ff4d4f', 6: '#1890ff', '进行中': '#1890ff', '已完成': '#52c41a', '已暂停': '#faad14', '已取消': '#ff4d4f' };
       return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = { 0: '#f5f5f5', 1: '#fffbe6', 2: '#f6ffed', 3: '#fff2f0', 6: '#e6f7ff', '进行中': '#e6f7ff', '已完成': '#f6ffed', '已暂停': '#fffbe6', '已取消': '#fff2f0' };
+      return map[status] || '#fff';
+    },
+    getStatusText(status) {
+      const map = { 0: '草稿', 1: '审核中', 2: '已立项', 3: '已驳回', 6: '已归档' };
+      return map[status] || status;
+    },
+    formatTime(timestamp) {
+      if (!timestamp) return '';
+      const d = new Date(timestamp);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     },
     getStatusBg(status) {
       const map = { '进行中': '#e6f7ff', '已完成': '#f6ffed', '已暂停': '#fffbe6', '已取消': '#fff2f0' };

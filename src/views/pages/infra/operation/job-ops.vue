@@ -103,21 +103,22 @@ export default {
     async loadTaskList() {
       try {
         const res = await getJobPage({
-          pageNo: this.pagination.pageNo,
-          pageSize: this.pagination.pageSize,
           name: this.searchForm.keyword
         });
-        // 将API返回的数据转换为卡片需要的格式
-        this.taskList = res.list.map((item) => ({
-          id: item.id,
-          tag: item.status === 0 ? '运行中' : '已暂停',
-          tagClass: item.status === 0 ? 'tag-purple' : 'tag-gray',
-          name: item.name,
+        // API返回数组，转换为卡片需要的格式
+        const list = Array.isArray(res) ? res : (res && res.list) || [];
+        this.taskList = list.map((item) => ({
+          id: item.jobHandler,
+          jobHandler: item.jobHandler,
+          tag: '运行中',
+          tagClass: 'tag-purple',
+          module: item.module,
+          name: item.description || item.className,
           desc: item.remark || '暂无描述',
-          handler: item.handlerName,
-          className: item.handlerName
+          handler: item.jobHandler,
+          className: item.className
         }));
-        this.pagination.total = res.total;
+        this.pagination.total = list.length;
       } catch (error) {
         console.error('加载任务列表失败:', error);
       }
@@ -131,7 +132,7 @@ export default {
     async handleRun(task) {
       if (!confirm(`确定要立即执行任务【${task.name}】吗？`)) return;
       try {
-        await runJob(task.id);
+        await runJob(task.jobHandler);
         alert('任务执行成功');
       } catch (error) {
         console.error('执行任务失败:', error);
@@ -179,26 +180,27 @@ export default {
 
 /* 工具栏 */
 .toolbar {
-  width: 70%;
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 12px 0;
   margin-bottom: 16px;
+  box-sizing: border-box;
 }
 .filter-dropdown {
-  height: 40px;
-  padding: 0 16px;
+  height: 32px;
+  padding: 0 12px;
   background: #fff;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 13px;
   color: #999;
-  min-width: 160px;
+  min-width: 120px;
 }
 .dropdown-arrow {
   width: 16px;
@@ -208,20 +210,20 @@ export default {
 }
 .search-box {
   flex: 1;
-  height: 40px;
+  height: 32px;
   background: #fff;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
-  padding: 0 14px;
+  padding: 0 10px;
   position: relative;
 }
 .search-box input {
   flex: 1;
   border: none;
   outline: none;
-  font-size: 16px;
+  font-size: 13px;
   color: #333;
   background: transparent;
 }
@@ -235,16 +237,16 @@ export default {
   margin-left: 8px;
 }
 .btn-refresh {
-  height: 40px;
-  padding: 0 20px;
+  height: 32px;
+  padding: 0 14px;
   background: #fff;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 13px;
   color: #333;
   transition: all 0.2s;
 }
@@ -257,7 +259,7 @@ export default {
   height: 18px;
 }
 .task-count {
-  font-size: 16px;
+  font-size: 13px;
   color: #999;
   margin-left: auto;
 }
@@ -267,17 +269,22 @@ export default {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* 任务卡片 */
 .task-card {
   background: #fff;
-  border-radius: 12px;
-  padding: 10px;
+  border-radius: 10px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
   border: 1px solid #e8e8e8;
   transition: all 0.2s;
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
 }
 .task-card:hover {
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
@@ -289,19 +296,19 @@ export default {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 .card-title-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex: 1;
   min-width: 0;
 }
 .tag {
-  padding: 3px 10px;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
   flex-shrink: 0;
@@ -317,7 +324,7 @@ export default {
   border: 1px solid #e8e8e8;
 }
 .task-name {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
   color: #333;
   overflow: hidden;
@@ -325,13 +332,13 @@ export default {
   white-space: nowrap;
 }
 .param-btn {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   border: none;
   background: #f0f0f0;
   color: #999;
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -346,42 +353,48 @@ export default {
 
 /* 任务描述 */
 .task-desc {
-  font-size: 15px;
+  font-size: 12px;
   color: #666;
-  line-height: 1.6;
-  margin: 0 0 20px 0;
+  line-height: 1.5;
+  margin: 0 0 10px 0;
   display: -webkit-box;
   -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
 }
 
 /* 任务信息 */
 .task-info {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 .info-row {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
-  font-size: 16px;
+  margin-bottom: 6px;
+  font-size: 12px;
 }
 .info-row:last-child {
   margin-bottom: 0;
 }
 .info-label {
   color: #555;
-  margin-right: 8px;
+  margin-right: 6px;
   font-weight: 500;
+  flex-shrink: 0;
 }
 .info-value {
   color: #666;
   font-family: 'Consolas', 'Monaco', monospace;
-  font-size: 15px;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 .handler-value {
   color: #3366ff;
   background: #eef2ff;
-  padding: 2px 8px;
+  padding: 1px 6px;
   border-radius: 4px;
   border: 1px solid #c7d2fe;
   cursor: pointer;
@@ -394,12 +407,12 @@ export default {
   justify-content: flex-end;
 }
 .btn-exec {
-  padding: 8px 20px;
+  padding: 5px 14px;
   background: #3366ff;
   color: #fff;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;

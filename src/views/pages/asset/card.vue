@@ -80,10 +80,10 @@
                       borderRadius: '12px',
                       fontSize: '12px'
                     }"
-                  >{{ item.status }}</span>
+                  >{{ getStatusText(item.status) }}</span>
                 </td>
-                <td>¥{{ item.originalValue.toLocaleString() }}</td>
-                <td>¥{{ item.netValue.toLocaleString() }}</td>
+                <td>¥{{ (item.originalValue || 0).toLocaleString() }}</td>
+                <td>¥{{ (item.netValue || 0).toLocaleString() }}</td>
                 <td>{{ item.user }}</td>
                 <td>{{ item.department }}</td>
                 <td>{{ item.location }}</td>
@@ -151,24 +151,24 @@ export default {
         const data = await getInfoPage({
           pageNo: this.pagination.pageNo,
           pageSize: this.pagination.pageSize,
-          assetNo: this.searchForm.assetNo,
+          assetCode: this.searchForm.assetNo,
           assetName: this.searchForm.assetName,
         });
         // 字段映射，适配页面表格
         this.tabValue = data.list.map((item) => ({
           id: item.id,
-          assetNo: item.assetNo || "",           // 资产编号
+          assetNo: item.assetCode || "",           // 资产编号
           assetName: item.assetName || "",       // 资产名称
           category: item.categoryName || "",     // 资产分类
           spec: item.specification || "",        // 规格型号
           brand: item.brand || "",               // 品牌
-          status: this.getStatusName(item.status), // 状态
+          status: item.assetStatus, // 状态
           originalValue: item.originalValue || 0, // 原值
           netValue: item.netValue || 0,          // 净值
-          user: item.userName || "",             // 使用人
-          department: item.deptName || "",       // 使用部门
+          user: item.useUserName || "",             // 使用人
+          department: item.useDeptName || "",       // 使用部门
           location: item.locationName || "",     // 存放位置
-          labelPrinted: item.labelPrinted || false, // 标签已打印
+          labelPrinted: (item.labelPrintCount || 0) > 0, // 标签已打印
           createTime: this.formatTimestamp(item.createTime), // 创建时间
         }));
         this.pagination.total = data.total;
@@ -223,20 +223,21 @@ export default {
       }
     },
     getStatusColor(status) {
-      const map = {
-        '正常': '#52c41a',
-        '维修中': '#faad14',
-        '已报废': '#8c8c8c'
-      };
+      const map = { 0: '#8c8c8c', 1: '#52c41a', 2: '#faad14', 3: '#ff4d4f', 4: '#1890ff', '闲置': '#8c8c8c', '在用': '#52c41a', '维修': '#faad14', '报废': '#ff4d4f', '调拨中': '#1890ff' };
       return map[status] || '#333';
     },
     getStatusBg(status) {
-      const map = {
-        '正常': '#f6ffed',
-        '维修中': '#fffbe6',
-        '已报废': '#f5f5f5'
-      };
+      const map = { 0: '#f5f5f5', 1: '#f6ffed', 2: '#fffbe6', 3: '#fff2f0', 4: '#e6f7ff', '闲置': '#f5f5f5', '在用': '#f6ffed', '维修': '#fffbe6', '报废': '#fff2f0', '调拨中': '#e6f7ff' };
       return map[status] || '#fff';
+    },
+    getStatusText(status) {
+      const map = { 0: '闲置', 1: '在用', 2: '维修', 3: '报废', 4: '调拨中' };
+      return map[status] || status;
+    },
+    formatTime(timestamp) {
+      if (!timestamp) return '';
+      const d = new Date(timestamp);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
     }
   }
 };

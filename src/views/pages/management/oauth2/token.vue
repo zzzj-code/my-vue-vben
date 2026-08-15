@@ -84,7 +84,7 @@
 
 <script>
 // ========== 导入OAuth2令牌列表相关API ==========
-import { getOAuth2AccessTokenPage } from '#/api/system/oauth2/token';
+import { getOAuth2TokenPage } from '#/api/system/oauth2/token';
 
 export default {
   data() {
@@ -110,7 +110,7 @@ export default {
         Object.keys(this.searchForm).forEach((key) => {
           if (this.searchForm[key]) params[key] = this.searchForm[key];
         });
-        const data = await getOAuth2AccessTokenPage(params);
+        const data = await getOAuth2TokenPage(params);
         this.tabValue = data.list.map((item) => ({
           id: item.id || '',
           userId: item.userId || '',

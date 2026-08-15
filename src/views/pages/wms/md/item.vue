@@ -120,148 +120,57 @@
 </template>
 
 <script>
+import { getItemPage, deleteItem } from '#/api/wms/item';
+
 export default {
   data() {
     return {
-      totalCount: 13,
-      treeData: [
-        { id: "shucai", label: "蔬菜" },
-        { id: "shyp", label: "生活用品" },
-        {
-          id: "dzcp",
-          label: "电子产品",
-          open: true,
-          children: [
-            { id: "sj", label: "手机" },
-            { id: "bjb", label: "笔记本电脑" },
-          ],
-        },
-        {
-          id: "jydq",
-          label: "家用电器",
-          open: true,
-          children: [
-            { id: "bx", label: "冰箱" },
-            { id: "kt", label: "空调" },
-          ],
-        },
-        {
-          id: "bgwp",
-          label: "办公用品",
-          open: true,
-          children: [
-            { id: "dyj", label: "打印机" },
-            { id: "bghc", label: "办公耗材" },
-          ],
-        },
-        {
-          id: "spyl",
-          label: "食品饮料",
-          open: true,
-          children: [
-            { id: "yl", label: "饮料" },
-            { id: "ls", label: "零食" },
-          ],
-        },
-      ],
-      productList: [
-        {
-          id: 1,
-          name: "呃呃呃",
-          code: "abc",
-          brand: "苹果",
-          category: "蔬菜",
-          specs: [
-            {
-              specName: "ABC",
-              sku: "",
-              barcode: "",
-              costPrice: "",
-              salePrice: "",
-              netWeight: "",
-              grossWeight: "",
-            },
-          ],
-        },
-        {
-          id: 2,
-          name: "红富士苹果",
-          code: "SPU-APPLE",
-          brand: "",
-          category: "水果",
-          specs: [
-            {
-              specName: "5kg 装箱",
-              sku: "SKU-APPLE-5KG",
-              barcode: "690100120001",
-              costPrice: "35.00",
-              salePrice: "59.00",
-              netWeight: "5.000",
-              grossWeight: "5.500",
-            },
-            {
-              specName: "10kg 装箱",
-              sku: "SKU-APPLE-10KG",
-              barcode: "690100120002",
-              costPrice: "68.00",
-              salePrice: "109.00",
-              netWeight: "10.000",
-              grossWeight: "10.800",
-            },
-          ],
-        },
-        {
-          id: 3,
-          name: "盐焗腰果",
-          code: "SPU-CASHEW",
-          brand: "",
-          category: "零食",
-          specs: [
-            {
-              specName: "250g 袋装",
-              sku: "SKU-CASHEW-250G",
-              barcode: "690100110001",
-              costPrice: "18.00",
-              salePrice: "29.90",
-              netWeight: "0.250",
-              grossWeight: "0.280",
-            },
-          ],
-        },
-      ],
+      searchForm: { name: '', code: '' },
+      pagination: { pageNo: 1, pageSize: 20, total: 0 },
+      treeData: [],
+      productList: [],
     };
   },
-  computed: {
-    tableData() {
-      const rows = [];
-      this.productList.forEach((product) => {
-        product.specs.forEach((spec, index) => {
-          rows.push({
-            productId: product.id,
-            productName: product.name,
-            productCode: product.code,
-            productBrand: product.brand,
-            productCategory: product.category,
-            specCount: product.specs.length,
-            isFirst: index === 0,
-            specName: spec.specName,
-            sku: spec.sku,
-            barcode: spec.barcode,
-            costPrice: spec.costPrice,
-            salePrice: spec.salePrice,
-            netWeight: spec.netWeight,
-            grossWeight: spec.grossWeight,
-          });
-        });
-      });
-      return rows;
-    },
+  mounted() {
+    this.loadList();
   },
   methods: {
-    toggleNode(node) {
-      if (node.children && node.children.length) {
-        node.open = !node.open;
+    async loadList() {
+      try {
+        const data = await getItemPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          name: this.searchForm.name,
+          code: this.searchForm.code,
+        });
+        const list = (data && data.list) || [];
+        this.productList = list.map(item => ({
+          id: item.id,
+          name: item.name || '',
+          code: item.code || '',
+          categoryName: item.categoryName || '',
+          unit: item.unit || '',
+          brandName: item.brandName || '',
+          status: item.status === 0 ? '启用' : '禁用',
+          createTime: this.formatTime(item.createTime),
+        }));
+        this.pagination.total = (data && data.total) || 0;
+      } catch (e) {
+        console.error('获取商品列表失败', e);
       }
+    },
+    formatTime(timestamp) {
+      if (!timestamp) return '';
+      const d = new Date(timestamp);
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() { this.searchForm = { name: '', code: '' }; this.loadList(); },
+    handleEdit(row) { alert('编辑：' + row.name); },
+    async handleDelete(row) {
+      if (!confirm('确定删除「' + row.name + '」吗？')) return;
+      try { await deleteItem(row.id); alert('删除成功'); this.loadList(); }
+      catch (e) { console.error('删除失败', e); }
     },
   },
 };

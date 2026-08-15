@@ -4,7 +4,7 @@
       <div class="app-top">
         <div>
           <span>选择年份</span>
-          <input type="text" placeholder="2026" v-model="searchForm.year" />
+          <input type="text" placeholder="2026" v-model="searchForm.time" />
         </div>
         <div>
           <span>归属部门</span>
@@ -79,9 +79,9 @@ export default {
         "合同汇总表",
       ],
       searchForm: {
-        year: "2026",  // 选择年份
-        deptId: "",    // 归属部门
-        userId: "",    // 员工
+        time: "2026",
+        deptId: 1,
+        userId: "",
       },
       tableData: [],    // 底部表格数据
       chart: null,      // 图表实例
@@ -111,20 +111,28 @@ export default {
     // ========== 获取统计数据 ==========
     async loadStatistics() {
       try {
+        // 把年份转换为times日期范围(年初到年末)
+        const year = parseInt(this.searchForm.time) || 2026;
+        const params = {
+          ...this.searchForm,
+          times: [
+            year + "-01-01 00:00:00",
+            year + "-12-31 23:59:59"
+          ]
+        };
         let data;
-        // 根据Tab选择不同的API
         switch (this.activeNav) {
-          case 0: // 员工合同数量统计
-            data = await getContractCountPerformance(this.searchForm);
+          case 0:
+            data = await getContractCountPerformance(params);
             break;
-          case 1: // 员工合同金额统计
-            data = await getContractPricePerformance(this.searchForm);
+          case 1:
+            data = await getContractPricePerformance(params);
             break;
-          case 2: // 员工回款金额统计
-            data = await getReceivablePricePerformance(this.searchForm);
+          case 2:
+            data = await getReceivablePricePerformance(params);
             break;
-          case 3: // 合同汇总表
-            data = await getContractPricePerformance(this.searchForm);
+          case 3:
+            data = await getContractPricePerformance(params);
             break;
           default:
             data = [];
@@ -138,7 +146,7 @@ export default {
     },
     handleSearch() { this.loadStatistics(); },
     handleReset() {
-      this.searchForm = { year: "2026", deptId: "", userId: "" };
+      this.searchForm = { time: "2026", deptId: 1, userId: "" };
       this.loadStatistics();
     },
     switchNav(index) { this.activeNav = index; this.loadStatistics(); },

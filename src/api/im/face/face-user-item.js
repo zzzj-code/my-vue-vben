@@ -13,7 +13,7 @@ import { requestClient } from "#/api/request";
  * @param {Object} params - 查询参数
  */
 function getFaceUserItemPage(params) {
-  return requestClient.get("/im/face-user-item/page", { params });
+  return requestClient.get("/im/face-user-item/list", { params });
 }
 
 /**

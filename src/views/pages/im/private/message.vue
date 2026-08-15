@@ -107,7 +107,7 @@ export default {
           if (this.searchForm[key]) params[key] = this.searchForm[key];
         });
         const data = await getPrivateMessagePage(params);
-        this.tabValue = data.list.map((item) => {
+        this.tabValue = (Array.isArray(data) ? data : (data && data.list) || []).map((item) => {
           const obj = {};
           obj.id = item.id || '';
           obj.sender = item.sender || '';
@@ -119,7 +119,7 @@ export default {
           obj.sendTime = item.sendTime || '';
           return obj;
         });
-        this.pagination.total = data.total;
+        this.pagination.total = Array.isArray(data) ? data.length : (data && data.total) || 0;
       } catch (err) {
         console.error('获取列表失败', err);
       }

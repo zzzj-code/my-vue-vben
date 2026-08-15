@@ -13,7 +13,7 @@ import { requestClient } from "#/api/request";
  * @param {Object} params - 查询参数
  */
 function getChannelMaterialPage(params) {
-  return requestClient.get("/im/channel-material/page", { params });
+  return requestClient.get("/im/channel-material/list", { params });
 }
 
 /**

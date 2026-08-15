@@ -62,63 +62,49 @@
 </template>
 
 <script>
+import { getItemBrandPage, deleteItemBrand } from '#/api/wms/item-brand';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          brandCode: "BR-001",
-          brandName: "华为",
-          createTime: "2026-01-10 09:00",
-        },
-        {
-          brandCode: "BR-002",
-          brandName: "小米",
-          createTime: "2026-01-15 10:30",
-        },
-        {
-          brandCode: "BR-003",
-          brandName: "苹果",
-          createTime: "2026-02-01 14:20",
-        },
-        {
-          brandCode: "BR-004",
-          brandName: "三星",
-          createTime: "2026-02-20 11:00",
-        },
-        {
-          brandCode: "BR-005",
-          brandName: "联想",
-          createTime: "2026-03-05 16:45",
-        },
-        {
-          brandCode: "BR-006",
-          brandName: "海尔",
-          createTime: "2026-03-15 08:30",
-        },
-        {
-          brandCode: "BR-007",
-          brandName: "美的",
-          createTime: "2026-04-01 13:50",
-        },
-        {
-          brandCode: "BR-008",
-          brandName: "格力",
-          createTime: "2026-04-20 10:10",
-        },
-        {
-          brandCode: "BR-009",
-          brandName: "vivo",
-          createTime: "2026-05-05 09:40",
-        },
-        {
-          brandCode: "BR-010",
-          brandName: "OPPO",
-          createTime: "2026-05-15 15:20",
-        },
-      ],
+      pagination: { pageNo: 1, pageSize: 20, total: 0 },
+      tabValue: [],
     };
-  }
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const data = await getItemBrandPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+        });
+        const list = (data && data.list) || [];
+        this.tabValue = list.map(item => ({
+          id: item.id,
+          brandCode: item.code || '',
+          brandName: item.name || '',
+          createTime: this.formatTime(item.createTime),
+        }));
+        this.pagination.total = (data && data.total) || 0;
+      } catch (e) {
+        console.error('获取品牌列表失败', e);
+      }
+    },
+    formatTime(timestamp) {
+      if (!timestamp) return '';
+      const d = new Date(timestamp);
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    },
+    handleEdit(row) { alert('编辑：' + row.brandName); },
+    async handleDelete(row) {
+      if (!confirm('确定删除「' + row.brandName + '」吗？')) return;
+      try { await deleteItemBrand(row.id); alert('删除成功'); this.loadList(); }
+      catch (e) { console.error('删除失败', e); }
+    },
+  },
 };
 </script>
 

@@ -12,7 +12,7 @@ import { requestClient } from "#/api/request";
  * 获取项目统计概览
  */
 function getProjectStatsSummary() {
-  return requestClient.get("/project/stats/summary");
+  return requestClient.get("/project/home/summary");
 }
 
 /**

@@ -103,7 +103,7 @@ export default {
           if (this.searchForm[key]) params[key] = this.searchForm[key];
         });
         const data = await getSensitiveWordPage(params);
-        this.tabValue = data.list.map((item) => {
+        this.tabValue = (Array.isArray(data) ? data : (data && data.list) || []).map((item) => {
           const obj = {};
           obj.id = item.id || '';
           obj.word = item.word || '';
@@ -112,7 +112,7 @@ export default {
           obj.createTime = item.createTime || '';
           return obj;
         });
-        this.pagination.total = data.total;
+        this.pagination.total = Array.isArray(data) ? data.length : (data && data.total) || 0;
       } catch (err) {
         console.error('获取列表失败', err);
       }

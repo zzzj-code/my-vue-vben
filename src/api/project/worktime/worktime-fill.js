@@ -13,7 +13,7 @@ import { requestClient } from "#/api/request";
  * @param {Object} params - 查询参数
  */
 function getWorktimeFillPage(params) {
-  return requestClient.get("/project/worktime-fill/page", { params });
+  return requestClient.get("/project/worktime/my-page", { params });
 }
 
 /**
@@ -21,7 +21,7 @@ function getWorktimeFillPage(params) {
  * @param {Number} id - 填报ID
  */
 function getWorktimeFill(id) {
-  return requestClient.get(`/project/worktime-fill/get?id=${id}`);
+  return requestClient.get(`/project/worktime/get?id=${id}`);
 }
 
 /**
@@ -29,7 +29,7 @@ function getWorktimeFill(id) {
  * @param {Object} data - 填报数据
  */
 function createWorktimeFill(data) {
-  return requestClient.post("/project/worktime-fill/create", data);
+  return requestClient.post("/project/worktime/create", data);
 }
 
 /**
@@ -37,7 +37,7 @@ function createWorktimeFill(data) {
  * @param {Object} data - 填报数据
  */
 function updateWorktimeFill(data) {
-  return requestClient.put("/project/worktime-fill/update", data);
+  return requestClient.put("/project/worktime/update", data);
 }
 
 /**
@@ -45,7 +45,7 @@ function updateWorktimeFill(data) {
  * @param {Number} id - 填报ID
  */
 function deleteWorktimeFill(id) {
-  return requestClient.delete(`/project/worktime-fill/delete?id=${id}`);
+  return requestClient.delete(`/project/worktime/delete?id=${id}`);
 }
 
 export {

@@ -13,7 +13,7 @@ import { requestClient } from "#/api/request";
  * @param {Object} params - 查询参数
  */
 function getGroupRequestPage(params) {
-  return requestClient.get("/im/group-request/page", { params });
+  return requestClient.get("/im/group-request/list", { params });
 }
 
 /**

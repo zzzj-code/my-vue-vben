@@ -4,7 +4,7 @@
       <div class="app-top">
         <div>
           <span>时间范围</span>
-          <input type="text" placeholder="请选择时间范围" v-model="searchForm.timeRange" />
+          <input type="text" placeholder="请选择时间范围" v-model="searchForm.times" />
         </div>
         <div>
           <span>时间间隔</span>
@@ -93,11 +93,11 @@ export default {
         "商机转化率分析",
       ],
       searchForm: {
-        timeRange: "",   // 时间范围
-        interval: "周",  // 时间间隔
-        businessStatusId: "", // 商机组
-        deptId: "",      // 归属部门
-        userId: "",      // 员工
+        times: ["2026-08-08 08:49:50","2026-08-15 08:49:50"],
+        interval: 2,
+        businessStatusId: "",
+        deptId: 1,
+        userId: "",
       },
       tableData: [],    // 底部表格数据
       chart: null,      // 图表实例
@@ -141,7 +141,7 @@ export default {
     },
     handleSearch() { this.loadStatistics(); },
     handleReset() {
-      this.searchForm = { timeRange: "", interval: "周", businessStatusId: "", deptId: "", userId: "" };
+      this.searchForm = { times: ["2026-08-08 08:49:50","2026-08-15 08:49:50"], interval: 2, businessStatusId: "", deptId: 1, userId: "" };
       this.loadStatistics();
     },
     switchNav(index) { this.activeNav = index; this.loadStatistics(); },

@@ -10,7 +10,7 @@ import { requestClient } from "#/api/request";
 
 // 获取物料分类分页列表
 function getItemTypePage(params) {
-  return requestClient.get("/mes/md/item-type/page", { params });
+  return requestClient.get("/mes/md/item-type/list", { params });
 }
 
 // 获取物料分类详情

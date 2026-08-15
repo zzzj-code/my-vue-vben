@@ -120,12 +120,9 @@
 
 <script>
 // ========== 导入采购入库相关 API（src/api/wms/purchaseinwarehousing/index.js）==========
-// getPurchaseInWarehousingPage : 采购入库单分页查询（GET /wms/purchase-in-warehousing/page）
-// deletePurchaseInWarehousing  : 删除采购入库单（DELETE /wms/purchase-in-warehousing/delete?id=xxx）
-import {
-  getPurchaseInWarehousingPage,
-  deletePurchaseInWarehousing,
-} from '#/api/wms/purchaseinwarehousing';
+// getReceiptOrderPage : 采购入库单分页查询（GET /wms/purchase-in-warehousing/page）
+// deleteReceiptOrder  : 删除采购入库单（DELETE /wms/purchase-in-warehousing/delete?id=xxx）
+import { getReceiptOrderPage, deleteReceiptOrder } from '#/api/wms/receipt-order';
 
 export default {
   data() {
@@ -156,7 +153,7 @@ export default {
     async loadReceiptList() {
       try {
         // 调用后端分页接口，携带分页 + 搜索参数
-        const data = await getPurchaseInWarehousingPage({
+        const data = await getReceiptOrderPage({
           pageNo: this.pagination.pageNo,
           pageSize: this.pagination.pageSize,
           no: this.searchForm.orderNo,             // 入库单号（后端参数名以实际为准）
@@ -240,7 +237,7 @@ export default {
     async handleDelete(row) {
       if (!confirm(`确定要删除「${row.orderNo}」吗？`)) return;
       try {
-        await deletePurchaseInWarehousing(row.id);
+        await deleteReceiptOrder(row.id);
         alert("删除成功");
         this.loadReceiptList();
       } catch (err) {

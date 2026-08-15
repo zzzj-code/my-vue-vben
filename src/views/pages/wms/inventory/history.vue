@@ -104,75 +104,59 @@
 </template>
 
 <script>
+import { getInventoryHistoryPage } from '#/api/wms/inventory-history';
+
 export default {
   name: 'InventoryFlow',
   data() {
     return {
-      tableData: [
-        {
-          docNo: 'YK202605120001',
-          docType: '移库单',
-          productName: '可口可乐汽水',
-          productCode: 'SPU-COLA',
-          specName: '330ml*24 罐',
-          specCode: 'SKU-COLA-330-24',
-          warehouse: '北京1',
-          operateTime: '2026-07-31 22:25:05',
-        },
-        {
-          docNo: 'YK202605120001',
-          docType: '移库单',
-          productName: '可口可乐汽水',
-          productCode: 'SPU-COLA',
-          specName: '330ml*24 罐',
-          specCode: 'SKU-COLA-330-24',
-          warehouse: '上海1',
-          operateTime: '2026-07-31 22:25:05',
-        },
-        {
-          docNo: 'YK202605120001',
-          docType: '移库单',
-          productName: 'A4 复印纸',
-          productCode: 'SPU-A4-PAPER',
-          specName: '70g 8 包/箱',
-          specCode: 'SKU-A4-70G-8',
-          warehouse: '北京1',
-          operateTime: '2026-07-31 22:25:05',
-        },
-        {
-          docNo: 'YK202605120001',
-          docType: '移库单',
-          productName: 'A4 复印纸',
-          productCode: 'SPU-A4-PAPER',
-          specName: '70g 8 包/箱',
-          specCode: 'SKU-A4-70G-8',
-          warehouse: '上海1',
-          operateTime: '2026-07-31 22:25:05',
-        },
-        {
-          docNo: 'RK20260801001',
-          docType: '入库单',
-          productName: '华为 Mate 60 Pro',
-          productCode: 'SPU-HW-MATE60',
-          specName: '256GB 雅丹黑',
-          specCode: 'SKU-HW-256-BLK',
-          warehouse: '深圳1',
-          operateTime: '2026-08-01 10:30:00',
-        },
-        {
-          docNo: 'RK20260801002',
-          docType: '入库单',
-          productName: '小米 14 Ultra',
-          productCode: 'SPU-XM-14U',
-          specName: '512GB 白色',
-          specCode: 'SKU-XM-512-WHT',
-          warehouse: '广州1',
-          operateTime: '2026-08-01 14:20:00',
-        },
-      ],
-    }
-  }
-}
+      searchForm: { itemName: '', warehouseId: '' },
+      pagination: { pageNo: 1, pageSize: 20, total: 0 },
+      tableData: [],
+    };
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const data = await getInventoryHistoryPage({
+          pageNo: this.pagination.pageNo,
+          pageSize: this.pagination.pageSize,
+          itemName: this.searchForm.itemName,
+        });
+        const list = (data && data.list) || [];
+        this.tableData = list.map(item => ({
+          id: item.id,
+          docNo: item.bizNo || item.docNo || '',
+          docType: this.formatDocType(item.bizType || item.docType),
+          productName: item.itemName || '',
+          productCode: item.itemCode || '',
+          specName: item.skuName || '',
+          specCode: item.skuCode || '',
+          warehouse: item.warehouseName || '',
+          operateTime: this.formatTime(item.createTime || item.operateTime),
+          quantity: item.quantity || 0,
+        }));
+        this.pagination.total = (data && data.total) || 0;
+      } catch (e) {
+        console.error('获取库存流水失败', e);
+      }
+    },
+    formatDocType(type) {
+      const map = { 1: '入库单', 2: '出库单', 3: '移库单', 4: '盘库单' };
+      return map[type] || type || '';
+    },
+    formatTime(timestamp) {
+      if (!timestamp) return '';
+      const d = new Date(timestamp);
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0');
+    },
+    handleSearch() { this.pagination.pageNo = 1; this.loadList(); },
+    handleReset() { this.searchForm = { itemName: '', warehouseId: '' }; this.loadList(); },
+  },
+};
 </script>
 
 <style scoped>

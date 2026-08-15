@@ -119,12 +119,12 @@ export default {
         // 字段映射，适配页面表格
         this.tabValue = data.list.map((item) => ({
           id: item.id,
-          invoiceNo: item.invoiceNo || '',          // 单据编号
-          invoiceNumber: item.invoiceNumber || '',  // 发票号码
-          buyerName: item.buyerName || '',          // 购方名称
-          invoiceType: item.invoiceType || '',      // 发票类型
-          totalAmount: item.totalAmount || '',      // 价税合计
-          status: item.status || '',                // 状态
+          invoiceNo: item.no || '',
+          invoiceNumber: item.invoiceNo || '',
+          buyerName: item.buyerName || '',
+          invoiceType: this.getInvoiceTypeText(item.invoiceType),
+          totalAmount: item.priceTaxAmount || 0,
+          status: this.getStatusText(item.status),
           invoiceDate: this.formatTimestamp(item.invoiceDate), // 开票日期
         }));
         this.pagination.total = data.total;

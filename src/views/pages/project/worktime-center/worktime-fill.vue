@@ -5,7 +5,7 @@
         <div class="top-inp">
           <div class="inp-1">
             <span>所属项目</span>
-            <input type="text" placeholder="全部"  v-model="searchForm.status" />
+            <input type="text" placeholder="全部"  v-model="searchForm.projectName" />
           </div>
           <div class="inp-1">
             <span>状态</span>
@@ -69,9 +69,7 @@
                       borderRadius: '12px',
                       fontSize: '12px'
                     }"
-                  >
-                    {{ item.status }}
-                  </span>
+                  >{{ getStatusText(item.status) }}</span>
                 </td>
                 <td>{{ item.reviewComment }}</td>
                 <td>{{ item.createTime }}</td>
@@ -95,7 +93,7 @@ import { getWorktimeFillPage, deleteWorktimeFill } from '#/api/project/worktime/
 export default {
   data() {
     return {
-      searchForm: { status: '', status: '' },
+      searchForm: { projectName: '', status: '' },
       pagination: { pageNo: 1, pageSize: 10, total: 0 },
       tabValue: []
     };
@@ -112,7 +110,17 @@ export default {
           ...this.searchForm
         };
         const res = await getWorktimeFillPage(params);
-        this.tabValue = res.list || res.records || [];
+        const list = res.list || res.records || [];
+        this.tabValue = list.map(item => ({
+          id: item.id,
+          workDate: item.workDate || '',
+          taskName: item.taskName || '',
+          hours: item.workHours || 0,
+          content: item.workContent || '',
+          status: item.status,
+          reviewComment: item.reviewComment || '',
+          createTime: this.formatTime(item.createTime)
+        }));
         this.pagination.total = res.total || 0;
       } catch (e) {
         console.error('加载数据失败', e);
@@ -123,7 +131,7 @@ export default {
       this.loadData();
     },
     handleReset() {
-      this.searchForm = { status: '', status: '' };
+      this.searchForm = { projectName: '', status: '' };
       this.pagination.pageNo = 1;
       this.loadData();
     },
@@ -140,8 +148,21 @@ export default {
       }
     },
     getStatusColor(status) {
-      const map = { '待审核': '#faad14', '已通过': '#52c41a', '已驳回': '#ff4d4f' };
+      const map = { 0: '#8c8c8c', 1: '#faad14', 2: '#52c41a', 3: '#ff4d4f', '草稿': '#8c8c8c', '审核中': '#faad14', '已通过': '#52c41a', '已驳回': '#ff4d4f' };
       return map[status] || '#333';
+    },
+    getStatusBg(status) {
+      const map = { 0: '#f5f5f5', 1: '#fffbe6', 2: '#f6ffed', 3: '#fff2f0', '草稿': '#f5f5f5', '审核中': '#fffbe6', '已通过': '#f6ffed', '已驳回': '#fff2f0' };
+      return map[status] || '#fff';
+    },
+    getStatusText(status) {
+      const map = { 0: '草稿', 1: '审核中', 2: '已通过', 3: '已驳回' };
+      return map[status] || status;
+    },
+    formatTime(timestamp) {
+      if (!timestamp) return '';
+      const d = new Date(timestamp);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
     },
     getStatusBg(status) {
       const map = { '待审核': '#fffbe6', '已通过': '#f6ffed', '已驳回': '#fff2f0' };

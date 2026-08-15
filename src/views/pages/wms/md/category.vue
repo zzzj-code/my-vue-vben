@@ -81,69 +81,46 @@
 </template>
 
 <script>
+import { getItemCategoryList, deleteItemCategory } from '#/api/wms/item-category';
+
 export default {
   data() {
     return {
-      tabValue: [
-        {
-          categoryName: "电子产品",
-          categoryCode: "EL-001",
-          sort: 1,
-          status: "启用",
-          createTime: "2026-01-10 09:00",
-        },
-        {
-          categoryName: "服装鞋帽",
-          categoryCode: "CL-001",
-          sort: 2,
-          status: "启用",
-          createTime: "2026-01-15 10:30",
-        },
-        {
-          categoryName: "食品饮料",
-          categoryCode: "FD-001",
-          sort: 3,
-          status: "启用",
-          createTime: "2026-02-01 14:20",
-        },
-        {
-          categoryName: "家居用品",
-          categoryCode: "HM-001",
-          sort: 4,
-          status: "启用",
-          createTime: "2026-02-20 11:00",
-        },
-        {
-          categoryName: "图书文具",
-          categoryCode: "BK-001",
-          sort: 5,
-          status: "停用",
-          createTime: "2026-03-05 16:45",
-        },
-        {
-          categoryName: "美妆个护",
-          categoryCode: "BC-001",
-          sort: 6,
-          status: "启用",
-          createTime: "2026-03-15 08:30",
-        },
-        {
-          categoryName: "运动户外",
-          categoryCode: "SP-001",
-          sort: 7,
-          status: "启用",
-          createTime: "2026-04-01 13:50",
-        },
-        {
-          categoryName: "汽车配件",
-          categoryCode: "AP-001",
-          sort: 8,
-          status: "停用",
-          createTime: "2026-04-20 10:10",
-        },
-      ],
+      tabValue: [],
     };
-  }
+  },
+  mounted() {
+    this.loadList();
+  },
+  methods: {
+    async loadList() {
+      try {
+        const data = await getItemCategoryList();
+        const list = Array.isArray(data) ? data : (data && data.list) || [];
+        this.tabValue = list.map(item => ({
+          id: item.id,
+          categoryName: item.name || '',
+          categoryCode: item.code || '',
+          sort: item.sort || 0,
+          status: item.status === 0 ? '启用' : '禁用',
+          createTime: this.formatTime(item.createTime),
+        }));
+      } catch (e) {
+        console.error('获取分类列表失败', e);
+      }
+    },
+    formatTime(timestamp) {
+      if (!timestamp) return '';
+      const d = new Date(timestamp);
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    },
+    handleEdit(row) { alert('编辑：' + row.categoryName); },
+    async handleDelete(row) {
+      if (!confirm('确定删除「' + row.categoryName + '」吗？')) return;
+      try { await deleteItemCategory(row.id); alert('删除成功'); this.loadList(); }
+      catch (e) { console.error('删除失败', e); }
+    },
+  },
 };
 </script>
 

@@ -159,15 +159,20 @@ export default {
     // ========== 获取物料分类列表 ==========
     async loadList() {
       try {
-        const data = await getItemTypePage({
-          pageNo: this.pagination.pageNo,
-          pageSize: this.pagination.pageSize,
-          ...this.searchForm,
-        });
-        this.tabValue = data.list || [];
-        this.pagination.total = data.total || 0;
-      } catch (err) {
-        console.error("获取物料分类列表失败", err);
+        const res = await getItemTypePage();
+        const list = Array.isArray(res) ? res : (res.list || res.records || []);
+        this.tabValue = list.map(item => ({
+          id: item.id,
+          name: item.name || '',
+          code: item.code || '',
+          type: item.itemOrProduct === 'PRODUCT' ? '产品' : '物料',
+          sort: item.sort || 0,
+          status: item.status === 0 ? '启用' : '禁用',
+          createTime: this.formatTime(item.createTime)
+        }));
+        this.pagination.total = this.tabValue.length;
+      } catch (e) {
+        console.error('加载数据失败', e);
       }
     },
     // ========== 时间戳格式化 ==========
@@ -211,6 +216,11 @@ export default {
         console.error("删除失败", err);
       }
     },
+    formatTime(timestamp) {
+      if (!timestamp) return '';
+      const d = new Date(timestamp);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+    }
   }
 };
 </script>

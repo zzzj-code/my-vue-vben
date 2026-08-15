@@ -115,10 +115,10 @@ export default {
           id: item.id || '',
           name: item.name || '',
           description: item.description || '',
-          strategy: item.strategy || '',
+          strategy: this.formatStrategy(item.assignStrategy),
           status: item.status === 0 ? '启用' : '停用',
           sort: item.sort || 0,
-          createTime: item.createTime || '',
+          createTime: this.formatTime(item.createTime),
         }));
         this.pagination.total = data.total;
       } catch (err) {
@@ -149,6 +149,17 @@ export default {
       } catch (err) {
         console.error('删除失败', err);
       }
+    },
+    // 分配策略转换
+    formatStrategy(strategy) {
+      const map = { 1: '轮询', 2: '负载均衡', 3: '手动分配', 4: '空闲优先' };
+      return map[strategy] || strategy || '';
+    },
+    // 时间格式化
+    formatTime(timestamp) {
+      if (!timestamp) return '';
+      const d = new Date(timestamp);
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
     },
   },
 };

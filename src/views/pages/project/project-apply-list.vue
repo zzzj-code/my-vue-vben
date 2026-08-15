@@ -87,7 +87,7 @@
                       borderRadius: '12px',
                       fontSize: '12px'
                     }"
-                  >{{ item.priority }}</span>
+                  >{{ getPriorityText(item.priority) }}</span>
                 </td>
                 <td>
                   <span
@@ -102,12 +102,12 @@
                       borderRadius: '12px',
                       fontSize: '12px'
                     }"
-                  >{{ item.status }}</span>
+                  >{{ getStatusText(item.status) }}</span>
                 </td>
                 <td>{{ item.manager }}</td>
                 <td>{{ item.department }}</td>
                 <td>{{ item.counterparty }}</td>
-                <td>¥{{ item.budget.toLocaleString() }}</td>
+                <td>¥{{ (item.budget || 0).toLocaleString() }}</td>
                 <td>{{ item.createTime }}</td>
                 <td class="ol-col">
                   <button>编辑</button>
@@ -152,10 +152,25 @@ export default {
         const params = {
           pageNo: this.pagination.pageNo,
           pageSize: this.pagination.pageSize,
-          ...this.searchForm
+          billCode: this.searchForm.projectNo,
+          projectName: this.searchForm.projectName,
+          projectType: this.searchForm.projectType
         };
         const res = await getProjectApplyPage(params);
-        this.tabValue = res.list || res.records || [];
+        const list = res.list || res.records || [];
+        this.tabValue = list.map(item => ({
+          id: item.id,
+          projectNo: item.billCode,
+          projectName: item.projectName,
+          projectType: item.projectType,
+          priority: item.priority,
+          status: item.status,
+          manager: item.managerUserName,
+          department: item.deptName,
+          counterparty: item.counterpartyName,
+          budget: item.budgetAmount,
+          createTime: this.formatTime(item.createTime)
+        }));
         this.pagination.total = res.total || 0;
       } catch (e) {
         console.error('加载数据失败', e);
@@ -183,36 +198,33 @@ export default {
       }
     },
     getPriorityColor(priority) {
-      const map = {
-        '高': '#ff4d4f',
-        '中': '#faad14',
-        '低': '#52c41a'
-      };
+      const map = { 1: '#ff4d4f', 2: '#faad14', 3: '#52c41a', '高': '#ff4d4f', '中': '#faad14', '低': '#52c41a' };
       return map[priority] || '#333';
     },
     getPriorityBg(priority) {
-      const map = {
-        '高': '#fff2f0',
-        '中': '#fffbe6',
-        '低': '#f6ffed'
-      };
+      const map = { 1: '#fff2f0', 2: '#fffbe6', 3: '#f6ffed', '高': '#fff2f0', '中': '#fffbe6', '低': '#f6ffed' };
       return map[priority] || '#fff';
     },
+    getPriorityText(priority) {
+      const map = { 1: '高', 2: '中', 3: '低' };
+      return map[priority] || priority;
+    },
     getStatusColor(status) {
-      const map = {
-        '已立项': '#52c41a',
-        '审核中': '#faad14',
-        '已驳回': '#ff4d4f'
-      };
+      const map = { 0: '#8c8c8c', 1: '#faad14', 2: '#52c41a', 3: '#ff4d4f', '草稿': '#8c8c8c', '审核中': '#faad14', '已立项': '#52c41a', '已驳回': '#ff4d4f' };
       return map[status] || '#333';
     },
     getStatusBg(status) {
-      const map = {
-        '已立项': '#f6ffed',
-        '审核中': '#fffbe6',
-        '已驳回': '#fff2f0'
-      };
+      const map = { 0: '#f5f5f5', 1: '#fffbe6', 2: '#f6ffed', 3: '#fff2f0', '草稿': '#f5f5f5', '审核中': '#fffbe6', '已立项': '#f6ffed', '已驳回': '#fff2f0' };
       return map[status] || '#fff';
+    },
+    getStatusText(status) {
+      const map = { 0: '草稿', 1: '审核中', 2: '已立项', 3: '已驳回', 6: '已归档' };
+      return map[status] || status;
+    },
+    formatTime(timestamp) {
+      if (!timestamp) return '';
+      const d = new Date(timestamp);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
     }
   }
 };

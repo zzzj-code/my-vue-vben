@@ -4,7 +4,7 @@
       <div class="app-top">
         <div>
           <span>时间范围</span>
-          <input type="text" placeholder="请选择时间范围" v-model="searchForm.timeRange" />
+          <input type="text" placeholder="请选择时间范围" v-model="searchForm.times" />
         </div>
         <div>
           <span>时间间隔</span>
@@ -80,8 +80,9 @@ export default {
         "产品客户成交周期分析",
       ],
       searchForm: {
-        timeRange: "",   // 时间范围
-        interval: "周",  // 时间间隔
+        times: ["2026-08-08 08:49:50","2026-08-15 08:49:50"],
+        interval: 2,
+        deptId: 1,
       },
       tableData: [],    // 底部表格数据
       chart: null,      // 图表实例
@@ -115,7 +116,7 @@ export default {
           "followCountRank",        // 客户跟进次数分析
           "followCustomerCountRank",// 客户跟进方式分析
           "contractCountRank",      // 客户转化率分析
-          "contactsCountRank",      // 公海客户分析
+          "contactCountRank",      // 公海客户分析
           "contractPriceRank",      // 员工客户成交周期分析
           "productSalesRank",       // 地区客户成交周期分析
           "receivablePriceRank",    // 产品客户成交周期分析
@@ -132,7 +133,7 @@ export default {
     },
     handleSearch() { this.loadStatistics(); },
     handleReset() {
-      this.searchForm = { timeRange: "", interval: "周" };
+      this.searchForm = { times: ["2026-08-08 08:49:50","2026-08-15 08:49:50"], interval: 2, deptId: 1 };
       this.loadStatistics();
     },
     switchNav(index) { this.activeNav = index; this.loadStatistics(); },
